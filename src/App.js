@@ -10,6 +10,8 @@ class App extends React.Component {
       isLoaded: false,
       items: []
     };
+
+    this.renderCounter = 0;
   }
 
   componentDidMount() {
@@ -37,7 +39,10 @@ class App extends React.Component {
 
   render() {
     
-    const { error, isLoaded, items } = this.state;
+    const { error, isLoaded, items, renderTimes} = this.state;
+
+    this.renderCounter++;
+    console.log("Rendered " + this.renderCounter + " times!");
 
     if (error) {
       return <div>Error: {error.message}</div>;

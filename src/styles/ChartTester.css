@@ -1,0 +1,6 @@
+.highcharts-navigator-mask-inside {
+    cursor: grab !important;
+  }
+.highcharts-navigator-mask-inside:active {
+cursor: grabbing !important;
+}

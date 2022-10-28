@@ -1,14 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import Highcharts from 'highcharts/highstock';
 
 import reportWebVitals from './reportWebVitals';
 import App from './components/App';
 import HTTP from './components/HTTP';
 
 import './index.css';
-
-// load highcharts
-import Highcharts from 'highcharts/highstock';
 
 // import highcharts modules
 require('highcharts/modules/boost')(Highcharts)

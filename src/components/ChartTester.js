@@ -1,10 +1,8 @@
 import React from 'react';
-
-// load highcharts
 import Highcharts from 'highcharts/highstock';
 import HighchartsReact from 'highcharts-react-official';
 
-// load css
+// load styles
 import '../index.css';
 import '../styles/ChartTester.css';
 
@@ -332,21 +330,6 @@ function prepData(dataArray, timeArray) {
         parsedData.push([timeArray[i], dataArray[i]]);
     }
     return parsedData;
-}
-
-function getRandomInts(min, max, total) {
-    let randomNumbers = Array(total);
-    for (let i = 0; i < randomNumbers.length; i++) {
-        min = Math.ceil(min);
-        max = Math.floor(max);
-        randomNumbers[i] = Math.floor(Math.random() * (max - min) + min);        
-    }
-     return randomNumbers;
-} 
-
-function calcTime (a){
-    var b = new Date().getMilliseconds();
-    console.log( b - a );
 }
 
 export default ChartTester;

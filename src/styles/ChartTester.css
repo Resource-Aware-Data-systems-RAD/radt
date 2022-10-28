@@ -2,5 +2,5 @@
     cursor: grab !important;
   }
 .highcharts-navigator-mask-inside:active {
-cursor: grabbing !important;
+    cursor: grabbing !important;
 }

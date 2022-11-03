@@ -20,7 +20,7 @@ class App extends React.Component {
     fetch("https://res43.itu.dk/runs", {
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoicmVzdF91c2VyIn0.M16CO12bDsPscIJrQkBgbBwlOj73mBD_6Ws1CRPQwcw",
+        "Authorization": "Bearer ",
       }
     })
       .then(res => res.json())

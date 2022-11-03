@@ -1,0 +1,11 @@
+$theme-colors: (
+  "primary": lightblue,
+  "secondary": yellow,
+  "success": blue,
+  "info": purple,
+  "warning": orange,
+  "danger": red,
+  "custom": brown
+);
+
+@import "/node_modules/bootstrap/scss/bootstrap.scss"

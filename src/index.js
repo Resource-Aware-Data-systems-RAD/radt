@@ -6,7 +6,7 @@ import reportWebVitals from './reportWebVitals';
 import App from './components/App';
 import HTTP from './components/HTTP';
 
-import BasicExample from './components/Dropdown';
+import { BasicExample, VariantsExample } from './components/Dropdown';
 
 import './index.css';
 
@@ -19,8 +19,9 @@ require('highcharts/modules/offline-exporting')(Highcharts)
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   //<React.StrictMode>
-    //<HTTP />
-    <BasicExample />
+    <React.Fragment>
+      <App />
+    </React.Fragment>
   //</React.StrictMode>
 );
 

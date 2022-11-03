@@ -17,10 +17,18 @@ class App extends React.Component {
 
   componentDidMount() {
 
-    fetch("https://jsonplaceholder.typicode.com/posts?_limit=15")
+    fetch("https://res43.itu.dk/runs", {
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoicmVzdF91c2VyIn0.M16CO12bDsPscIJrQkBgbBwlOj73mBD_6Ws1CRPQwcw",
+      }
+    })
       .then(res => res.json())
       .then(
         (results) => {
+
+          console.log(results);
+
           this.setState({
             isLoaded: true,
             items: results
@@ -43,7 +51,7 @@ class App extends React.Component {
     const { error, isLoaded, items, renderTimes} = this.state;
 
     this.renderCounter++;
-    console.log("Rendered " + this.renderCounter + " times!");
+    //console.log("Rendered " + this.renderCounter + " times!");
 
     if (error) {
       return <div>Error: {error.message}</div>;
@@ -52,15 +60,17 @@ class App extends React.Component {
       return <div>Loading...</div>;
     } 
     else {
-      return (
+      /*
+      return (   
         <ul>
           {items.map(item => (
             <li key={item.id}>
               {item.title} {item.body}
             </li>
           ))}
-        </ul>
+        </ul>       
       );
+      */
     }
   }
 

@@ -9,7 +9,7 @@ import data_4 from '../data/test_e3052';
 import data_5 from '../data/test_f1974';
 import data_X from '../data/test_stress_09fda';
 
-class HTTP extends React.Component {
+class LocalDataTest extends React.Component {
 
     constructor(props) {
         super(props);
@@ -45,4 +45,4 @@ class HTTP extends React.Component {
     }
 }
 
-export default HTTP;
+export default LocalDataTest;

@@ -1,5 +1,7 @@
 import React from 'react';
-import { HTTP } from '../utils';
+import { url, headers, HTTP } from '../utils';
+
+import Experiments  from './Experiments';
 
 import '../styles/App.css';
 
@@ -8,75 +10,59 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      error: null,
-      isLoaded: false,
-      items: []
+      isFetching: false,
+      experimentData: []
     };
-
-    this.renderCounter = 0;
   }
+
+  fetchExperiments(endpoint, param) {
+    this.setState({isFetching: true});
+    return fetch(url + endpoint, { headers })
+    .then(response => response.json())
+    .then((json) => {
+
+        console.log(json); // testing
+
+        this.setState({
+          experimentData: json, 
+          isFetching: false
+        });
+    })
+    .catch((error) => {
+        alert(error);    
+    })
+  }
+
 
   componentDidMount() {
 
-    HTTP.getExperiments("runs", "");
-
-    /*
-    fetch("https://res43.itu.dk/runs", {
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoicmVzdF91c2VyIn0.M16CO12bDsPscIJrQkBgbBwlOj73mBD_6Ws1CRPQwcw",
-      }
-    })
-    .then(res => res.json())
-    .then(
-      (results) => {
-
-        console.log(results);
-
-        this.setState({
-          isLoaded: true,
-          items: results
-        });
-      },
-      // Note: it's important to handle errors here
-      // instead of a catch() block so that we don't swallow
-      // exceptions from actual bugs in components.
-      (error) => {
-        this.setState({
-          isLoaded: true,
-          error
-        });
-      }
-    )
-    */
-
+    this.fetchExperiments("fe_experiments");
   }
 
   render() {
     
-    const { error, isLoaded, items, renderTimes} = this.state;
+    const { isFetching, experimentData } = this.state;
 
-    //this.renderCounter++;
-    //console.log("Rendered " + this.renderCounter + " times!");
-
-    if (error) {
-      return <div>Error: {error.message}</div>;
-    } 
-    else if (!isLoaded) {
-      return <div>Loading...</div>;
+    if (isFetching) {
+      return <div>Fetching!</div>;
     } 
     else {
-      /*
       return (   
-        <ul>
-          {items.map(item => (
-            <li key={item.id}>
-              {item.title} {item.body}
-            </li>
+
+        <Experiments 
+          value={experimentData} 
+        />
+      /*
+      <div id="container">
+        {data.map(item => (
+            <button key={item.experiment_id}>
+              {item.name}
+            </button>
           ))}
-        </ul>       
-      );
+      </div>
       */
+
+      );
     }
   }
 

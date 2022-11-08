@@ -15,7 +15,7 @@ class LocalDataTest extends React.Component {
         super(props);
 
         // pull data from iported json files
-        let seriesData = new Array();
+        let seriesData = [];
         seriesData.push(data_1);
         seriesData.push(data_2);
         //seriesData.push(data_3);
@@ -23,7 +23,7 @@ class LocalDataTest extends React.Component {
         seriesData.push(data_5);
 
         // extract DCGMI model names from json
-        let seriesModels = new Array();
+        let seriesModels = [];
         Object.keys(seriesData[0]).forEach(key => {
             if (key.substring(0, 5) == "DCGMI") {
                 seriesModels.push(key);

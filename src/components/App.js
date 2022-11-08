@@ -1,5 +1,5 @@
 import React from 'react';
-import { url, headers, HTTP } from '../utils';
+import { url, headers } from '../utils';
 
 import Experiments  from './Experiments';
 
@@ -15,57 +15,47 @@ class App extends React.Component {
     };
   }
 
-  fetchExperiments(endpoint, param) {
+  fetchData(endpoint, param = "") {
+
+    console.log("Fetching... " + url + endpoint + param);
+
     this.setState({isFetching: true});
-    return fetch(url + endpoint, { headers })
+    return fetch(url + endpoint + param, { headers })
     .then(response => response.json())
     .then((json) => {
-
-        console.log(json); // testing
-
-        this.setState({
-          experimentData: json, 
-          isFetching: false
-        });
+        console.log(json); // debugging
+        this.setState({isFetching: false});
+        this.parseData(endpoint, json);
     })
     .catch((error) => {
         alert(error);    
     })
-  }
+  };
 
+  parseData(endpoint, json) {
+    
+    /****************************************** experiments endpoint */
+    if (endpoint == "fe_experiments") {
+      this.setState({
+        experimentData: json
+      });
+    }
+
+  };
 
   componentDidMount() {
-
-    this.fetchExperiments("fe_experiments");
+    this.fetchData("fe_experiments");
   }
 
-  render() {
-    
-    const { isFetching, experimentData } = this.state;
-
-    if (isFetching) {
-      return <div>Fetching!</div>;
-    } 
-    else {
-      return (   
-
-        <Experiments 
-          value={experimentData} 
-        />
-      /*
-      <div id="container">
-        {data.map(item => (
-            <button key={item.experiment_id}>
-              {item.name}
-            </button>
-          ))}
-      </div>
-      */
-
-      );
-    }
+  render() {  
+    const { experimentData } = this.state;
+    return (   
+      <Experiments 
+        value={experimentData} 
+        onClick={this.fetchData.bind(this)} 
+      />
+    );
   }
-
 }
 
 export default App;

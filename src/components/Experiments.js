@@ -1,24 +1,16 @@
 import React from 'react';
+import '../styles/Experiments.css';
 
 class Experiments extends React.Component {
-
-    constructor(props) {
-        super(props);
-    }
-
-    myClick(item) {
-        console.log(item.experiment_id + " | " + item.name);
-    }
-
     render() {
         return (
             <div id="container">
                 {this.props.value.map(item => (
-                    <button 
+                    <button
                         key={item.experiment_id}
-                        onClick={() => this.myClick(item)} 
+                        onClick= {() => this.props.onClick("runs", "?experiment_id=eq." + item.experiment_id)}      
                     >
-                    {item.name}
+                    <span className="text">{item.name}</span>
                     </button>
                 ))}
             </div>

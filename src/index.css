@@ -3,23 +3,26 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
+
+  border: 1px solid blue;
+  box-sizing: border-box;
 }
 #root {
   display: block;
   height: 100%;
   margin: 0;
   padding: 0;
+
+  border: 3px solid green;
+  box-sizing: border-box;
 }
-#container {
-  display: block;
-  /*height: 100%;*/
-  margin: 0;
-  padding: 0;
-}
+
+
+
 .chartContainer {
   display: block;
   /*height: 100%;*/
-  margin: 0;
+  margin: 0; 
   padding: 0;
 }
 .chart {

@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import Highcharts from 'highcharts/highstock';
 
 import App from './components/App';
+import DataPicker from './components/DataPicker';
 
 //import reportWebVitals from './reportWebVitals';
 //import LocalDataTest from './components/LocalDataTest';
@@ -18,17 +19,17 @@ require('highcharts/modules/offline-exporting')(Highcharts)
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  //<React.StrictMode>
-    <React.Fragment>
-      <App />
-    </React.Fragment>
-  //</React.StrictMode>
+	//<React.StrictMode>
+		<React.Fragment>
+			<App />
+		</React.Fragment>
+	//</React.StrictMode>
 );
 
 window.addEventListener('message', e => {
-  if (process.env.NODE_ENV !== 'production' && e.data && e.data.type === 'webpackInvalid') {
-    console.clear();
-  }
+	if (process.env.NODE_ENV !== 'production' && e.data && e.data.type === 'webpackInvalid') {
+		console.clear();
+	}
 });
 
 // If you want to start measuring performance in your app, pass a function

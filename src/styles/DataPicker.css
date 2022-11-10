@@ -1,0 +1,14 @@
+#dataPickerWrapper {
+
+    position: absolute;
+    bottom: 50%;
+    right: 50%;
+    transform: translate(50%, 50%);
+
+    display: block;
+    width: 90%;
+    height: 90%;
+
+    border: 1px solid red; 
+    box-sizing: border-box;
+}

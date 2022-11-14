@@ -6,19 +6,28 @@ class Experiments extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            activeExperiment: null
+            activeExperimentId: null
         };
     }
+    
+    setActiveExperimentId(id) {
+        this.setState({ activeExperimentId: id });
+    };
 
     render() {
+        const { activeExperimentId } = this.state;
         return (
             <div id="experimentWrapper">
-                {this.props.value.map(item => (
+                {this.props.value.map(experiment => (
                     <button
-                        key={item.experiment_id}
-                        onClick= {() => this.props.onClick(item.experiment_id)}      
+                        className={activeExperimentId === experiment.Id ? "test" : null}   
+                        key={experiment.id}            
+                        onClick= {() => {
+                            this.props.onClick(experiment.id);
+                            this.setActiveExperimentId(experiment.id)
+                        } }
                     >
-                    <span className="text">{item.name}</span>
+                        <span className="text">{experiment.name}</span>
                     </button>
                 ))}
             </div>

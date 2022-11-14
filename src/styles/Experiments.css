@@ -1,10 +1,13 @@
 #experimentWrapper {
+    display: block;
+    float: left;
     width: 15%;
     height: 100%;
     overflow-x: hidden;
     overflow-y: scroll;
     scrollbar-width: none;  /* Firefox */
 
+    /* testing */
     border: 1px solid purple;
     box-sizing: border-box;
 }
@@ -17,6 +20,7 @@
     display: block;
     width: 100%;
     height: 60px;
+    /* font-size: 1vw; */
 }
 
 #experimentWrapper button .text {
@@ -24,4 +28,9 @@
     white-space: nowrap;
     display: block;
     text-overflow: ellipsis;
+}
+
+#experimentWrapper button.test {
+	background-color: blue;
+    color: white;
 }

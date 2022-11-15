@@ -1,7 +1,7 @@
 #experimentWrapper {
     display: block;
     float: left;
-    width: 15%;
+    width: 20%;
     height: 100%;
     overflow-x: hidden;
     overflow-y: scroll;
@@ -30,7 +30,7 @@
     text-overflow: ellipsis;
 }
 
-#experimentWrapper button.test {
+#experimentWrapper button.active {
 	background-color: blue;
     color: white;
 }

@@ -9,14 +9,20 @@ class Workloads extends React.Component {
             activeWorkload: null
         };
     }
+
+    setActiveWorkload(workload) {
+        this.setState({ activeWorkload: workload });
+    };
     
     render() {
+        const { activeWorkload } = this.state;
         return (
             <div id="workloadsWrapper">
                 {this.props.value.slice().sort((a, b) => a - b).map(workload => (
                     <button
                         key={workload}
-                        //onClick= {() => }  
+                        className={activeWorkload === workload ? "active" : null}
+                        onClick= {() =>  this.setActiveWorkload(workload)}  
                     >
                     <span className="text">Workload {workload}</span>
                     </button>

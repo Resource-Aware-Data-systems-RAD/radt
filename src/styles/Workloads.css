@@ -29,3 +29,8 @@
     display: block;
     text-overflow: ellipsis;
 }
+
+#workloadsWrapper button.active {
+	background-color: blue;
+    color: white;
+}

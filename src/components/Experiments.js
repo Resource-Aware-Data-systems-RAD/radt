@@ -20,8 +20,8 @@ class Experiments extends React.Component {
             <div id="experimentWrapper">
                 {this.props.value.map(experiment => (
                     <button
-                        className={activeExperimentId === experiment.Id ? "test" : null}   
-                        key={experiment.id}            
+                        key={experiment.id}
+                        className={activeExperimentId === experiment.id ? "active" : null}
                         onClick= {() => {
                             this.props.onClick(experiment.id);
                             this.setActiveExperimentId(experiment.id)

@@ -21,7 +21,10 @@ class DataPicker extends React.Component {
 			runData: [],
 			visibleWorkloads: [],
 			visibleRuns: [],
-			selectedRuns: []
+			selectedRuns: [],
+
+			activeExperimentId: null,
+			activeWorkload: null,
 		};
 	}
 
@@ -125,18 +128,27 @@ class DataPicker extends React.Component {
 		}
 		this.setState({
 			visibleWorkloads: filteredWorkloads,
-			visibleRuns: []
+			visibleRuns: [],
+			activeExperimentId: experimentId
 		});
+
+		///////////////////// just tested making EXPERIMENTS stateless and 
+		///////////////////// pulling up activeExperimentId from it
+		///////////////////// so need to do same with WORKLOADS now
+		///////////////////// then see if this all makes more sense?? 
+
 	}
 
 	setVisibleRuns(workload) {
 		workload = workload === "null" ? null : workload;
-		const { runData } = this.state;
+		const { runData, activeExperimentId } = this.state;
 		let filteredRuns = [];
 		for (let i = 0; i < runData.length; i++) {		
 			const run = runData[i];
-			if (workload === "null") {
-				
+			if (workload === null) {
+				if (run.experimentId === activeExperimentId) {
+					filteredRuns.push(run);
+				}
 			}
 			else if (run.workload === workload) {
 				filteredRuns.push(run);
@@ -154,11 +166,12 @@ class DataPicker extends React.Component {
 	}
 
 	render() {
-		const { experimentData, visibleWorkloads, visibleRuns } = this.state;
+		const { experimentData, visibleWorkloads, visibleRuns, activeExperimentId } = this.state;
 		return (
 			<div id="dataPickerWrapper">
-				<Experiments
+				<ExperimentsTest2
 					value={experimentData}
+					activeExperimentId={activeExperimentId}
 					onClick={this.setVisibleWorkloads.bind(this)}
 				/>
 				<Workloads
@@ -172,5 +185,36 @@ class DataPicker extends React.Component {
 		);
 	}
 }
-
 export default DataPicker;
+
+function ExperimentsTest1(props) {
+    return (
+		<div id="experimentWrapper">
+			{props.value.map(experiment => (
+				<button
+					key={experiment.id}
+					className={props.activeExperimentId === experiment.id ? "active" : null}
+					onClick= {() => props.onClick(experiment.id)}
+				>
+					<span className="text">{experiment.name}</span>
+				</button>
+			))}
+		</div>
+	)
+}
+
+const ExperimentsTest2 = props => (
+	<div id="experimentWrapper">
+		{props.value.map(experiment => (
+			<button
+				key={experiment.id}
+				className={props.activeExperimentId === experiment.id ? "active" : null}
+				onClick= {() => props.onClick(experiment.id)}
+			>
+				<span className="text">{experiment.name}</span>
+			</button>
+		))}
+	</div>
+)
+
+

@@ -24,8 +24,8 @@ class Experiments extends React.Component {
                         className={activeExperimentId === experiment.id ? "active" : null}
                         onClick= {() => {
                             this.props.onClick(experiment.id);
-                            this.setActiveExperimentId(experiment.id)
-                        } }
+                            this.setActiveExperimentId(experiment.id);
+                        }}
                     >
                         <span className="text">{experiment.name}</span>
                     </button>

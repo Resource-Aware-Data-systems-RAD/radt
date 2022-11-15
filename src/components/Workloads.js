@@ -22,9 +22,12 @@ class Workloads extends React.Component {
                     <button
                         key={workload}
                         className={activeWorkload === workload ? "active" : null}
-                        onClick= {() =>  this.setActiveWorkload(workload)}  
+                        onClick= {() => {
+                            this.props.onClick(workload);
+                            this.setActiveWorkload(workload);           
+                        }}  
                     >
-                    <span className="text">Workload {workload}</span>
+                    <span className="text">Workload {workload === "null" ? "N/A" : workload}</span>
                     </button>
                 ))}
             </div>

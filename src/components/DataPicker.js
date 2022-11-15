@@ -2,6 +2,7 @@ import React from 'react';
 import { url, headers } from '../utils';
 import Experiments from './Experiments';
 import Workloads from './Workloads';
+import Runs from './Runs';
 
 import '../styles/DataPicker.css';
 
@@ -84,14 +85,13 @@ class DataPicker extends React.Component {
 						"workload": element["workload"],
 						"experimentId": element["experiment_id"],
 						"name": element["run_uuid"],
-						/*
 						"duration": element["duration"],
 						"startTime": element["start_time"],
 						"source": element["data"],	
 						"letter": element["letter"],
 						"model": element["model"],
-						"params": element["params"],			
-						*/
+						"params": element["params"],
+						"status": element["status"],
 					})
 				});
 				this.setState({
@@ -107,7 +107,7 @@ class DataPicker extends React.Component {
 	};
 
 	/* select experiment and render its workloads to the workloads component */
-	selectExperiment(experimentId) {
+	setVisibleWorkloads(experimentId) {
 		const { runData } = this.state;
 		let filteredWorkloads = [];
 		for (let i = 0; i < runData.length; i++) {
@@ -124,8 +124,28 @@ class DataPicker extends React.Component {
 			}
 		}
 		this.setState({
-			visibleWorkloads: filteredWorkloads
+			visibleWorkloads: filteredWorkloads,
+			visibleRuns: []
 		});
+	}
+
+	setVisibleRuns(workload) {
+		workload = workload === "null" ? null : workload;
+		const { runData } = this.state;
+		let filteredRuns = [];
+		for (let i = 0; i < runData.length; i++) {		
+			const run = runData[i];
+			if (workload === "null") {
+				
+			}
+			else if (run.workload === workload) {
+				filteredRuns.push(run);
+			}
+		}
+		this.setState({
+			visibleRuns: filteredRuns
+		});
+		console.log(filteredRuns);
 	}
 
 	componentDidMount() {
@@ -134,15 +154,19 @@ class DataPicker extends React.Component {
 	}
 
 	render() {
-		const { experimentData, visibleWorkloads } = this.state;
+		const { experimentData, visibleWorkloads, visibleRuns } = this.state;
 		return (
 			<div id="dataPickerWrapper">
 				<Experiments
 					value={experimentData}
-					onClick={this.selectExperiment.bind(this)}
+					onClick={this.setVisibleWorkloads.bind(this)}
 				/>
 				<Workloads
 					value={visibleWorkloads}
+					onClick={this.setVisibleRuns.bind(this)}
+				/>
+				<Runs 
+					value={visibleRuns}
 				/>
 			</div>
 		);

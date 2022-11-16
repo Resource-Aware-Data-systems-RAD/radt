@@ -1,3 +1,4 @@
+/********************************************** DATA PICKER */
 #dataPickerWrapper {
     display: block;
     width: 90%;
@@ -6,8 +7,131 @@
     bottom: 50%;
     right: 50%;
     transform: translate(50%, 50%);
+    border: 1px solid black; 
+    box-sizing: border-box;
+}
+
+/********************************************** EXPERIMENTS */
+#experimentWrapper {
+    display: block;
+    float: left;
+    width: 20%;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    scrollbar-width: none;  /* Firefox */
 
     /* testing */
-    border: 1px solid red; 
+    border: 1px solid black;
     box-sizing: border-box;
+}
+#experimentWrapper::-webkit-scrollbar {
+    display: none;
+}
+#experimentWrapper button {
+    display: block;
+    width: 100%;
+    height: 60px;
+    /* font-size: 1vw; */
+}
+#experimentWrapper button .text {
+    overflow: hidden;
+    white-space: nowrap;
+    display: block;
+    text-overflow: ellipsis;
+}
+#experimentWrapper button.active {
+	background-color: blue;
+    color: white;
+}
+
+/********************************************** WORKLOADS */
+#workloadsWrapper {
+	display: block;
+	float: left;
+	width: 15%;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    scrollbar-width: none;  /* Firefox */
+
+    /* testing */
+    border: 1px solid black;
+    box-sizing: border-box;
+}
+#workloadsWrapper::-webkit-scrollbar {
+    display: none;
+}
+#workloadsWrapper button {
+    display: block;
+    width: 100%;
+    height: 60px;
+    /* font-size: 1vw; */
+}
+#workloadsWrapper button .text {
+    overflow: hidden;
+    white-space: nowrap;
+    display: block;
+    text-overflow: ellipsis;
+}
+#workloadsWrapper button.active {
+	background-color: blue;
+    color: white;
+}
+
+/********************************************** RUNS */
+#runsWrapper {
+	display: block;
+	float: left;
+	width: 40%;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    scrollbar-width: none;  /* Firefox */
+
+    /* testing */
+    border: 1px solid black;
+    box-sizing: border-box;
+}
+#runsWrapper::-webkit-scrollbar {
+    display: none;
+}
+#runsWrapper button {
+    width: 100%;
+    height: 60px;
+
+    
+    /* font-size: 1vw; */
+}
+#runsWrapper button .text {
+    overflow: hidden;
+    white-space: nowrap;
+    display: block;
+    text-overflow: ellipsis;
+    text-align: center;
+}
+#runsWrapper button.active {
+	background-color: blue;
+    color: white;
+}
+#runsWrapper button span {
+    width: 90%;
+    float: left;
+    height: 20px;
+    line-height: 22px;
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+
+    /* testing */
+    /*border: 1px solid red;
+    box-sizing: border-box;*/
+}
+#runsWrapper button span.checkMark {
+    background-color: white;
+    width: 20px;
+    height: 20px;
+    line-height: 22px;
+    border: 2px solid black;
+    font-weight: bold;
 }

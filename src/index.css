@@ -3,12 +3,12 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
+  font-family: sans-serif;
 
   /* testing */
   border: 1px solid blue;
   box-sizing: border-box;
 }
-
 #root {
   display: block;
   height: 100%;
@@ -19,9 +19,6 @@ html, body {
   border: 3px solid green;
   box-sizing: border-box;
 }
-
-
-
 
 
 

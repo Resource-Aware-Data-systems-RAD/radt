@@ -66,6 +66,7 @@
     display: block;
     width: 100%;
     height: 60px;
+    cursor: pointer;
     /* font-size: 1vw; */
 }
 #workloadsWrapper button .text {
@@ -77,6 +78,26 @@
 #workloadsWrapper button.active {
 	background-color: blue;
     color: white;
+}
+#workloadsWrapper button span {
+    width: 70%;
+    float: left;
+    height: 20px;
+    line-height: 22px;
+    text-align: center;
+    vertical-align: middle;
+
+    /* testing */
+    border: 1px solid red;
+    box-sizing: border-box;
+}
+#workloadsWrapper button span.checkMark {
+    background-color: white;
+    width: 20px;
+    height: 20px;
+    line-height: 22px;
+    border: 2px solid black;
+    font-weight: bold;
 }
 
 /********************************************** RUNS */
@@ -99,8 +120,8 @@
 #runsWrapper button {
     width: 100%;
     height: 60px;
+    cursor: pointer;
 
-    
     /* font-size: 1vw; */
 }
 #runsWrapper button .text {
@@ -121,11 +142,10 @@
     line-height: 22px;
     text-align: center;
     vertical-align: middle;
-    cursor: pointer;
 
     /* testing */
-    /*border: 1px solid red;
-    box-sizing: border-box;*/
+    border: 1px solid red;
+    box-sizing: border-box;
 }
 #runsWrapper button span.checkMark {
     background-color: white;

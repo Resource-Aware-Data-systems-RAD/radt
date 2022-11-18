@@ -10,11 +10,11 @@ const endpoints = {
 function Experiments(props) {
     return (
 		<div id="experimentWrapper">
-			{props.value.map(experiment => (
+			{props.data.map(experiment => (
 				<button
 					key={experiment.id}
 					className={props.activeExperimentId === experiment.id ? "active" : null}
-					onClick= {() => props.onClick(experiment.id)}
+					onClick= {() => props.onClickSetVisibleWorkloads(experiment.id)}
 				>
 					<span className="text">{experiment.name}</span>
 				</button>
@@ -25,12 +25,15 @@ function Experiments(props) {
 function Workloads(props) {
 	return (
 		<div id="workloadsWrapper">
-		{props.value.slice().sort((a, b) => a - b).map(workload => (
+		{props.data.slice().sort((a, b) => a - b).map(workload => (
 			<button
 				key={workload}
 				className={props.activeWorkload === workload ? "active" : null}
-				onClick={() => props.onClick(workload)}
+				onClick={() => props.onClickSetVisibleRuns(workload)}
 			>
+				<span className="checkMark" onClick={() => props.onClickToggleWorkloadSelection(workload)}>
+					{props.selectedWorkloads.includes(workload) ? "X" : " "}
+				</span>
 				<span className="text">Workload {workload === "null" ? "N/A" : workload}</span>
 			</button>
 		))}
@@ -40,10 +43,10 @@ function Workloads(props) {
 function Runs(props) {
 	return (
 		<div id="runsWrapper">
-			{props.value.slice().sort((a, b) => a - b).map(run => (
+			{props.data.slice().sort((a, b) => a - b).map(run => (
 				<button
 					key={run.name}
-					onClick={() => props.onClick(run.name)}
+					onClick={() => props.onClickToggleRunSelection(run.name)}
 				>
 					<span className="checkMark">{props.selectedRuns.includes(run.name) ? "X" : " "}</span>
 					<span className="text">Run {run.name.substring(0, 5)}</span>
@@ -65,6 +68,7 @@ class DataPicker extends React.Component {
 			activeWorkload: null,
 			visibleWorkloads: [],
 			visibleRuns: [],
+			selectedWorkloads: [],
 			selectedRuns: [],
 		};
 	}
@@ -177,6 +181,9 @@ class DataPicker extends React.Component {
 
 	/* select workload and render its runs to the runs component */
 	setVisibleRuns(workload) {
+
+		console.log("WORKLOAD HIGHLIGHTED!");
+
 		workload = workload === "null" ? null : workload;
 		const { runData, activeExperimentId } = this.state;
 		let filteredRuns = [];
@@ -195,10 +202,10 @@ class DataPicker extends React.Component {
 			visibleRuns: filteredRuns,
 			activeWorkload: workload
 		});
-		console.log(filteredRuns);
 	}
 
 	toggleRunSelection(run) {
+		// add/remove run to selected run state array depending on if it's already there
 		const { selectedRuns } = this.state;
 		let newSelectedRuns;
 		let runIndex = selectedRuns.indexOf(run);
@@ -210,6 +217,25 @@ class DataPicker extends React.Component {
 		}
 		this.setState({
 			selectedRuns: newSelectedRuns
+		});
+	}
+
+	toggleWorkloadSelection(workload) {
+
+		console.log("WORKLOAD SELECTED!");
+
+		const { selectedWorkloads } = this.state;
+		let newSelectedWorkloads;
+		let workloadIndex = selectedWorkloads.indexOf(workload);
+		if (workloadIndex === -1) {
+			newSelectedWorkloads = selectedWorkloads.concat(workload);
+		}
+		else {
+			newSelectedWorkloads = selectedWorkloads.slice(0, workloadIndex).concat(selectedWorkloads.slice(workloadIndex + 1));
+		}
+
+		this.setState({
+			selectedWorkloads: newSelectedWorkloads,
 		});
 	}
 
@@ -226,24 +252,27 @@ class DataPicker extends React.Component {
 			visibleRuns, 
 			activeExperimentId,
 			activeWorkload,
-			selectedRuns
+			selectedWorkloads,
+			selectedRuns,
 		} = this.state;
 		return (
 			<div id="dataPickerWrapper">
 				<Experiments
-					value={experimentData}
+					data={experimentData}
 					activeExperimentId={activeExperimentId}
-					onClick={this.setVisibleWorkloads.bind(this)}
+					onClickSetVisibleWorkloads={this.setVisibleWorkloads.bind(this)}
 				/>
 				<Workloads
-					value={visibleWorkloads}
+					data={visibleWorkloads}
 					activeWorkload={activeWorkload}
-					onClick={this.setVisibleRuns.bind(this)}
+					selectedWorkloads={selectedWorkloads}
+					onClickSetVisibleRuns={this.setVisibleRuns.bind(this)}
+					onClickToggleWorkloadSelection={this.toggleWorkloadSelection.bind(this)}
 				/>
 				<Runs 
-					value={visibleRuns}
+					data={visibleRuns}
 					selectedRuns={selectedRuns}
-					onClick={this.toggleRunSelection.bind(this)}	
+					onClickToggleRunSelection={this.toggleRunSelection.bind(this)}	
 				/>
 			</div>
 		);

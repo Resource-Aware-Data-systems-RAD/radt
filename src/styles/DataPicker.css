@@ -9,7 +9,6 @@
     right: 50%;
     transform: translate(50%, 50%);
     border: 1px solid black; 
-    box-sizing: border-box;
 }
 
 /********************************************** EXPERIMENTS */
@@ -175,4 +174,52 @@
     border: 2px solid black;
     font-weight: bold;
     text-align: center;
+}
+
+/********************************************** SELECTION */
+#selectionsWrapper {
+	display: block;
+	float: left;
+	width: 25%;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    scrollbar-width: none;  /* Firefox */
+    box-sizing: border-box;
+}
+#selectionsWrapper::-webkit-scrollbar {
+    display: none;
+}
+#selectionsWrapper .selectedWorkload {
+    width: 100%;
+    min-height: 60px;
+    cursor: pointer;
+    border: 1px solid black;
+    box-sizing: border-box;
+    background-color: lightgrey;
+    font-size: 14px;
+}
+#selectionsWrapper .showSelectedRunsBtn {
+    display: block;
+    width: 10%;
+    height: 60px;
+    background-color: red;
+
+    float: left;
+}
+#selectionsWrapper .workloadName {
+    display: block;
+    width: 90%;
+    height: 60px;
+    background-color: yellow;
+
+    float: right;
+}
+#selectionsWrapper .selectedRuns {
+    width: 100%;
+    min-height: 60px;
+    background-color: green;
+
+    clear: both;
+
 }

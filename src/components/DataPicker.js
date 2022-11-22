@@ -1,90 +1,12 @@
 import React from 'react';
+import Selections from './Selections';
 import { url, headers } from '../utils';
 import '../styles/DataPicker.css';
 
+// endpoints for API
 const endpoints = {
 	"experiments": "fe_experiments",
 	"runs": "fe_runs"
-}
-
-function Experiments(props) {
-    return (
-		<div id="experimentWrapper">
-			{props.data.map(experiment => (
-				<button
-					key={experiment.id}
-					className={props.activeExperimentId === experiment.id ? "active" : null}
-					onClick= {() => props.onClickSetVisibleWorkloads(experiment.id)}
-				>
-					<span className="text">{experiment.name}</span>
-				</button>
-			))}
-		</div>
-	)
-}
-function Workloads(props) {
-	return (
-		<div id="workloadsWrapper"> 
-		{props.data.slice().sort((a, b) => a - b).map(workload => (
-			<div 
-				key={workload}
-				className={`workload ${props.activeWorkload === workload ? "active" : null}`}
-				onClick={() => props.onClickSetVisibleRuns(workload)}
-			>
-				<div className="info">
-					Workload {workload.substring(workload.indexOf("-") + 1) === "null" ? "N/A" : workload.substring(workload.indexOf("-") + 1)}
-				</div>
-				<div className="checkboxWrapper">
-					<div className="checkbox"
-						onClick={() => props.onClickToggleWorkloadSelection(workload)}
-					>
-						{props.selectedWorkloads.includes(workload) ? "X" : " "}
-					</div>
-				</div>		
-			</div>
-		))}
-	</div>
-	)
-}
-function Runs(props) {
-	return (
-		<div id="runsWrapper">
-			{props.data.slice().sort((a, b) => a - b).map(run => (
-				<button
-					key={run.name}
-					onClick={() => props.onClickToggleRunSelection(run.workload, run)}
-				>
-					<span className="text">Run {run.name.substring(0, 5)}</span>
-					<div className="checkbox">{props.selectedRuns.includes(run.name) ? "X" : " "}</div>
-				</button>
-			))}
-		</div>
-	)
-}
-function Selections(props) {
-
-	function testing(test) {
-		return(
-			<div>Hello {test}</div>
-		)
-	}
-
-	return (
-		<div id="selectionsWrapper">
-			{props.selectedWorkloads.map(workload => (
-				<div 
-					className="selectedWorkload"
-					key={workload}
-				>
-					<div className="showSelectedRunsBtn"></div>
-					<div className="workloadName">{workload}</div>			
-					<div className="selectedRuns">
-						{testing("there")}
-					</div>
-				</div>
-		))}
-		</div>
-	)
 }
 
 class DataPicker extends React.Component {
@@ -236,77 +158,55 @@ class DataPicker extends React.Component {
 	/* adds or removes runs and workloads to a selection array */
 	toggleRunWorkloadSelection(workload, run = null) {
 
+		// grab current state and clone it for changes
 		const { selectedWorkloads, selectedRuns, runData } = this.state;
 		let newSelectedWorkloads = [...selectedWorkloads];
 		let newSelectedRuns = [...selectedRuns];
 
+		// four different ways the yser can add data to selection
 		if (run === null) {
-			// add or remove all runs from one workload
+			// add all runs from this workload to selection if they are not already added
 			let workloadIndex = newSelectedWorkloads.indexOf(workload);
 			if (workloadIndex === -1) {
-
-				// add workload to selected
-				newSelectedWorkloads.push(workload);
-
-				// add all runs from this workload to selected
 				runData.forEach(run => {
 					if (run.workload === workload) {
-						let runIndex = newSelectedRuns.indexOf(run.name);
+						let runIndex = newSelectedRuns.findIndex(el => el.name === run.name);
 						if (runIndex === -1) {
-							newSelectedRuns.push(run.name);
+							newSelectedRuns.push(run);
 						}
 					}
 				});
 			}
 			else {
-				// remove workload from selected
-				newSelectedWorkloads = selectedWorkloads.slice(0, workloadIndex).concat(selectedWorkloads.slice(workloadIndex + 1));	
-				
-				// remove all runs from this workload from selected
-				runData.forEach(run => {	
-					let runIndex = newSelectedRuns.indexOf(run.name);
-					if (run.workload == workload && runIndex > -1) {
-						newSelectedRuns = newSelectedRuns.slice(0, runIndex).concat(newSelectedRuns.slice(runIndex + 1));
-					}
-				});
+				// remove all runs from this workload from selection
+				newSelectedRuns = newSelectedRuns.filter(el => el.workload !== workload);
 			}
 		}
 		else {
-			// add run amd its workload to selected runs and workloads
-			let runIndex = selectedRuns.indexOf(run.name);
+			let runIndex = newSelectedRuns.findIndex(el => el.name === run.name);
 			if (runIndex === -1) {
-				newSelectedRuns.push(run.name);
-				let workloadIndex = newSelectedWorkloads.indexOf(run.workload);
-				if (workloadIndex === -1) {
-					newSelectedWorkloads.push(run.workload);
-				}
+				// add run to selection if it is not already added
+				newSelectedRuns.push(run);
 			}
 			else {
-				// remove run from selected runs
+				// remove run from selection if it is already added
 				newSelectedRuns = newSelectedRuns.slice(0, runIndex).concat(newSelectedRuns.slice(runIndex + 1));
-
-				// update selected workload list to reflect new selected runs
-				newSelectedWorkloads = [];
-				runData.forEach(run => {	
-					let runIndex = newSelectedRuns.indexOf(run.name);
-					if (runIndex > -1) {
-						let workloadIndex = newSelectedWorkloads.indexOf(run.workload);
-						if (workloadIndex === -1) {
-							newSelectedWorkloads.push(run.workload);
-						}
-					}
-				});
 			}
 		}
+
+		// update list of selected workloads based on new selected runs
+		newSelectedWorkloads = [];
+		newSelectedRuns.forEach(run => {	
+			let workloadIndex = newSelectedWorkloads.indexOf(run.workload);
+			if (workloadIndex === -1) {
+				newSelectedWorkloads.push(run.workload);
+			}
+		});
 
 		this.setState({
 			selectedWorkloads: newSelectedWorkloads,
 			selectedRuns: newSelectedRuns
 		});
-	}
-
-	renderTest(workload) {
-		console.log(workload);
 	}
 
 	/* fetch experiment and run data from server on component mount */
@@ -345,10 +245,67 @@ class DataPicker extends React.Component {
 					onClickToggleRunSelection={this.toggleRunWorkloadSelection.bind(this)}	
 				/>
 				<Selections 
-					selectedWorkloads={selectedWorkloads}
+					selectedRuns={selectedRuns}
 				/>
 			</div>
 		);
 	}
 }
+
+/* DataPicker functional components */
+function Experiments(props) {
+    return (
+		<div id="experimentWrapper">
+			{props.data.map(experiment => (
+				<button
+					key={experiment.id}
+					className={props.activeExperimentId === experiment.id ? "active" : null}
+					onClick= {() => props.onClickSetVisibleWorkloads(experiment.id)}
+				>
+					<span className="text">{experiment.name}</span>
+				</button>
+			))}
+		</div>
+	)
+}
+function Workloads(props) {
+	return (
+		<div id="workloadsWrapper"> 
+		{props.data.slice().sort((a, b) => a - b).map(workload => (
+			<div 
+				key={workload}
+				className={`workload ${props.activeWorkload === workload ? "active" : null}`}
+				onClick={() => props.onClickSetVisibleRuns(workload)}
+			>
+				<div className="info">
+					Workload {workload.substring(workload.indexOf("-") + 1) === "null" ? "N/A" : workload.substring(workload.indexOf("-") + 1)}
+				</div>
+				<div className="checkboxWrapper">
+					<div className="checkbox"
+						onClick={() => props.onClickToggleWorkloadSelection(workload)}
+					>
+						{props.selectedWorkloads.includes(workload) ? "X" : " "}
+					</div>
+				</div>		
+			</div>
+		))}
+	</div>
+	)
+}
+function Runs(props) {
+	return (
+		<div id="runsWrapper">
+			{props.data.slice().sort((a, b) => a - b).map(run => (
+				<button
+					key={run.name}
+					onClick={() => props.onClickToggleRunSelection(run.workload, run)}
+				>
+					<span className="text">Run {run.name.substring(0, 5)}</span>
+					<div className="checkbox">{props.selectedRuns.findIndex(el => el.name === run.name) > -1 ? "X" : " "}</div>
+				</button>
+			))}
+		</div>
+	)
+}
+
 export default DataPicker;

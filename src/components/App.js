@@ -21,6 +21,3 @@ class App extends React.Component {
   }
 }
 export default App;
-
-
-// this.props.handleSelectedRuns(newSelectedRuns); <--- use this in relevant component

@@ -1,6 +1,7 @@
 /********************************************** DATA PICKER */
 #dataPickerWrapper {
     display: flex;
+    position: relative;
     flex-direction: row;
     height: 90%;
     width: 90%;
@@ -9,6 +10,22 @@
     right: 50%;
     transform: translate(50%, 50%);
     border: 1px solid black; 
+}
+.selectionConfirmBtn {
+    position: absolute;
+    display: block;
+    width: 25%;
+    height: 50px;
+    bottom: 0;
+    right: 0;
+    background-color: green;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+}
+.selectionConfirmBtn:hover { 
+    background-color: lightgreen;
 }
 
 /********************************************** EXPERIMENTS */

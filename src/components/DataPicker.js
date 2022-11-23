@@ -15,6 +15,7 @@ class DataPicker extends React.Component {
 		super(props);
 		this.state = {
 			isFetching: false,
+			isVisible: true,
 			experimentData: [],
 			runData: [],
 			activeExperimentId: null,
@@ -82,7 +83,13 @@ class DataPicker extends React.Component {
 			/* experiments endpoint */
 			case endpoints["runs"]:
 				json.forEach(element => {
+
+					if (element["workload"] === null) {
+						element["workload"] = 0;
+					}
+
 					let workloadId = element["experiment_id"] + "-" + element["workload"]
+
 					filteredData.push({
 						"experimentId": element["experiment_id"],
 						"name": element["run_uuid"],
@@ -115,37 +122,26 @@ class DataPicker extends React.Component {
 		for (let i = 0; i < runData.length; i++) {
 			const run = runData[i];
 			if (run.experimentId === experimentId) {
-				if (run.workload == null) {
-					if (filteredWorkloads.indexOf("null") == -1) {
-						filteredWorkloads.push("null");
-					}			
-				}
-				else if (filteredWorkloads.indexOf(run.workload) == -1) {
+				if (filteredWorkloads.indexOf(run.workload) == -1) {
 					filteredWorkloads.push(run.workload);
 				}
 			}
 		}
+
 		this.setState({
 			visibleWorkloads: filteredWorkloads,
 			visibleRuns: [],
 			activeExperimentId: experimentId
 		});
-
 	}
 
 	/* select workload and render its runs to the runs component */
 	setVisibleRuns(workload) {
-		workload = workload === "null" ? null : workload;
 		const { runData, activeExperimentId } = this.state;
 		let filteredRuns = [];
 		for (let i = 0; i < runData.length; i++) {		
 			const run = runData[i];
-			if (workload === null) {
-				if (run.experimentId === activeExperimentId) {
-					filteredRuns.push(run);
-				}
-			}
-			else if (run.workload === workload) {
+			if (run.workload === workload) {
 				filteredRuns.push(run);
 			}
 		}
@@ -207,6 +203,19 @@ class DataPicker extends React.Component {
 			selectedWorkloads: newSelectedWorkloads,
 			selectedRuns: newSelectedRuns
 		});
+
+		// push copy of selected runs to parent
+		this.props.handleSelectedRuns(newSelectedRuns);
+	}
+
+	submitSelections() {
+		const {isVisible} = this.state;
+		let newVisibility = !isVisible;
+		this.setState({
+			isVisible: newVisibility
+		});
+
+		console.log("Fired!");
 	}
 
 	/* fetch experiment and run data from server on component mount */
@@ -216,6 +225,7 @@ class DataPicker extends React.Component {
 	}
 
 	render() {
+
 		const { 
 			experimentData, 
 			visibleWorkloads, 
@@ -224,9 +234,14 @@ class DataPicker extends React.Component {
 			activeWorkload,
 			selectedWorkloads,
 			selectedRuns,
+			isVisible,
 		} = this.state;
+
 		return (
-			<div id="dataPickerWrapper">
+			<div 
+				id="dataPickerWrapper"
+				className={isVisible ? null : "hide"}
+			>
 				<Experiments
 					data={experimentData}
 					activeExperimentId={activeExperimentId}
@@ -246,9 +261,17 @@ class DataPicker extends React.Component {
 				/>
 				<Selections 
 					selectedRuns={selectedRuns}
+					onClickToggleWorkloadSelection={this.toggleRunWorkloadSelection.bind(this)}
 				/>
+				<button 
+					className="selectionConfirmBtn"
+					onClick={() => this.submitSelections()}
+					>
+						Confirm
+				</button>
 			</div>
 		);
+
 	}
 }
 
@@ -256,51 +279,58 @@ class DataPicker extends React.Component {
 function Experiments(props) {
     return (
 		<div id="experimentWrapper">
-			{props.data.map(experiment => (
+			{props.data.sort((a, b) => a.id - b.id).map(experiment => (
 				<button
 					key={experiment.id}
 					className={props.activeExperimentId === experiment.id ? "active" : null}
 					onClick= {() => props.onClickSetVisibleWorkloads(experiment.id)}
 				>
-					<span className="text">{experiment.name}</span>
+					<span className="text">{experiment.id}: {experiment.name}</span>
 				</button>
 			))}
 		</div>
 	)
 }
 function Workloads(props) {
+
+	function sortWorkloads(a, b) {	
+		let x = a.substring(a.indexOf("-") + 1);
+		let y = b.substring(b.indexOf("-") + 1);
+		return x - y;
+	}
+
 	return (
 		<div id="workloadsWrapper"> 
-		{props.data.slice().sort((a, b) => a - b).map(workload => (
-			<div 
-				key={workload}
-				className={`workload ${props.activeWorkload === workload ? "active" : null}`}
-				onClick={() => props.onClickSetVisibleRuns(workload)}
-			>
-				<div className="info">
-					Workload {workload.substring(workload.indexOf("-") + 1) === "null" ? "N/A" : workload.substring(workload.indexOf("-") + 1)}
-				</div>
-				<div className="checkboxWrapper">
-					<div className="checkbox"
-						onClick={() => props.onClickToggleWorkloadSelection(workload)}
-					>
-						{props.selectedWorkloads.includes(workload) ? "X" : " "}
+			{props.data.slice().sort((a, b) => sortWorkloads(a, b)).map(workload => (
+				<div 
+					key={workload}
+					className={`workload ${props.activeWorkload === workload ? "active" : null}`}
+					onClick={() => props.onClickSetVisibleRuns(workload)}
+				>
+					<div className="info">
+						Workload {workload}
 					</div>
-				</div>		
-			</div>
-		))}
-	</div>
+					<div className="checkboxWrapper">
+						<div className="checkbox"
+							onClick={() => props.onClickToggleWorkloadSelection(workload)}
+						>
+							{props.selectedWorkloads.includes(workload) ? "X" : " "}
+						</div>
+					</div>		
+				</div>
+			))}
+		</div>
 	)
 }
 function Runs(props) {
 	return (
 		<div id="runsWrapper">
-			{props.data.slice().sort((a, b) => a - b).map(run => (
+			{props.data.slice().sort((a, b) => a.startTime - b.startTime).map(run => (
 				<button
 					key={run.name}
 					onClick={() => props.onClickToggleRunSelection(run.workload, run)}
 				>
-					<span className="text">Run {run.name.substring(0, 5)}</span>
+					<span className="text">Run {run.name.substring(0, 6)}</span>
 					<div className="checkbox">{props.selectedRuns.findIndex(el => el.name === run.name) > -1 ? "X" : " "}</div>
 				</button>
 			))}

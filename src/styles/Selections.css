@@ -1,8 +1,10 @@
 #selectionsWrapper {
+    width: 25%;
+    height: calc(100% - 50px);
+
+    position: relative;
 	display: block;
 	float: left;
-	width: 25%;
-    height: 100%;
     overflow-x: hidden;
     overflow-y: scroll;
     scrollbar-width: none;  /* Firefox */
@@ -11,38 +13,40 @@
 #selectionsWrapper::-webkit-scrollbar {
     display: none;
 }
-
-/*
-#selectionsWrapper .selectedWorkload {
-    width: 100%;
-    min-height: 60px;
-    cursor: pointer;
-    border: 1px solid black;
+#selectionsWrapper .workloadWrapper {
     box-sizing: border-box;
+    border: 1px solid black;
+}
+#selectionsWrapper .workloadWrapper .workload {
+    height: 40px;
+    display: flex;
+    align-items: center; 
+    justify-content: left;
+    padding-left: 20px;
     background-color: lightgrey;
-    font-size: 14px;
+    font-weight: bold;
 }
-#selectionsWrapper .showSelectedRunsBtn {
-    display: block;
-    width: 10%;
-    height: 60px;
+#selectionsWrapper .removeBtn {
+    width: 25px;
+    height: 25px;
     background-color: red;
-
-    float: left;
+    color: white;
+    margin-left: 10px;
+    cursor: pointer;
+    font-weight: bold;
 }
-#selectionsWrapper .workloadName {
+#selectionsWrapper button:hover {
+    background-color: white;
+    color: red;
+}
+#selectionsWrapper .workloadWrapper ul {
     display: block;
-    width: 90%;
-    height: 60px;
-    background-color: yellow;
-
-    float: right;
+    padding: 0;
+    margin: 0;
 }
-#selectionsWrapper .selectedRuns {
-    width: 100%;
-    min-height: 60px;
-    background-color: green;
-
-    clear: both;
+#selectionsWrapper .workloadWrapper ul li {
+    text-align: right;
+    padding: 2px;
+    box-sizing: border-box;
+    border: 1px solid white;
 }
-*/

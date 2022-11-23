@@ -10,20 +10,22 @@ class Selections extends React.Component {
 		};
 	}
 
+    /* run on initial component load (mostly for hot reload in dev) */
+    componentDidMount() {
+        this.parseSelectedRuns(this.props.selectedRuns);
+	}
+
+    /* runs once every time selectedRuns from props changes */
     componentDidUpdate(prevProps) {     
         if (this.props.selectedRuns.length !== prevProps.selectedRuns.length) {
             this.parseSelectedRuns(this.props.selectedRuns);
         }
     }
     
+    /* takes the selected runs and parses them into a new array to render them */
     parseSelectedRuns(selectedRuns) {
-
-        console.log("Update visible runs!");
-    
         let newVisibleSelection = [];
-
         selectedRuns.forEach(run => {
-        
             let workloadIndex = newVisibleSelection.findIndex(el => el.workload === run.workload);
             if (workloadIndex > -1) {
                 let runIndex = newVisibleSelection[workloadIndex].runs.findIndex(el => el.name === run.name);
@@ -38,12 +40,11 @@ class Selections extends React.Component {
                     workload: run.workload,
                     runs: runs
                 })
-            }
-            
-            this.setState({
-                visibleSelection: newVisibleSelection
-            });
+            }         
+        });
 
+        this.setState({
+            visibleSelection: newVisibleSelection
         });
     }
 
@@ -51,16 +52,35 @@ class Selections extends React.Component {
         const { visibleSelection } = this.state;
         return (   
             <div id="selectionsWrapper">
-            {visibleSelection.map(visibleWorkload => (
-                <div>
-                    {visibleWorkload.workload}
-                    <ul>
-                        {visibleWorkload.runs.map(visibleRun => (
-                            <li>{visibleRun.name}</li>
-                        ))}
-                    </ul>
-                </div>
-            ))}
+                {visibleSelection.map(visibleWorkload => (
+                    <div
+                        className='workloadWrapper'
+                        key={visibleWorkload.workload}
+                    >
+                        <div className='workload'>
+                            Workload {visibleWorkload.workload}
+                            <button 
+                                className="removeBtn"
+                                onClick={() => this.props.onClickToggleWorkloadSelection(visibleWorkload.workload)}
+                            >
+                                X
+                            </button>
+                        </div>
+                        <ul>
+                            {visibleWorkload.runs.sort((a, b) => a.startTime - b.startTime).map(visibleRun => (
+                                <li key={visibleRun.name}>
+                                    {visibleRun.name.substring(0, 6)}
+                                    <button 
+                                        className="removeBtn"
+                                        onClick={() => this.props.onClickToggleWorkloadSelection(visibleWorkload.workload, visibleRun)}
+                                    >
+                                        X
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                ))}
             </div>
         );
     }

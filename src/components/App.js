@@ -1,6 +1,6 @@
 import React from 'react';
 import DataPicker from './DataPicker';
-import Selections from './Selections';
+import ChartPicker from './ChartPicker';
 import '../styles/App.css';
 
 class App extends React.Component {
@@ -8,22 +8,28 @@ class App extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			selectedRuns: [],
+			selectedRuns: []
 		};
 	}
 
-	handleSelectedRuns = (newSelectedRuns) => {
+	updateSelectedRuns = (newSelectedRuns) => {
 		this.setState({selectedRuns: newSelectedRuns});
 	}
 
+	submitSelectedRuns = () => {
+		console.log(this.state.selectedRuns);
+
+		
+	} 
+
 	render() {  
-		const { selectedRuns } = this.state;
 		return (   
 			<div>
-				<DataPicker handleSelectedRuns={this.handleSelectedRuns} />
-				<Selections 
-					selectedRuns={selectedRuns}
+				<DataPicker 
+					pushSelectedRuns={this.updateSelectedRuns} 
+					confirmSelectedRuns={this.submitSelectedRuns}
 				/>
+				<ChartPicker />
 			</div>
 		);
 	}

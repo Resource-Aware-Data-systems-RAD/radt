@@ -1,5 +1,4 @@
-import React from 'react';
-import Selections from './Selections';
+import React, { useEffect, useRef } from 'react'
 import { url, headers } from '../utils';
 import '../styles/DataPicker.css';
 
@@ -205,17 +204,17 @@ class DataPicker extends React.Component {
 		});
 
 		// push copy of selected runs to parent
-		this.props.handleSelectedRuns(newSelectedRuns);
+		this.props.pushSelectedRuns(newSelectedRuns);
 	}
 
+	/* hides data picker and submits selections for viz */
 	submitSelections() {
 		const {isVisible} = this.state;
 		let newVisibility = !isVisible;
 		this.setState({
 			isVisible: newVisibility
 		});
-
-		console.log("Fired!");
+		this.props.confirmSelectedRuns();
 	}
 
 	/* fetch experiment and run data from server on component mount */
@@ -266,8 +265,8 @@ class DataPicker extends React.Component {
 				<button 
 					className="selectionConfirmBtn"
 					onClick={() => this.submitSelections()}
-					>
-						Confirm
+				>
+					Confirm
 				</button>
 			</div>
 		);
@@ -293,6 +292,7 @@ function Experiments(props) {
 }
 function Workloads(props) {
 
+	// sort workloads properly
 	function sortWorkloads(a, b) {	
 		let x = a.substring(a.indexOf("-") + 1);
 		let y = b.substring(b.indexOf("-") + 1);
@@ -336,6 +336,74 @@ function Runs(props) {
 			))}
 		</div>
 	)
+}
+function Selections(props) {
+
+	// scroll to bottom of container when new props are added
+	const bottomOfScrollRef = useRef(null);
+	useEffect(() => {
+		bottomOfScrollRef.current.scrollIntoView({ behavior: "smooth" });
+	});
+
+	// create new data object to render workloads and runs nicely in Selections
+	let visibleSelection = [];
+	props.selectedRuns.forEach(run => {
+		let workloadIndex = visibleSelection.findIndex(el => el.workload === run.workload);
+		if (workloadIndex > -1) {
+			let runIndex = visibleSelection[workloadIndex].runs.findIndex(el => el.name === run.name);
+			if (runIndex === -1) {
+				visibleSelection[workloadIndex].runs.push(run);
+			}           
+		}
+		else {
+			let runs = [];
+			runs.push(run);
+			visibleSelection.push({
+				workload: run.workload,
+				runs: runs
+			})
+		}         
+	});
+
+	return (   
+		<div 
+			id="selectionsWrapper"
+		>
+			{ /* render all workloads */ }
+			{visibleSelection.map(visibleWorkload => (
+				<div
+					className='workloadWrapper'
+					key={visibleWorkload.workload}
+				>
+					<div className='workload'>
+						Workload {visibleWorkload.workload}
+						<button 
+							className="removeBtn"
+							onClick={() => props.onClickToggleWorkloadSelection(visibleWorkload.workload)}
+						>
+							X
+						</button>
+					</div>
+					<ul>
+					{ /* render all runs */ }
+						{visibleWorkload.runs.sort((a, b) => a.startTime - b.startTime).map(visibleRun => (
+							<li key={visibleRun.name}>
+								{visibleRun.name.substring(0, 6)}
+								<button 
+									className="removeBtn"
+									onClick={() => props.onClickToggleWorkloadSelection(visibleWorkload.workload, visibleRun)}
+								>
+									X
+								</button>
+							</li>
+						))}
+					</ul>
+				</div>
+			))}
+			{ /* div ref to scroll to bottom of */ }
+			<div ref={bottomOfScrollRef} /> 
+		</div>
+	);
 }
 
 export default DataPicker;

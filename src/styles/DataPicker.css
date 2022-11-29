@@ -1,7 +1,6 @@
 /********************************************** DATA PICKER */
 #dataPickerWrapper {
     display: flex;
-    position: relative;
     flex-direction: row;
     height: 90%;
     width: 90%;

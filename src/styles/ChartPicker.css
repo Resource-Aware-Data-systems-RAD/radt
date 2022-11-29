@@ -1,0 +1,16 @@
+/********************************************** CHART PICKER */
+
+#chartPickerWrapper {
+    display: block;
+    height: 100%;
+    width: 100%;
+    text-align: center;
+}
+#chartPickerWrapper button {
+    width: 75%;
+    height: 60px;
+    line-height: 60px;
+    font-size: 40px;
+    margin: 20px auto 0 auto;
+    cursor: pointer;
+}

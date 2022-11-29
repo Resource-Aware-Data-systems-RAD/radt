@@ -2,8 +2,15 @@ export const url = "https://res43.itu.dk/";
 export const headers = new Headers();
 headers.append('Content-Type', 'application/json');
 headers.append('Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoicmVzdF91c2VyIn0.M16CO12bDsPscIJrQkBgbBwlOj73mBD_6Ws1CRPQwcw');
+export const endpoints = {
+	experiments: "fe_experiments",
+	runs: "fe_runs", 
+    metrics: "fe_metrics_available",
+    data: "fe_metrics"
+}
 
-export const HTTP = {
+/*
+export const TEST = {
    
     test_1: function (endpoint, param) {
         return fetch(url + endpoint, { headers })
@@ -44,4 +51,4 @@ export const HTTP = {
     }
        
 };
-
+*/

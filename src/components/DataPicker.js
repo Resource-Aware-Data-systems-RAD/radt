@@ -1,12 +1,6 @@
 import React, { useEffect, useRef } from 'react'
-import { url, headers } from '../utils';
+import { url, endpoints, headers } from '../utils';
 import '../styles/DataPicker.css';
-
-// endpoints for API
-const endpoints = {
-	"experiments": "fe_experiments",
-	"runs": "fe_runs"
-}
 
 class DataPicker extends React.Component {
 
@@ -14,7 +8,6 @@ class DataPicker extends React.Component {
 		super(props);
 		this.state = {
 			isFetching: false,
-			isVisible: true,
 			experimentData: [],
 			runData: [],
 			activeExperimentId: null,
@@ -29,20 +22,20 @@ class DataPicker extends React.Component {
 	/* fetch all experiemnts or a specific experiment */
 	fetchExperiments(param = "") {
 		if (param == "") {
-			this.fetchData(endpoints["experiments"]);
+			this.fetchData(endpoints.experiments);
 		}
 		else {
-			this.fetchData(endpoints["experiments"], "?experiment_id=eq." + param);
+			this.fetchData(endpoints.experiments, "?experiment_id=eq." + param);
 		}
 	};
 
 	/* fetch all runs or a specific run */
 	fetchRuns(param = "") {
 		if (param == "") {
-			this.fetchData(endpoints["runs"]);
+			this.fetchData(endpoints.runs);
 		}
 		else {
-			this.fetchData(endpoints["runs"], "?experiment_id=eq." + param);
+			this.fetchData(endpoints.runs, "?experiment_id=eq." + param);
 		}
 	};
 
@@ -51,15 +44,15 @@ class DataPicker extends React.Component {
 		console.log("Fetching... " + url + endpoint + param);
 		this.setState({ isFetching: true });
 		return fetch(url + endpoint + param, { headers })
-			.then(response => response.json())
-			.then((json) => {
-				//console.log(json); // debugging
-				this.setState({ isFetching: false });
-				this.parseDataAndSetState(endpoint, json);
-			})
-			.catch((error) => {
-				alert(error);
-			})
+		.then(response => response.json())
+		.then((json) => {
+			//console.log(json); // debugging
+			this.setState({ isFetching: false });
+			this.parseDataAndSetState(endpoint, json);
+		})
+		.catch((error) => {
+			alert(error);
+		})
 	};
 
 	/* parse data returned from endpoints into custom objects (if needed) and then apply to component state */
@@ -67,7 +60,7 @@ class DataPicker extends React.Component {
 		let filteredData = [];
 		switch (endpoint) {		
 			/* experiments endpoint */
-			case endpoints["experiments"]:
+			case endpoints.experiments:
 				json.forEach(element => {
 					filteredData.push({
 						"id": element["experiment_id"],
@@ -80,13 +73,12 @@ class DataPicker extends React.Component {
 				break;
 
 			/* experiments endpoint */
-			case endpoints["runs"]:
+			case endpoints.runs:
 				json.forEach(element => {
 
 					if (element["workload"] === null) {
 						element["workload"] = 0;
 					}
-
 					let workloadId = element["experiment_id"] + "-" + element["workload"]
 
 					filteredData.push({
@@ -203,18 +195,8 @@ class DataPicker extends React.Component {
 			selectedRuns: newSelectedRuns
 		});
 
-		// push copy of selected runs to parent
-		this.props.pushSelectedRuns(newSelectedRuns);
-	}
-
-	/* hides data picker and submits selections for viz */
-	submitSelections() {
-		const {isVisible} = this.state;
-		let newVisibility = !isVisible;
-		this.setState({
-			isVisible: newVisibility
-		});
-		this.props.confirmSelectedRuns();
+		// pull copy of selected runs up to parent
+		this.props.pullSelectedRuns(newSelectedRuns);
 	}
 
 	/* fetch experiment and run data from server on component mount */
@@ -225,6 +207,8 @@ class DataPicker extends React.Component {
 
 	render() {
 
+		// className={isVisible ? null : "hide"}
+
 		const { 
 			experimentData, 
 			visibleWorkloads, 
@@ -233,13 +217,12 @@ class DataPicker extends React.Component {
 			activeWorkload,
 			selectedWorkloads,
 			selectedRuns,
-			isVisible,
 		} = this.state;
 
 		return (
 			<div 
 				id="dataPickerWrapper"
-				className={isVisible ? null : "hide"}
+				className={this.props.toHide ? null : "hide"}
 			>
 				<Experiments
 					data={experimentData}
@@ -264,7 +247,7 @@ class DataPicker extends React.Component {
 				/>
 				<button 
 					className="selectionConfirmBtn"
-					onClick={() => this.submitSelections()}
+					onClick={() => this.props.confirmSelection()}
 				>
 					Confirm
 				</button>

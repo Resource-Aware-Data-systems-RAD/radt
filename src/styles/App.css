@@ -6,20 +6,19 @@ html, body {
     font-family: sans-serif;
   
     /* testing */
-    border: 1px solid blue;
+    border: 0px solid blue;
     box-sizing: border-box;
-  }
-  #root {
+}
+#root, #appWrapper {
     display: block;
     height: 100%;
     margin: 0;
     padding: 0;
   
     /* testing */
-    border: 3px solid green;
+    border: 0px solid green;
     box-sizing: border-box;
-  }
-  .hide {
+}
+.hide {
     display: none !important;
-  }
-  
+}

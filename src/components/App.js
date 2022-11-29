@@ -8,7 +8,8 @@ class App extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			selectedRuns: []
+			selectedRuns: [],
+			dataPickerOpen: true
 		};
 	}
 
@@ -17,19 +18,25 @@ class App extends React.Component {
 	}
 
 	submitSelectedRuns = () => {
-		console.log(this.state.selectedRuns);
+
+		this.setState({ dataPickerOpen: false });
 
 		
-	} 
+	}
 
 	render() {  
+		const { selectedRuns, dataPickerOpen } = this.state;
 		return (   
-			<div>
+			<div id="appWrapper">
 				<DataPicker 
-					pushSelectedRuns={this.updateSelectedRuns} 
-					confirmSelectedRuns={this.submitSelectedRuns}
+					toHide={dataPickerOpen}
+					pullSelectedRuns={this.updateSelectedRuns} 
+					confirmSelection={this.submitSelectedRuns}
 				/>
-				<ChartPicker />
+				<ChartPicker 
+					toHide={!dataPickerOpen}
+					pushSelectedRuns={selectedRuns}
+				/>
 			</div>
 		);
 	}

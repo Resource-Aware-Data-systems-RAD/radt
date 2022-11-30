@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from 'react'
-import { url, endpoints, headers } from '../utils';
+
+import { HTTP, endpoints } from '../utils';
+
 import '../styles/DataPicker.css';
 
 class DataPicker extends React.Component {
@@ -19,91 +21,46 @@ class DataPicker extends React.Component {
 		};
 	}
 
-	/* fetch all experiemnts or a specific experiment */
-	fetchExperiments(param = "") {
-		if (param == "") {
-			this.fetchData(endpoints.experiments);
-		}
-		else {
-			this.fetchData(endpoints.experiments, "?experiment_id=eq." + param);
-		}
+	/* fetch all experiemnts */
+	async fetchExperiments() {
+		const experiments = await HTTP.fetchData(endpoints.experiments);
+		let data = [];
+		experiments.forEach(experiment => {
+			data.push({
+				"id": experiment["experiment_id"],
+				"name": experiment["name"]
+			})
+		});
+		this.setState({
+			experimentData: data
+		});
 	};
 
-	/* fetch all runs or a specific run */
-	fetchRuns(param = "") {
-		if (param == "") {
-			this.fetchData(endpoints.runs);
-		}
-		else {
-			this.fetchData(endpoints.runs, "?experiment_id=eq." + param);
-		}
-	};
-
-	/* fetch data from relevant API endpoint */
-	fetchData(endpoint, param = "") {
-		console.log("Fetching... " + url + endpoint + param);
-		this.setState({ isFetching: true });
-		return fetch(url + endpoint + param, { headers })
-		.then(response => response.json())
-		.then((json) => {
-			//console.log(json); // debugging
-			this.setState({ isFetching: false });
-			this.parseDataAndSetState(endpoint, json);
-		})
-		.catch((error) => {
-			alert(error);
-		})
-	};
-
-	/* parse data returned from endpoints into custom objects (if needed) and then apply to component state */
-	parseDataAndSetState(endpoint, json) {
-		let filteredData = [];
-		switch (endpoint) {		
-			/* experiments endpoint */
-			case endpoints.experiments:
-				json.forEach(element => {
-					filteredData.push({
-						"id": element["experiment_id"],
-						"name": element["name"]
-					})
-				});
-				this.setState({
-					experimentData: filteredData
-				});
-				break;
-
-			/* experiments endpoint */
-			case endpoints.runs:
-				json.forEach(element => {
-
-					if (element["workload"] === null) {
-						element["workload"] = 0;
-					}
-					let workloadId = element["experiment_id"] + "-" + element["workload"]
-
-					filteredData.push({
-						"experimentId": element["experiment_id"],
-						"name": element["run_uuid"],
-						"duration": element["duration"],
-						"startTime": element["start_time"],
-						"source": element["data"],	
-						"letter": element["letter"],
-						"model": element["model"],
-						"params": element["params"],
-						"status": element["status"],
-						"workload": workloadId,
-					})
-				});
-				this.setState({
-					runData: filteredData
-				});
-				break;
-
-			/* experiments endpoint */
-			default:
-				alert("Endpoint not recognised: " + endpoint);
-
-		}
+	/* fetch all runs */
+	async fetchRuns() {
+		const runs = await HTTP.fetchData(endpoints.runs);
+		let data = [];
+		runs.forEach(run => {
+			if (run["workload"] === null) {
+				run["workload"] = 0;
+			}
+			let workloadId = run["experiment_id"] + "-" + run["workload"]
+			data.push({
+				"experimentId": run["experiment_id"],
+				"name": run["run_uuid"],
+				"duration": run["duration"],
+				"startTime": run["start_time"],
+				"source": run["data"],	
+				"letter": run["letter"],
+				"model": run["model"],
+				"params": run["params"],
+				"status": run["status"],
+				"workload": workloadId,
+			})
+		});
+		this.setState({
+			runData: data
+		});
 	};
 
 	/* select experiment and render its workloads to the workloads component */
@@ -206,8 +163,6 @@ class DataPicker extends React.Component {
 	}
 
 	render() {
-
-		// className={isVisible ? null : "hide"}
 
 		const { 
 			experimentData, 

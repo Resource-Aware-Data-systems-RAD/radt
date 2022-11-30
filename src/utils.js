@@ -1,7 +1,8 @@
-export const url = "https://res43.itu.dk/";
-export const headers = new Headers();
+const url = "https://res43.itu.dk/";
+const headers = new Headers();
 headers.append('Content-Type', 'application/json');
 headers.append('Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoicmVzdF91c2VyIn0.M16CO12bDsPscIJrQkBgbBwlOj73mBD_6Ws1CRPQwcw');
+
 export const endpoints = {
 	experiments: "fe_experiments",
 	runs: "fe_runs", 
@@ -9,46 +10,42 @@ export const endpoints = {
     data: "fe_metrics"
 }
 
-/*
-export const TEST = {
-   
-    test_1: function (endpoint, param) {
-        return fetch(url + endpoint, { headers })
-        .then(response => response.json())
-        .then((results) => {
-            //console.log(results);
-            return results;
-        })
-        .catch((error) => {
-            //alert(error);
-            console.error(error);      
-        })
-    },
-      
-    test_2: async function (endpoint, param) {
-        const response = await fetch(url + endpoint, { headers });
-        const json = await response.json();
-        console.log(json);
-    },
-    
-    test_3: async function (endpoint, param){
-        let data = await (await (fetch(url + endpoint, { headers })
-          .then(response => {
-            return response.json()
-          })
-          .catch(error => {
-            console.log(error)
-          })
-        ))
-        return data;
-    },
+export const HTTP = {
 
-    test_4: function() {
-        const headers = new Headers();
-        headers.append('Content-Type', 'application/json');
-        headers.append('Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoicmVzdF91c2VyIn0.M16CO12bDsPscIJrQkBgbBwlOj73mBD_6Ws1CRPQwcw');
-        return headers;
+    fetchData: (endpoint, param = "") => {
+        console.log("Fetching... " + url + endpoint + param);
+		return fetch(url + endpoint + param, { headers })
+		.then(response => response.json())
+		.then((json) => {
+			return(json);
+		})
+		.catch((error) => {
+			alert(error);
+		})
+    },
+ 
+    fetchAllData: async(endpoint, param, fetches) => {
+        return new Promise((resolve, reject) => {
+            let counter = 1;
+            let total = fetches.length;
+            let results = [];
+            fetches.forEach(fetch => {
+                HTTP.fetchData(endpoint + param + fetch).then((json) => {              
+                    results.push(json);           
+                    if (counter === total) { 
+                        resolve(results);
+                    }
+                    counter++;
+                });
+            });
+        });
     }
-       
+
+}
+
+// let randomTime = Math.floor(Math.random() * (10000 - 1000 + 1) + 1000);
+function waitFor(ms) {
+    return function(x) {
+      return new Promise(resolve => setTimeout(() => resolve(x), ms));
+    }
 };
-*/

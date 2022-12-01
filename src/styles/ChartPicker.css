@@ -6,11 +6,46 @@
     width: 100%;
     text-align: center;
 }
-#chartPickerWrapper button {
+#chartPickerWrapper #pickChartBtn {
+    display: block;
     width: 75%;
     height: 60px;
     line-height: 60px;
     font-size: 40px;
     margin: 20px auto 0 auto;
     cursor: pointer;
+    border: 0px solid black;
+    color: white;
+    background-color: black;
+}
+#chartPickerWrapper #pickChart:hover {
+    color: white;
+    background-color: grey;
+}
+#chartPickerWrapper #metricBtnList {
+    display: block;
+
+    height: 500px;
+    width: 75%;
+
+    margin: auto;
+    text-align: left;;
+
+    overflow-x: hidden;
+    overflow-y: scroll;
+    scrollbar-width: none;  /* Firefox */
+
+    border: 1px solid black;
+    box-sizing: border-box;
+}
+#chartPickerWrapper #metricBtnList::-webkit-scrollbar {
+    display: none;
+}
+#chartPickerWrapper .metricBtn {
+    width: 50%;
+    font-size: 16px;
+    margin: 0 auto 0 auto;
+    padding: 5px 0 5px 20px;
+    cursor: pointer;
+    text-align: left;
 }

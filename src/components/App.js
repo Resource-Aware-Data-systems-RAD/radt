@@ -18,10 +18,7 @@ class App extends React.Component {
 	}
 
 	submitSelectedRuns = () => {
-
-		this.setState({ dataPickerOpen: false });
-
-		
+		this.setState({ dataPickerOpen: false });	
 	}
 
 	render() {  

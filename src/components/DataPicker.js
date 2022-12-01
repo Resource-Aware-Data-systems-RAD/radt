@@ -1,7 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-
-import { HTTP, endpoints } from '../utils';
-
+import { HTTP, endpoints } from '../api';
 import '../styles/DataPicker.css';
 
 class DataPicker extends React.Component {
@@ -23,44 +21,14 @@ class DataPicker extends React.Component {
 
 	/* fetch all experiemnts */
 	async fetchExperiments() {
-		const experiments = await HTTP.fetchData(endpoints.experiments);
-		let data = [];
-		experiments.forEach(experiment => {
-			data.push({
-				"id": experiment["experiment_id"],
-				"name": experiment["name"]
-			})
-		});
-		this.setState({
-			experimentData: data
-		});
+		const data = await HTTP.fetchData(endpoints.experiments);
+		this.setState({ experimentData: data });
 	};
 
 	/* fetch all runs */
 	async fetchRuns() {
-		const runs = await HTTP.fetchData(endpoints.runs);
-		let data = [];
-		runs.forEach(run => {
-			if (run["workload"] === null) {
-				run["workload"] = 0;
-			}
-			let workloadId = run["experiment_id"] + "-" + run["workload"]
-			data.push({
-				"experimentId": run["experiment_id"],
-				"name": run["run_uuid"],
-				"duration": run["duration"],
-				"startTime": run["start_time"],
-				"source": run["data"],	
-				"letter": run["letter"],
-				"model": run["model"],
-				"params": run["params"],
-				"status": run["status"],
-				"workload": workloadId,
-			})
-		});
-		this.setState({
-			runData: data
-		});
+		const data = await HTTP.fetchData(endpoints.runs);
+		this.setState({ runData: data });
 	};
 
 	/* select experiment and render its workloads to the workloads component */
@@ -75,7 +43,6 @@ class DataPicker extends React.Component {
 				}
 			}
 		}
-
 		this.setState({
 			visibleWorkloads: filteredWorkloads,
 			visibleRuns: [],
@@ -156,7 +123,6 @@ class DataPicker extends React.Component {
 		this.props.pullSelectedRuns(newSelectedRuns);
 	}
 
-	/* fetch experiment and run data from server on component mount */
 	componentDidMount() {
 		this.fetchExperiments();
 		this.fetchRuns();
@@ -323,7 +289,7 @@ function Selections(props) {
 						</button>
 					</div>
 					<ul>
-					{ /* render all runs */ }
+						{ /* render all runs */ }
 						{visibleWorkload.runs.sort((a, b) => a.startTime - b.startTime).map(visibleRun => (
 							<li key={visibleRun.name}>
 								{visibleRun.name.substring(0, 6)}

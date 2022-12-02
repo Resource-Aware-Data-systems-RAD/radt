@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import { HTTP, endpoints } from '../api';
+import { HTTP } from '../api';
 import '../styles/DataPicker.css';
 
 class DataPicker extends React.Component {
@@ -21,13 +21,13 @@ class DataPicker extends React.Component {
 
 	/* fetch all experiemnts */
 	async fetchExperiments() {
-		const data = await HTTP.fetchData(endpoints.experiments);
+		const data = await HTTP.fetchExperiments();
 		this.setState({ experimentData: data });
 	};
 
 	/* fetch all runs */
 	async fetchRuns() {
-		const data = await HTTP.fetchData(endpoints.runs);
+		const data = await HTTP.fetchRuns();
 		this.setState({ runData: data });
 	};
 
@@ -38,7 +38,7 @@ class DataPicker extends React.Component {
 		for (let i = 0; i < runData.length; i++) {
 			const run = runData[i];
 			if (run.experimentId === experimentId) {
-				if (filteredWorkloads.indexOf(run.workload) == -1) {
+				if (filteredWorkloads.indexOf(run.workload) === -1) {
 					filteredWorkloads.push(run.workload);
 				}
 			}
@@ -46,13 +46,14 @@ class DataPicker extends React.Component {
 		this.setState({
 			visibleWorkloads: filteredWorkloads,
 			visibleRuns: [],
-			activeExperimentId: experimentId
+			activeExperimentId: experimentId,
+			activeWorkload: null
 		});
 	}
 
 	/* select workload and render its runs to the runs component */
 	setVisibleRuns(workload) {
-		const { runData, activeExperimentId } = this.state;
+		const { runData } = this.state;
 		let filteredRuns = [];
 		for (let i = 0; i < runData.length; i++) {		
 			const run = runData[i];
@@ -203,6 +204,18 @@ function Workloads(props) {
 		return x - y;
 	}
 
+	// format workload labels (handles unsorted runs with no workload)
+	function formatWorkloadLabel(workload) {
+		const workloadId = workload.substring(workload.indexOf("-") + 1);
+		if (workloadId === "-1") {
+			workload = "Unsorted Runs";
+		}
+		else {
+			workload = "Workload " + workload; 
+		}
+		return workload;
+	}
+
 	return (
 		<div id="workloadsWrapper"> 
 			{props.data.slice().sort((a, b) => sortWorkloads(a, b)).map(workload => (
@@ -212,10 +225,13 @@ function Workloads(props) {
 					onClick={() => props.onClickSetVisibleRuns(workload)}
 				>
 					<div className="info">
-						Workload {workload}
+						{formatWorkloadLabel(workload)}
 					</div>
-					<div className="checkboxWrapper">
-						<div className="checkbox"
+					<div 
+						className={`checkboxWrapper ${formatWorkloadLabel(workload) === "Unsorted Runs" ? "hide" : null}`}
+					>
+						<div 
+							className="checkbox"
 							onClick={() => props.onClickToggleWorkloadSelection(workload)}
 						>
 							{props.selectedWorkloads.includes(workload) ? "X" : " "}
@@ -252,7 +268,13 @@ function Selections(props) {
 	// create new data object to render workloads and runs nicely in Selections
 	let visibleSelection = [];
 	props.selectedRuns.forEach(run => {
-		let workloadIndex = visibleSelection.findIndex(el => el.workload === run.workload);
+
+		let workload = run.workload;
+		if (workload.substring(workload.indexOf("-") + 1) === "-1") {
+			workload = "null"
+		}
+
+		let workloadIndex = visibleSelection.findIndex(el => el.workload === workload);
 		if (workloadIndex > -1) {
 			let runIndex = visibleSelection[workloadIndex].runs.findIndex(el => el.name === run.name);
 			if (runIndex === -1) {
@@ -263,13 +285,24 @@ function Selections(props) {
 			let runs = [];
 			runs.push(run);
 			visibleSelection.push({
-				workload: run.workload,
+				workload: workload,
 				runs: runs
 			})
-		}         
+		}
 	});
 
+	function formatWorkloadLabel(workload) {
+		if (workload === "null") {
+			workload = "Unsorted Runs";
+		}
+		else {
+			workload = "Workload " + workload; 
+		}
+		return workload;
+	}
+
 	return (   
+
 		<div 
 			id="selectionsWrapper"
 		>
@@ -280,7 +313,7 @@ function Selections(props) {
 					key={visibleWorkload.workload}
 				>
 					<div className='workload'>
-						Workload {visibleWorkload.workload}
+						{formatWorkloadLabel(visibleWorkload.workload)}
 						<button 
 							className="removeBtn"
 							onClick={() => props.onClickToggleWorkloadSelection(visibleWorkload.workload)}

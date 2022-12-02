@@ -3,57 +3,20 @@ const headers = new Headers();
 headers.append('Content-Type', 'application/json');
 headers.append('Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoicmVzdF91c2VyIn0.M16CO12bDsPscIJrQkBgbBwlOj73mBD_6Ws1CRPQwcw');
 
-const filters = {
-    metrics: "?run_uuid=eq."
-}
-
-export const endpoints = {
+const endpoints = {
 	experiments: "fe_experiments",
 	runs: "fe_runs", 
     metrics: "fe_metrics_available",
     data: "fe_metrics"
 }
-
-export const HTTP = {
-
-    fetchData: (endpoint, param = "") => {
-        //console.log("Fetching... " + url + endpoint + param); // debugging
-		return fetch(url + endpoint + param, { headers })
-		.then(response => response.json())
-		.then((json) => {
-            let parsed = parseData(endpoint, json);
-			return(parsed);
-		})
-		.catch((error) => {
-			alert(error);
-		})
-    },
-
-    fetchAllData: async(endpoint, parameters, filter) => {
-        filter = endpoint === endpoints.metrics ? filters.metrics : "";
-        return new Promise((resolve) => {
-            let counter = 1;
-            let total = parameters.length;
-            let results = [];
-            parameters.forEach(param => {
-                HTTP.fetchData(endpoint, filter + param).then((json) => {              
-                    results.push(json);           
-                    if (counter === total) { 
-                        resolve(results);
-                    }
-                    counter++;
-                });
-            });
-        });
-    }
-
+const filters = {
+    run: "run_uuid=eq.",
+    metric: "key=eq."
 }
 
 function parseData(endpoint, json) {
-
     let parsed = [];
     json.forEach(data => {
-
         switch(endpoint) {
 
             /* experiments */
@@ -67,7 +30,7 @@ function parseData(endpoint, json) {
             /* runs */
             case endpoints.runs: 
                 if (data["workload"] === null) {
-                    data["workload"] = 0;
+                    data["workload"] = -1;
                 }
                 let workloadId = data["experiment_id"] + "-" + data["workload"];
                 parsed.push({              
@@ -86,9 +49,9 @@ function parseData(endpoint, json) {
 
             /* metrics */
             case endpoints.metrics: 
-                parsed.push({
-                    "metric": data["key"]
-                })
+                parsed.push(
+                    data["key"]
+                )
                 break;
 
             /* do not parse */
@@ -99,4 +62,70 @@ function parseData(endpoint, json) {
         }
     });
     return parsed;
+}
+
+export const HTTP = {
+
+    fetchData: (endpoint, param = "") => {
+        console.log("GET: " + endpoint + param); // debugging
+		return fetch(url + endpoint + param, { headers })
+		.then(response => response.json())
+		.then((json) => {
+            let parsed = parseData(endpoint, json);
+            console.log(parsed);
+			return(parsed);
+		})
+		.catch((error) => {
+			alert(error);
+		})
+    },
+
+    fetchExperiments: async (param = "") => {
+        return new Promise((resolve) => {
+            HTTP.fetchData(endpoints.experiments,  param).then((data) => {   
+                resolve(data);
+            });
+        });
+    },
+
+    fetchRuns: async (param = "") => {
+        return new Promise((resolve) => {
+            HTTP.fetchData(endpoints.runs,  param).then((data) => {   
+                resolve(data);
+            });
+        });
+    },
+
+    fetchMetrics: async(runs) => {
+        return new Promise((resolve) => {
+            let [counter, total, results] = [1, runs.length, []];
+            runs.forEach(run => {
+                let params = "?" + filters.run + run.name;
+                HTTP.fetchData(endpoints.metrics, params).then((json) => {   
+                    results.push(json);           
+                    if (counter === total) { 
+                        resolve(results);
+                    }
+                    counter++;
+                });
+            });
+        });
+    },
+
+    fetchRunData: async(runs, metric) => {
+        return new Promise((resolve) => {
+            let [counter, total, results] = [1, runs.length, []];
+            runs.forEach(run => {
+                let params =  "?" + filters.run + run.name + "&" + filters.metric + encodeURIComponent(metric);
+                HTTP.fetchData(endpoints.data, params).then((json) => {              
+                    results.push(json);          
+                    if (counter === total) { 
+                        resolve(results);
+                    }
+                    counter++;
+                });
+            });
+        });
+    },
+
 }

@@ -18,7 +18,12 @@ class App extends React.Component {
 	}
 
 	submitSelectedRuns = () => {
-		this.setState({ dataPickerOpen: false });	
+		if (this.state.selectedRuns.length > 0) {
+			this.setState({ dataPickerOpen: false });	
+		}
+		else {
+			alert("No data selected.")
+		}
 	}
 
 	render() {  

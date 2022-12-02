@@ -1,5 +1,5 @@
 import React from 'react';
-import { HTTP, endpoints } from '../api';
+import { HTTP } from '../api';
 import '../styles/ChartPicker.css';
 
 class ChartPicker extends React.Component {
@@ -13,24 +13,20 @@ class ChartPicker extends React.Component {
 	}
 
 	/* fetch all available metrics for the current selected runs */
-	fetchMetrics(runs) {
-		// make a list of all run names
-		let runNames = runs.map(function (run) {
-			return run.name;
-		});
-
-		// find out all the unique metrics available for each of these runs
-		let availableMetrics = [];
-		HTTP.fetchAllData(endpoints.metrics, runNames).then((results) => {
+	fetchMetrics() {
+		const selectedRuns = this.props.pushSelectedRuns;	
+		HTTP.fetchMetrics(selectedRuns).then((results) => {
+			let uniqueMetrics = [];
 			results.forEach(runMetrics => {
-				runMetrics.forEach(metrics => {
-					let metricIndex = availableMetrics.indexOf(metrics.metric);
+				runMetrics.forEach(metric => {
+					let metricIndex = uniqueMetrics.indexOf(metric);
 					if (metricIndex === -1) {
-						availableMetrics.push(metrics.metric);
-					}				
+						uniqueMetrics.push(metric);
+					}
 				});
 			});
-			this.setState({availableMetrics: availableMetrics.sort()});
+			console.log("DONE!");
+			this.setState({availableMetrics: uniqueMetrics.sort()});
 		});
 	}
 
@@ -40,25 +36,12 @@ class ChartPicker extends React.Component {
 		this.setState({ showMetrics: !toShow})
 	}
 
-	fetchData(metric) {
-
-		// "https://res43.itu.dk/fe_metrics?run_uuid=eq.ee6e95e2ca594896a9964eaec22f3d46&key=eq.DCGMI+-+GR+Engine+Active"
-
-		console.log(metric);
-
+	/* fetch all data for each run */
+	fetchRunData(metric) {
 		const selectedRuns = this.props.pushSelectedRuns;
-		const runNames = selectedRuns.map(function (run) {
-			return run.name;
+		HTTP.fetchRunData(selectedRuns, metric).then((results) => {
+			console.log(results);
 		});
-
-		console.log(runNames);
-
-		/*
-		HTTP.fetchAllData(endpoints.data, runNames).then((results) => {
-
-		});
-		*/
-
 	}
 
 	componentDidMount() {
@@ -66,8 +49,15 @@ class ChartPicker extends React.Component {
 	}
 
 	componentDidUpdate(prevProps) {
+		/*
 		const selectedRuns = this.props.pushSelectedRuns;
 		if (prevProps.pushSelectedRuns.length !== selectedRuns.length) {
+			this.fetchMetrics(selectedRuns);
+		}
+		*/
+		const toHide =  this.props.toHide;
+		if (prevProps.toHide !== toHide) {
+			const selectedRuns = this.props.pushSelectedRuns;
 			this.fetchMetrics(selectedRuns);
 		}
 	}
@@ -93,7 +83,7 @@ class ChartPicker extends React.Component {
 						<button
 							key={metric}
 							className="metricBtn"
-							onClick={() => this.fetchData(metric)}
+							onClick={() => this.fetchRunData(metric)}
 						>
 							{metric}
 						</button>

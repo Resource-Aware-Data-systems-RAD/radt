@@ -9,60 +9,6 @@ const endpoints = {
     metrics: "fe_metrics_available",
     data: "fe_metrics"
 }
-const filters = {
-    run: "run_uuid=eq.",
-    metric: "key=eq."
-}
-
-function parseData(endpoint, json) {
-    let parsed = [];
-    json.forEach(data => {
-        switch(endpoint) {
-
-            /* experiments */
-            case endpoints.experiments:          
-                parsed.push({
-                    "id": data["experiment_id"],
-                    "name": data["name"]
-                })
-                break;
-            
-            /* runs */
-            case endpoints.runs: 
-                if (data["workload"] === null) {
-                    data["workload"] = -1;
-                }
-                let workloadId = data["experiment_id"] + "-" + data["workload"];
-                parsed.push({              
-                    "name": data["run_uuid"],
-                    "experimentId": data["experiment_id"],              
-                    "duration": data["duration"],
-                    "startTime": data["start_time"],
-                    "source": data["data"],	
-                    "letter": data["letter"],
-                    "model": data["model"],
-                    "params": data["params"],
-                    "status": data["status"],
-                    "workload": workloadId
-                })
-                break;
-
-            /* metrics */
-            case endpoints.metrics: 
-                parsed.push(
-                    data["key"]
-                )
-                break;
-
-            /* do not parse */
-            default: 
-                parsed = json;
-                break;
-
-        }
-    });
-    return parsed;
-}
 
 export const HTTP = {
 
@@ -71,9 +17,7 @@ export const HTTP = {
 		return fetch(url + endpoint + param, { headers })
 		.then(response => response.json())
 		.then((json) => {
-            let parsed = parseData(endpoint, json);
-            console.log(parsed);
-			return(parsed);
+            return json;
 		})
 		.catch((error) => {
 			alert(error);
@@ -82,41 +26,76 @@ export const HTTP = {
 
     fetchExperiments: async (param = "") => {
         return new Promise((resolve) => {
-            HTTP.fetchData(endpoints.experiments,  param).then((data) => {   
-                resolve(data);
+            HTTP.fetchData(endpoints.experiments, param).then((json) => {            
+                let parsed = [];
+                json.forEach(data => { 
+                    parsed.push({
+                        "id": data["experiment_id"],
+                        "name": data["name"]
+                    })
+                })        
+                resolve(parsed);
             });
         });
     },
 
     fetchRuns: async (param = "") => {
         return new Promise((resolve) => {
-            HTTP.fetchData(endpoints.runs,  param).then((data) => {   
-                resolve(data);
+            HTTP.fetchData(endpoints.runs,  param).then((json) => {   
+                let parsed = [];
+                json.forEach(data => { 
+                    if (data["workload"] === null) {
+                        data["workload"] = -1;
+                    }
+                    let workloadId = data["experiment_id"] + "-" + data["workload"];
+                    parsed.push({              
+                        "name": data["run_uuid"],
+                        "experimentId": data["experiment_id"],              
+                        "duration": data["duration"],
+                        "startTime": data["start_time"],
+                        "source": data["data"],	
+                        "letter": data["letter"],
+                        "model": data["model"],
+                        "params": data["params"],
+                        "status": data["status"],
+                        "workload": workloadId
+                    })
+                })        
+                resolve(parsed);
             });
         });
     },
 
     fetchMetrics: async(runs) => {
-        return new Promise((resolve) => {
-            let [counter, total, results] = [1, runs.length, []];
+        if (runs.length > 0) {
+            let param = "?run_uuid=in.(";
             runs.forEach(run => {
-                let params = "?" + filters.run + run.name;
-                HTTP.fetchData(endpoints.metrics, params).then((json) => {   
-                    results.push(json);           
-                    if (counter === total) { 
-                        resolve(results);
-                    }
-                    counter++;
+                param = param + '"' + run.name + '",';
+            });
+            param = param.substring(0, param.length - 1) + ")";       
+            return new Promise((resolve) => {
+                HTTP.fetchData(endpoints.metrics,  param).then((data) => {   
+                    let uniqueMetrics = [];
+                    data.forEach(metric => {                        
+                        const metricIndex = uniqueMetrics.indexOf(metric.key);
+                        if (metricIndex === -1) {
+                            uniqueMetrics.push(metric.key);
+                        }
+                    });
+                    resolve(uniqueMetrics.sort());
                 });
             });
-        });
+        }
+        else {
+            return [];
+        }
     },
 
     fetchRunData: async(runs, metric) => {
         return new Promise((resolve) => {
             let [counter, total, results] = [1, runs.length, []];
             runs.forEach(run => {
-                let params =  "?" + filters.run + run.name + "&" + filters.metric + encodeURIComponent(metric);
+                let params =  "?run_uuid=eq." + run.name + "&key=eq." + encodeURIComponent(metric);
                 HTTP.fetchData(endpoints.data, params).then((json) => {              
                     results.push(json);          
                     if (counter === total) { 
@@ -126,6 +105,6 @@ export const HTTP = {
                 });
             });
         });
-    },
+    }
 
 }

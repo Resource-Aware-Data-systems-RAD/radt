@@ -13,21 +13,10 @@ class ChartPicker extends React.Component {
 	}
 
 	/* fetch all available metrics for the current selected runs */
-	fetchMetrics() {
+	async fetchMetrics() {
 		const selectedRuns = this.props.pushSelectedRuns;	
-		HTTP.fetchMetrics(selectedRuns).then((results) => {
-			let uniqueMetrics = [];
-			results.forEach(runMetrics => {
-				runMetrics.forEach(metric => {
-					let metricIndex = uniqueMetrics.indexOf(metric);
-					if (metricIndex === -1) {
-						uniqueMetrics.push(metric);
-					}
-				});
-			});
-			console.log("DONE!");
-			this.setState({availableMetrics: uniqueMetrics.sort()});
-		});
+		const data = await HTTP.fetchMetrics(selectedRuns);
+		this.setState({availableMetrics: data});
 	}
 
 	/* toggle metric list visibility */
@@ -49,12 +38,6 @@ class ChartPicker extends React.Component {
 	}
 
 	componentDidUpdate(prevProps) {
-		/*
-		const selectedRuns = this.props.pushSelectedRuns;
-		if (prevProps.pushSelectedRuns.length !== selectedRuns.length) {
-			this.fetchMetrics(selectedRuns);
-		}
-		*/
 		const toHide =  this.props.toHide;
 		if (prevProps.toHide !== toHide) {
 			const selectedRuns = this.props.pushSelectedRuns;

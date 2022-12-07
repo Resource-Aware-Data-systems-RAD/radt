@@ -3,6 +3,8 @@ import DataPicker from './DataPicker';
 import ChartPicker from './ChartPicker';
 import '../styles/App.css';
 
+import LocalDataTest from './LocalDataTest';
+
 class App extends React.Component {
 
 	constructor(props) {
@@ -29,7 +31,7 @@ class App extends React.Component {
 	render() {  
 		const { selectedRuns, dataPickerOpen } = this.state;
 		return (   
-			<div id="appWrapper">
+			<div id="appWrapper">		
 				<DataPicker 
 					toHide={dataPickerOpen}
 					pullSelectedRuns={this.updateSelectedRuns} 
@@ -39,6 +41,7 @@ class App extends React.Component {
 					toHide={!dataPickerOpen}
 					pushSelectedRuns={selectedRuns}
 				/>
+				{/*}<LocalDataTest />{*/}
 			</div>
 		);
 	}

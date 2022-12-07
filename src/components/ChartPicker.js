@@ -8,6 +8,7 @@ class ChartPicker extends React.Component {
 		super(props);
 		this.state = {
 			availableMetrics: [],
+			selectedRunsData: [],
 			showMetrics: false
 		};
 	}
@@ -26,11 +27,43 @@ class ChartPicker extends React.Component {
 	}
 
 	/* fetch all data for each run */
-	fetchRunData(metric) {
+	async fetchSeriesData(metric) {
 		const selectedRuns = this.props.pushSelectedRuns;
-		HTTP.fetchRunData(selectedRuns, metric).then((results) => {
-			console.log(results);
+		const data = await HTTP.fetchSeriesData(selectedRuns, metric);
+
+		data.forEach(series => {
+			selectedRuns.forEach(run => {
+				if (run.name === series.name) {			
+					if (run.data === undefined) {
+						run.data = [];
+					}
+					run.data.push({
+						timestamp: series["timestamp"],
+						value: series["value"],
+						step: series["step"],
+					});
+				}
+			});
 		});
+		this.generateWorkloadSeries(selectedRuns);
+		this.setState({ selectedRunsData: selectedRuns });	
+	}
+
+	generateWorkloadSeries(runs) {
+
+		let workloadSeries = [];
+
+		runs.forEach(run => {
+			run.data.forEach(series => {
+				console.log(series);
+			});
+		});
+
+		// TESTING: use 10-10 and 10-11
+	}
+
+	generateRunSeries() {
+
 	}
 
 	componentDidMount() {
@@ -66,7 +99,7 @@ class ChartPicker extends React.Component {
 						<button
 							key={metric}
 							className="metricBtn"
-							onClick={() => this.fetchRunData(metric)}
+							onClick={() => this.fetchSeriesData(metric)}
 						>
 							{metric}
 						</button>

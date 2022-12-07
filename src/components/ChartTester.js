@@ -2,10 +2,6 @@ import React from 'react';
 import Highcharts from 'highcharts/highstock';
 import HighchartsReact from 'highcharts-react-official';
 
-// load styles
-import '../index.css';
-import '../styles/ChartTester.css';
-
 class ChartTester extends React.Component {
 
     constructor(props) {
@@ -218,6 +214,8 @@ class ChartTester extends React.Component {
         parsedData.push({
             data: parsedCombinedRuns
         });
+
+        console.log(parsedData);
         
         /*
         let data = [

@@ -74,9 +74,9 @@ export const HTTP = {
             });
             param = param.substring(0, param.length - 1) + ")";       
             return new Promise((resolve) => {
-                HTTP.fetchData(endpoints.metrics,  param).then((data) => {   
+                HTTP.fetchData(endpoints.metrics,  param).then((json) => {   
                     let uniqueMetrics = [];
-                    data.forEach(metric => {                        
+                    json.forEach(metric => {                        
                         const metricIndex = uniqueMetrics.indexOf(metric.key);
                         if (metricIndex === -1) {
                             uniqueMetrics.push(metric.key);
@@ -91,20 +91,33 @@ export const HTTP = {
         }
     },
 
-    fetchRunData: async(runs, metric) => {
-        return new Promise((resolve) => {
-            let [counter, total, results] = [1, runs.length, []];
+    fetchSeriesData: async(runs, metric) => {
+        if (runs.length > 0) {
+            let param = "?run_uuid=in.(";
             runs.forEach(run => {
-                let params =  "?run_uuid=eq." + run.name + "&key=eq." + encodeURIComponent(metric);
-                HTTP.fetchData(endpoints.data, params).then((json) => {              
-                    results.push(json);          
-                    if (counter === total) { 
-                        resolve(results);
-                    }
-                    counter++;
+                param = param + '"' + run.name + '",';
+            });
+            param = param.substring(0, param.length - 1) + ")&key=eq." + encodeURIComponent(metric);       
+            return new Promise((resolve) => {
+                HTTP.fetchData(endpoints.data,  param).then((json) => {  
+                    let parsed = [];
+                    json.forEach(data => { 
+                        parsed.push({
+                            "name": data["run_uuid"],
+                            "metric": data["key"],
+                            "step": data["step"],
+                            "timestamp": data["timestamp"],
+                            "value": data["value"],
+                        })
+                    })        
+                    resolve(parsed);
                 });
             });
-        });
+        }
+        else {
+            console.error("No data found!");
+            return [];
+        }
     }
 
 }

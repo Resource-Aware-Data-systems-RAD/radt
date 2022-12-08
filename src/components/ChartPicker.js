@@ -1,5 +1,6 @@
 import React from 'react';
 import { HTTP } from '../api';
+import Chart from './Chart';
 import '../styles/ChartPicker.css';
 
 class ChartPicker extends React.Component {
@@ -8,8 +9,8 @@ class ChartPicker extends React.Component {
 		super(props);
 		this.state = {
 			availableMetrics: [],
-			selectedRunsData: [],
-			showMetrics: false
+			showMetrics: false,
+			charts: []
 		};
 	}
 
@@ -27,10 +28,9 @@ class ChartPicker extends React.Component {
 	}
 
 	/* fetch all data for each run */
-	async fetchSeriesData(metric) {
+	async fetchChart(metric) {
 		const selectedRuns = this.props.pushSelectedRuns;
-		const data = await HTTP.fetchSeriesData(selectedRuns, metric);
-
+		const data = await HTTP.fetchChart(selectedRuns, metric);
 		data.forEach(series => {
 			selectedRuns.forEach(run => {
 				if (run.name === series.name) {			
@@ -38,32 +38,21 @@ class ChartPicker extends React.Component {
 						run.data = [];
 					}
 					run.data.push({
-						timestamp: series["timestamp"],
-						value: series["value"],
-						step: series["step"],
+						timestamp: series.timestamp,
+						value: series.value,
+						step: series.step,
 					});
 				}
 			});
 		});
-		this.generateWorkloadSeries(selectedRuns);
-		this.setState({ selectedRunsData: selectedRuns });	
-	}
-
-	generateWorkloadSeries(runs) {
-
-		let workloadSeries = [];
-
-		runs.forEach(run => {
-			run.data.forEach(series => {
-				console.log(series);
-			});
+		const { charts } = this.state;
+		let newCharts = [...charts];
+		const chartId = Date.now().toString();
+		newCharts.push({ 
+			id: chartId,
+			data: selectedRuns
 		});
-
-		// TESTING: use 10-10 and 10-11
-	}
-
-	generateRunSeries() {
-
+		this.setState({ charts: newCharts });
 	}
 
 	componentDidMount() {
@@ -79,12 +68,19 @@ class ChartPicker extends React.Component {
 	}
 
 	render() {
-		const { availableMetrics, showMetrics } = this.state;
+		const { availableMetrics, showMetrics, charts } = this.state;
 		return (
 			<div
 				id="chartPickerWrapper"
 				className={this.props.toHide ? null : "hide"}
 			>
+					{charts.map(chart => (
+						<Chart 
+							key={chart.id} 
+							chartData={chart}
+						/>
+					))}
+
 				<button 
 					id="pickChartBtn"
 					onClick={() => this.toggleMetrics()}
@@ -99,7 +95,7 @@ class ChartPicker extends React.Component {
 						<button
 							key={metric}
 							className="metricBtn"
-							onClick={() => this.fetchSeriesData(metric)}
+							onClick={() => this.fetchChart(metric)}
 						>
 							{metric}
 						</button>

@@ -2,10 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import Highcharts from 'highcharts/highstock';
 import App from './components/App';
-
 //import reportWebVitals from './reportWebVitals';
-//import LocalDataTest from './components/LocalDataTest';
-//import { BasicExample, VariantsExample } from './components/Dropdown';
 
 // import highcharts modules
 require('highcharts/modules/boost')(Highcharts)

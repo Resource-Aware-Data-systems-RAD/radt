@@ -91,7 +91,7 @@ export const HTTP = {
         }
     },
 
-    fetchSeriesData: async(runs, metric) => {
+    fetchChart: async(runs, metric) => {
         if (runs.length > 0) {
             let param = "?run_uuid=in.(";
             runs.forEach(run => {

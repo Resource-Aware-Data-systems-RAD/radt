@@ -45,7 +45,7 @@ export const HTTP = {
                 let parsed = [];
                 json.forEach(data => { 
                     if (data["workload"] === null) {
-                        data["workload"] = -1;
+                        data["workload"] = "null";
                     }
                     let workloadId = data["experiment_id"] + "-" + data["workload"];
                     parsed.push({              

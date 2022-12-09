@@ -32,33 +32,52 @@ class Chart extends React.Component {
 
         console.log(data);
 
-        let series = [];
-        data.forEach(run => {   
+        let allSeries = [];
+        data.forEach(run => {
             if (run.data !== undefined) {
 
-                const workloadId = run.workload.substring(run.workload.indexOf("-") + 1);
-                if (workloadId === "-1") {
-                    run.workload = run.workload + "_" + run.name;
+                // check for unsorted runs
+                let workloadId = run.workload;
+                if (workloadId.substring(workloadId.indexOf("-") + 1) === "null") {
+                    workloadId = workloadId + "-" + run.name;
                 }
 
-                let seriesIndex = series.findIndex(series => series.id === run.workload);
-                if (seriesIndex === -1) {                   
-                    series.push({
-                        id: run.workload,
+                // add all runs to one series per workload, unless they are unsorted runs
+                let seriesIndex = allSeries.findIndex(series => series.id === workloadId);
+                if (seriesIndex === -1) {                  
+                    let newSeries = {
+                        id: workloadId,
                         data: []
-                    });
+                    };
+                    run.data.forEach(data => {
+                        newSeries.data.push([data.timestamp, data.value]);
+                    })
+                    allSeries.push(newSeries);
                 }
                 else {
                     run.data.forEach(data => {
-                        series[seriesIndex].data.push([data.timestamp, data.value]);
+                        allSeries[seriesIndex].data.push([data.timestamp, data.value]);
                     })
                 }
-                
+
             }
+        });       
+
+        // sort all series by unix timestamp
+        allSeries.forEach(series => {
+            series.data.sort((a, b) => a[0] - b[0]);
         });
 
-        console.log(series);
+        // switch time to milliseconds from first timestamp
+        allSeries.forEach(series => {
+            const earliestTime = series.data[0][0];
+            series.data.forEach(timeAndValue => {
+                timeAndValue[0] = timeAndValue[0] - earliestTime;
+            });
+        });
 
+        console.log(allSeries);
+        
     }
 
     render() {

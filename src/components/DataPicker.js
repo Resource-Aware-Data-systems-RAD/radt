@@ -207,7 +207,7 @@ function Workloads(props) {
 	// format workload labels (handles unsorted runs with no workload)
 	function formatWorkloadLabel(workload) {
 		const workloadId = workload.substring(workload.indexOf("-") + 1);
-		if (workloadId === "-1") {
+		if (workloadId === "null") {
 			workload = "Unsorted Runs";
 		}
 		else {
@@ -270,7 +270,7 @@ function Selections(props) {
 	props.selectedRuns.forEach(run => {
 
 		let workload = run.workload;
-		if (workload.substring(workload.indexOf("-") + 1) === "-1") {
+		if (workload.substring(workload.indexOf("-") + 1) === "null") {
 			workload = "null"
 		}
 

@@ -36,12 +36,13 @@ class Chart extends React.Component {
         data.forEach(run => {   
             if (run.data !== undefined) {
 
-                // check to see if unsorted workloads here
-                let seriesId;
-                
+                const workloadId = run.workload.substring(run.workload.indexOf("-") + 1);
+                if (workloadId === "-1") {
+                    run.workload = run.workload + "_" + run.name;
+                }
 
                 let seriesIndex = series.findIndex(series => series.id === run.workload);
-                if (seriesIndex === -1) {
+                if (seriesIndex === -1) {                   
                     series.push({
                         id: run.workload,
                         data: []
@@ -52,6 +53,7 @@ class Chart extends React.Component {
                         series[seriesIndex].data.push([data.timestamp, data.value]);
                     })
                 }
+                
             }
         });
 

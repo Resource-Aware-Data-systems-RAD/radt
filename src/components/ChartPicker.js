@@ -29,28 +29,30 @@ class ChartPicker extends React.Component {
 
 	/* fetch all data for each run */
 	async fetchChart(metric) {
-		const selectedRuns = this.props.pushSelectedRuns;
-		const data = await HTTP.fetchChart(selectedRuns, metric);
-		data.forEach(series => {
-			selectedRuns.forEach(run => {
-				if (run.name === series.name) {			
+		const chartRuns = structuredClone(this.props.pushSelectedRuns);
+		const chartData = await HTTP.fetchChart(chartRuns, metric);
+
+		chartData.forEach(data => {	
+			chartRuns.forEach(run => {
+				if (run.name === data.name) {			
 					if (run.data === undefined) {
 						run.data = [];
 					}
 					run.data.push({
-						timestamp: series.timestamp,
-						value: series.value,
-						step: series.step,
+						timestamp: data.timestamp,
+						value: data.value,
+						step: data.step,
 					});
 				}
 			});
 		});
+
 		const { charts } = this.state;
 		let newCharts = [...charts];
 		const chartId = Date.now().toString();
 		newCharts.push({ 
 			id: chartId,
-			data: selectedRuns
+			data: chartRuns,
 		});
 		this.setState({ charts: newCharts });
 	}

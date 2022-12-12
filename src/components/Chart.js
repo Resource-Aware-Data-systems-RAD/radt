@@ -76,7 +76,7 @@ class Chart extends React.Component {
             });
         });
 
-        console.log(allSeries);
+        console.log(allSeries); /////////////////////////// best way to do this? 
         
     }
 

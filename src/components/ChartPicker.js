@@ -76,7 +76,7 @@ class ChartPicker extends React.Component {
 		return (
 			<div
 				id="chartPickerWrapper"
-				className={this.props.toHide ? null : "hide"}
+				//className={this.props.toHide ? null : "hide"}
 			>
 					{charts.map(chart => (
 						<Chart 
@@ -105,7 +105,7 @@ class ChartPicker extends React.Component {
 						</button>
 					))}
 				</div>			
-				
+				<br /><button onClick={() => this.props.toggleDataPicker(true)}>CHANGE DATA</button>
 			</div>
 		);
 	}

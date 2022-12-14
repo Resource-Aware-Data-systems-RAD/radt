@@ -2,13 +2,15 @@
 #dataPickerWrapper {
     display: flex;
     flex-direction: row;
-    height: 90%;
-    width: 90%;
+    height: 80%;
+    width: 80%;
     position: absolute;
     bottom: 50%;
     right: 50%;
     transform: translate(50%, 50%);
     border: 1px solid black; 
+    background-color: white;
+    z-index: 999;
 }
 .selectionConfirmBtn {
     position: absolute;

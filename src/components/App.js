@@ -19,13 +19,8 @@ class App extends React.Component {
 		this.setState({selectedRuns: newSelectedRuns});
 	}
 
-	submitSelectedRuns = () => {
-		if (this.state.selectedRuns.length > 0) {
-			this.setState({ dataPickerOpen: false });	
-		}
-		else {
-			alert("No data selected.")
-		}
+	toggleDataPicker = (toShow) => {
+		this.setState({ dataPickerOpen: toShow });
 	}
 
 	render() {  
@@ -35,11 +30,12 @@ class App extends React.Component {
 				<DataPicker 
 					toHide={dataPickerOpen}
 					pullSelectedRuns={this.updateSelectedRuns} 
-					confirmSelection={this.submitSelectedRuns}
+					toggleDataPicker={this.toggleDataPicker}
 				/>
 				<ChartPicker 
 					toHide={!dataPickerOpen}
 					pushSelectedRuns={selectedRuns}
+					toggleDataPicker={this.toggleDataPicker}
 				/>
 				{/*}<LocalDataTest />{*/}
 			</div>

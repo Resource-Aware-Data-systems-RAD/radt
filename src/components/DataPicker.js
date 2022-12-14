@@ -169,7 +169,7 @@ class DataPicker extends React.Component {
 				/>
 				<button 
 					className="selectionConfirmBtn"
-					onClick={() => this.props.confirmSelection()}
+					onClick={() => this.props.toggleDataPicker(false)}
 				>
 					Confirm
 				</button>
@@ -262,7 +262,7 @@ function Selections(props) {
 	// scroll to bottom of container when new props are added
 	const bottomOfScrollRef = useRef(null);
 	useEffect(() => {
-		bottomOfScrollRef.current.scrollIntoView({ behavior: "smooth" });
+		bottomOfScrollRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
 	});
 
 	// create new data object to render workloads and runs nicely in Selections
@@ -338,7 +338,7 @@ function Selections(props) {
 				</div>
 			))}
 			{ /* div ref to scroll to bottom of */ }
-			<div ref={bottomOfScrollRef} /> 
+			<div ref={bottomOfScrollRef} />
 		</div>
 	);
 }

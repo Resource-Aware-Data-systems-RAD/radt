@@ -3,35 +3,149 @@ import Highcharts from 'highcharts/highstock';
 import HighchartsReact from 'highcharts-react-official';
 import '../styles/Chart.css';
 
-// Highcharts security allowances
-Highcharts.AST.allowedTags.push('image');
-Highcharts.AST.allowedAttributes.push('xlink:href');
-Highcharts.AST.allowedAttributes.push('preserveAspectRatio');
-
 class Chart extends React.Component {
 
     constructor(props) {
 		super(props);
 		this.state = {
-            chartOptions: [], 
+            loading: true,
             id: null,
-            data: []
-		};
+            data: [],
+            series: [],
+            options: {
+                exporting: {
+                    scale: 3,
+                    sourceWidth: 1200,
+                    sourceHeight: 800,
+                    chartOptions: {
+                        navigator: {
+                            enabled: false       
+                        },
+                    }
+                },
+                chart: {
+                    type: "line",
+                    zoomType: 'x'
+                },
+                legend: {
+                    enabled: true
+                },
+                xAxis: {
+                    events: {
+                        setExtremes: function(event){
+                            if (!this.zoomButton) {
+                                const chart = this.chart;
+                                this.zoomButton = chart.renderer.button('Reset Zoom', null, null, function() {
+                                    chart.xAxis[0].setExtremes(null, null);
+                                }, {
+                                    zIndex: 20
+                                }).attr({
+                                    id: 'resetZoom',
+                                    align: 'right'
+                                }).add().align({
+                                    align: 'right',
+                                    x: -15,
+                                    y: 40
+                                }, false, null);
+                            }
+                            if(!event.min && !event.max){
+                                this.zoomButton.destroy();
+                                this.zoomButton = null;
+                            }
+                        }
+                    },
+                    ordinal: false,
+                    type: "datetime",
+                    title: {
+                        text: "Time"
+                    },
+                    labels:{
+                        formatter:function(){
+                            return (milliToMinsSecs(this.value))            
+                        },
+                     },
+                },
+                yAxis: {
+                    opposite: false
+                },
+                credits: {
+                    enabled: false
+                },
+                accessibility: {
+                    enabled: false
+                },
+                tooltip: {
+                    crosshairs: {
+                        color: 'black',
+                        dashStyle: '5'
+                    },
+                    shared: false,
+                    split: false,
+                    formatter: function() {
+                        return  '<b>Series:</b>' + this.series.name +'<br/><b>Value:</b> ' + this.y + '<br/><b>Time:</b> ' + milliToMinsSecs(this.x);
+                    }
+                },
+                navigator: {
+                    xAxis: {
+                        labels: {
+                            enabled: false
+                        }
+                    },
+                    height: 75,
+                    enabled: true,
+                    boostThreshold: 1,
+                    series: {
+                        dataGrouping: {
+                            enabled: false
+                        }
+                    }        
+                },
+                rangeSelector: {
+                    enabled: false
+                },
+                scrollbar: {
+                    enabled: false
+                },
+                plotOptions: {
+                    series: {
+                        boostThreshold: 1,
+                        marker: {
+                            radius: 1
+                        },      
+                        showInNavigator: false,    
+                        states: {
+                            hover: {
+                                enabled: false,
+                                halo: {
+                                    size: 0
+                                }
+                            },
+                            inactive: {
+                                opacity: 1
+                            }
+                        },
+                        dataGrouping: {
+                            enabled: false,
+                            units: [[
+                                'millisecond', 
+                                [1] 
+                            ]]
+                        }
+                    },
+                },
+            },
+		};    
 	}
 
     componentDidMount() {
-        const { chartData } = this.props;
-        this.generateSeries(chartData.data);
-        this.setState({
-            id: chartData.id,
-            data: chartData.data
-        });
+        this.generateSeries(this.props.chartData);
     }
 
-    generateSeries(data) {
+    generateSeries(chartData) {
 
-        console.log(data);
+        let data = chartData.data;
 
+        // format data into series for highcharts
         let allSeries = [];
         data.forEach(run => {
             if (run.data !== undefined) {
@@ -68,26 +182,68 @@ class Chart extends React.Component {
             series.data.sort((a, b) => a[0] - b[0]);
         });
 
-        // switch time to milliseconds from first timestamp
+        // subtract earliest time from all timestamps to get ms passed
         allSeries.forEach(series => {
             const earliestTime = series.data[0][0];
             series.data.forEach(timeAndValue => {
                 timeAndValue[0] = timeAndValue[0] - earliestTime;
             });
+
+            // add name
+            series.name = series.id;
+
+            // prevent duplicate ids in highcharts api
+            delete series.id;
+        });
+    
+        // update state which will update render of chart
+        const { metric } = this.state;
+        this.setState({
+            id: chartData.id,
+            data: chartData.data,
+            options: {
+                title: {
+                    text: chartData.metric
+                },
+                series: allSeries,
+                navigator: {
+                    series: allSeries
+                }
+            }
         });
 
-        console.log(allSeries); /////////////////////////// best way to do this? 
-        
+        console.log(allSeries) // debugging
     }
 
     render() {
-        const { id, data } = this.state;
+        const { options } = this.state;
         return (
             <div className="chartWrapper">
-                {id} | {data.length} runs
+                <HighchartsReact 
+                    highcharts={Highcharts} 
+                    constructorType="stockChart"
+                    containerProps={{className: "chart"}}
+                    options={options}         
+                    ref={ this.chartRef }
+                />
             </div>
         );
     }
 
 }
+
+/* Chart helper functions */
+function milliToMinsSecs(ms) {
+    let label;
+    let numOfDays = Math.trunc(ms / 86400000);
+    if (numOfDays > 0) {
+        label = numOfDays + "d " + new Date(ms).toISOString().slice(11, 19);
+    }
+    else {
+        label = new Date(ms).toISOString().slice(11, 19);
+    }
+    return label;
+}
+
 export default Chart;
+

@@ -1,6 +1,7 @@
 import React from 'react';
 import Highcharts from 'highcharts/highstock';
 import HighchartsReact from 'highcharts-react-official';
+import '../styles/Chart.css';
 
 class ChartTester extends React.Component {
 
@@ -187,7 +188,7 @@ class ChartTester extends React.Component {
             const emaSeries = calcEMA(dataSeries[model], smoothing);
             const parsedSeries = prepData(emaSeries, dataSeries["MSPast"]);
             parsedData.push({
-                data: parsedSeries,
+                data: parsedSeries
                 //name: 
             });
 
@@ -259,7 +260,7 @@ class ChartTester extends React.Component {
     render() {
         const { chartOptions, hoverData } = this.state;
         return (
-            <div className="chartContainer">
+            <div className="chartWrapper">
                 {/*<h3>Hovering over {hoverData}</h3>*/}
                 <HighchartsReact 
                     highcharts={Highcharts} 

@@ -31,7 +31,6 @@ class ChartPicker extends React.Component {
 	async fetchChart(metric) {
 		const chartRuns = structuredClone(this.props.pushSelectedRuns);
 		const chartData = await HTTP.fetchChart(chartRuns, metric);
-
 		chartData.forEach(data => {	
 			chartRuns.forEach(run => {
 				if (run.name === data.name) {			
@@ -46,15 +45,18 @@ class ChartPicker extends React.Component {
 				}
 			});
 		});
-
 		const { charts } = this.state;
 		let newCharts = [...charts];
 		const chartId = Date.now().toString();
 		newCharts.push({ 
 			id: chartId,
 			data: chartRuns,
+			metric: metric
 		});
-		this.setState({ charts: newCharts });
+		this.setState({ 
+			charts: newCharts,
+			showMetrics: false
+		});
 	}
 
 	componentDidMount() {
@@ -102,7 +104,8 @@ class ChartPicker extends React.Component {
 							{metric}
 						</button>
 					))}
-				</div>
+				</div>			
+				
 			</div>
 		);
 	}

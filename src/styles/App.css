@@ -20,27 +20,3 @@ html, body {
 .hide {
     display: none !important;
 }
-
-
-
-
-/* chart temp test styles  */
-.chartContainer {
-    display: block;
-    /*height: 100%;*/
-    margin: 0;
-    padding: 0;
-}
-.chart {
-    display: block;
-    /*height: 100%;*/
-    height: 750px;
-    margin: 0;
-    padding: 0;
-}
-.highcharts-navigator-mask-inside {
-    cursor: grab !important;
-}
-.highcharts-navigator-mask-inside:active {
-    cursor: grabbing !important;
-}

@@ -1,17 +1,17 @@
 .chartWrapper {
     display: block;
-    /*height: 100%;*/
-    margin: 0;
+    position: relative;
+    width: 90%;
+    margin: auto;
     padding: 0;
+
+    background-color: pink;
 }
 .chart {
     display: block;
-    /*height: 100%;*/
     height: 750px;
-    width: 90%;
-    margin: 10px auto 10px auto;
-
-
+    width: 100%;
+    margin: 10px auto 20px auto;
     border: 1px solid black;
 }
 .highcharts-navigator {
@@ -22,4 +22,21 @@
 }
 .highcharts-navigator-mask-inside:active {
     cursor: grabbing !important;
+}
+.removeChartBtn {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 99;
+    background-color: #e74c3c;
+    color: white;
+    width: 25px;
+    height: 25px;
+    line-height: 25px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+}
+.removeChartBtn:hover { 
+    filter: brightness(1.5);
 }

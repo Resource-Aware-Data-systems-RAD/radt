@@ -1,12 +1,18 @@
 html, body {
     display: block;
     margin: 0;
-    padding: 0;
+    padding: 0 0 30px 0;
     font-family: sans-serif;
   
     /* testing */
     border: 0px solid blue;
     box-sizing: border-box;
+
+    overflow: scroll;
+    scrollbar-width: none;  /* Firefox */
+}
+body::-webkit-scrollbar {
+    display: none;
 }
 #root, #appWrapper {
     display: block;

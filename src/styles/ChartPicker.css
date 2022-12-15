@@ -1,9 +1,31 @@
 /********************************************** CHART PICKER */
-
 #chartPickerWrapper {
     display: block;
     width: 100%;
     text-align: center;
+}
+#dataLogo {
+    position: fixed;
+    width: 40px;
+    height: 40px;
+    text-align: center;
+    left: 10px;
+    top: 10px;
+    cursor: pointer;
+    background-color: #f39c12;
+    border: none;
+}
+#dataLogo:hover {
+    background-color: white;
+    border: 2px solid #f39c12;
+    box-sizing: border-box;
+}
+.dataSVG {
+    width: 25px;
+    filter: invert(89%) sepia(23%) saturate(0%) hue-rotate(76deg) brightness(108%) contrast(103%);
+}
+#dataLogo:hover .dataSVG { 
+    filter: invert(63%) sepia(51%) saturate(1315%) hue-rotate(355deg) brightness(100%) contrast(91%);
 }
 #chartPickerWrapper #pickChartBtn {
     display: block;
@@ -11,21 +33,20 @@
     height: 60px;
     line-height: 60px;
     font-size: 40px;
-    margin: 20px auto 0 auto;
+    margin: 10px auto 0 auto;
     cursor: pointer;
-    border: 0px solid black;
     color: white;
-    background-color: black;
+    border: 0px solid #34495e;   
+    background-color: #34495e;
 }
-#chartPickerWrapper #pickChart:hover {
-    color: white;
-    background-color: grey;
+#chartPickerWrapper #pickChartBtn:hover {
+    filter: brightness(1.25);
 }
 #chartPickerWrapper #metricBtnList {
     display: block;
 
     height: 500px;
-    width: 75%;
+    width: 90%;
 
     margin: auto;
     text-align: left;;

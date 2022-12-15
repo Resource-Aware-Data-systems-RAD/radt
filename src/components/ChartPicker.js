@@ -2,6 +2,7 @@ import React from 'react';
 import { HTTP } from '../api';
 import Chart from './Chart';
 import '../styles/ChartPicker.css';
+import DataLogo from '../images/data.svg';
 
 class ChartPicker extends React.Component {
 
@@ -59,6 +60,25 @@ class ChartPicker extends React.Component {
 		});
 	}
 
+	/* check if metrics button should be visible */
+	checkVisibility() {
+		const { availableMetrics } = this.state;
+		if (availableMetrics.length === 0) {
+			return "hide";
+		}
+		else if (!this.props.toHide) {
+			return "hide"; 
+		}
+	}
+
+	/* removes chart from state using its id */
+	removeChart(id) {
+		let newCharts = [...this.state.charts];
+		this.setState({
+			charts: newCharts.filter(chart => chart.id !== id)
+		});
+	}
+
 	componentDidMount() {
 		this.fetchMetrics(this.props.pushSelectedRuns);
 	}
@@ -76,18 +96,25 @@ class ChartPicker extends React.Component {
 		return (
 			<div
 				id="chartPickerWrapper"
-				//className={this.props.toHide ? null : "hide"}
 			>
-					{charts.map(chart => (
-						<Chart 
-							key={chart.id} 
-							chartData={chart}
-						/>
-					))}
-
+				<button 
+					id="dataLogo"
+					onClick={() => this.props.toggleDataPicker(true)}
+					className={this.props.toHide ? null : "hide"}
+				>
+					<img src={DataLogo} className="dataSVG" alt="Change Data" />
+				</button>
+				{charts.map(chart => (
+					<Chart 
+						key={chart.id} 
+						chartData={chart}
+						removeChart={this.removeChart.bind(this)}
+					/>
+				))}
 				<button 
 					id="pickChartBtn"
 					onClick={() => this.toggleMetrics()}
+					className={this.checkVisibility()}
 				>
 					+
 				</button>
@@ -104,10 +131,26 @@ class ChartPicker extends React.Component {
 							{metric}
 						</button>
 					))}
-				</div>			
-				<br /><button onClick={() => this.props.toggleDataPicker(true)}>CHANGE DATA</button>
+				</div>
 			</div>
 		);
 	}
 }
+
+function ChartList(props) {
+    return (
+		<button></button>
+	)
+}
+function ChooseMetricBtn(props) {
+    return (
+		<button></button>
+	)
+}
+function MetricsList(props) {
+    return (
+		<button></button>
+	)
+}
+
 export default ChartPicker;

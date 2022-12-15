@@ -209,16 +209,27 @@ class Chart extends React.Component {
                 navigator: {
                     series: allSeries
                 }
-            }
+            },
+            loading: false
         });
+    }
 
-        console.log(allSeries) // debugging
+    componentDidUpdate(prevProps, prevState) {
+        if (prevState.loading != this.state.loading) {
+            console.log("Finished!"); // debugging
+        }
     }
 
     render() {
-        const { options } = this.state;
+        const { options, id } = this.state;
         return (
             <div className="chartWrapper">
+                <button 
+                    className="removeChartBtn"
+                    onClick={() => this.props.removeChart(id)}
+                >
+                    X
+                </button>
                 <HighchartsReact 
                     highcharts={Highcharts} 
                     constructorType="stockChart"

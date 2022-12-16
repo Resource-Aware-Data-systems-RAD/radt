@@ -250,7 +250,10 @@ function Runs(props) {
 					key={run.name}
 					onClick={() => props.onClickToggleRunSelection(run.workload, run)}
 				>
-					<span className="text">Run {run.name.substring(0, 6)}</span>
+					{/*}<span className="text">Run {run.name.substring(0, 6)}</span>{*/}
+					<span className="text">
+						{run.letter} | {milliToMinsSecs(run.duration)}
+					</span>
 					<div className="checkbox">{props.selectedRuns.findIndex(el => el.name === run.name) > -1 ? "X" : " "}</div>
 				</button>
 			))}
@@ -341,6 +344,18 @@ function Selections(props) {
 			<div ref={bottomOfScrollRef} />
 		</div>
 	);
+}
+
+function milliToMinsSecs(ms) {
+    let label;
+    let numOfDays = Math.trunc(ms / 86400000);
+    if (numOfDays > 0) {
+        label = numOfDays + "d " + new Date(ms).toISOString().slice(11, 19);
+    }
+    else {
+        label = new Date(ms).toISOString().slice(11, 19);
+    }
+    return label;
 }
 
 export default DataPicker;

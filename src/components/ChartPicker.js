@@ -137,20 +137,4 @@ class ChartPicker extends React.Component {
 	}
 }
 
-function ChartList(props) {
-    return (
-		<button></button>
-	)
-}
-function ChooseMetricBtn(props) {
-    return (
-		<button></button>
-	)
-}
-function MetricsList(props) {
-    return (
-		<button></button>
-	)
-}
-
 export default ChartPicker;

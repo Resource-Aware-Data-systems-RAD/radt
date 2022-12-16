@@ -216,7 +216,7 @@ class Chart extends React.Component {
 
     componentDidUpdate(prevProps, prevState) {
         if (prevState.loading != this.state.loading) {
-            console.log("Finished!"); // debugging
+            //console.log("Finished!"); // debugging
         }
     }
 
@@ -243,7 +243,7 @@ class Chart extends React.Component {
 
 }
 
-/* Chart helper functions */
+/* Chart component helper functions */
 function milliToMinsSecs(ms) {
     let label;
     let numOfDays = Math.trunc(ms / 86400000);

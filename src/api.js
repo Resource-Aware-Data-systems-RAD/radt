@@ -1,7 +1,7 @@
 const url = "https://res43.itu.dk/";
 const headers = new Headers();
 headers.append('Content-Type', 'application/json');
-headers.append('Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoicmVzdF91c2VyIn0.M16CO12bDsPscIJrQkBgbBwlOj73mBD_6Ws1CRPQwcw');
+headers.append('Authorization', 'Bearer ' + process.env.REACT_APP_API_KEY);
 
 const endpoints = {
 	experiments: "fe_experiments",

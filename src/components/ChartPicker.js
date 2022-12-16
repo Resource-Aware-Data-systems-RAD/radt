@@ -3,12 +3,14 @@ import { HTTP } from '../api';
 import Chart from './Chart';
 import '../styles/ChartPicker.css';
 import DataLogo from '../images/data.svg';
+import LoadingIcon from '../images/cogwheel.svg';
 
 class ChartPicker extends React.Component {
 
 	constructor(props) {
 		super(props);
 		this.state = {
+			loading: false,
 			availableMetrics: [],
 			showMetrics: false,
 			charts: []
@@ -30,6 +32,12 @@ class ChartPicker extends React.Component {
 
 	/* fetch all data for each run */
 	async fetchChart(metric) {
+
+		this.setState({ 
+			loading: true,
+			showMetrics: false
+		});
+
 		const chartRuns = structuredClone(this.props.pushSelectedRuns);
 		const chartData = await HTTP.fetchChart(chartRuns, metric);
 		chartData.forEach(data => {	
@@ -56,7 +64,7 @@ class ChartPicker extends React.Component {
 		});
 		this.setState({ 
 			charts: newCharts,
-			showMetrics: false
+			loading: false,
 		});
 	}
 
@@ -92,7 +100,7 @@ class ChartPicker extends React.Component {
 	}
 
 	render() {
-		const { availableMetrics, showMetrics, charts } = this.state;
+		const { availableMetrics, showMetrics, charts, loading } = this.state;
 		return (
 			<div
 				id="chartPickerWrapper"
@@ -104,19 +112,14 @@ class ChartPicker extends React.Component {
 				>
 					<img src={DataLogo} className="dataSVG" alt="Change Data" />
 				</button>
-				{charts.map(chart => (
-					<Chart 
-						key={chart.id} 
-						chartData={chart}
-						removeChart={this.removeChart.bind(this)}
-					/>
-				))}
+
 				<button 
 					id="pickChartBtn"
 					onClick={() => this.toggleMetrics()}
 					className={this.checkVisibility()}
+					disabled={loading ? true : ""}
 				>
-					+
+					{loading ? <img src={LoadingIcon} className="loadingIcon" /> : "+"}
 				</button>
 				<div 
 					id="metricBtnList"
@@ -132,6 +135,14 @@ class ChartPicker extends React.Component {
 						</button>
 					))}
 				</div>
+
+				{charts.sort((a, b) => b.id - a.id).map(chart => (
+					<Chart 
+						key={chart.id} 
+						chartData={chart}
+						removeChart={this.removeChart.bind(this)}
+					/>
+				))}
 			</div>
 		);
 	}

@@ -6,8 +6,8 @@
 }
 #dataLogo {
     position: fixed;
-    width: 40px;
-    height: 40px;
+    width: 60px;
+    height: 60px;
     text-align: center;
     left: 10px;
     top: 10px;
@@ -21,15 +21,17 @@
     box-sizing: border-box;
 }
 .dataSVG {
-    width: 25px;
+    width: 40px;
     filter: invert(89%) sepia(23%) saturate(0%) hue-rotate(76deg) brightness(108%) contrast(103%);
 }
 #dataLogo:hover .dataSVG { 
     filter: invert(63%) sepia(51%) saturate(1315%) hue-rotate(355deg) brightness(100%) contrast(91%);
 }
 #chartPickerWrapper #pickChartBtn {
+    position: relative;
     display: block;
-    width: 90%;
+    width: 80%;
+    max-width: 1500px;
     height: 60px;
     line-height: 60px;
     font-size: 40px;
@@ -42,19 +44,27 @@
 #chartPickerWrapper #pickChartBtn:hover {
     filter: brightness(1.25);
 }
+#chartPickerWrapper #pickChartBtn:disabled {
+    cursor: default;
+    filter: brightness(1.25);
+}
+.loadingIcon {
+    height: 70%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
 #chartPickerWrapper #metricBtnList {
     display: block;
-
     height: 500px;
-    width: 90%;
-
+    width: 80%;
+    max-width: 1500px;
     margin: auto;
     text-align: left;;
-
     overflow-x: hidden;
     overflow-y: scroll;
     scrollbar-width: none;  /* Firefox */
-
     border: 1px solid black;
     box-sizing: border-box;
 }

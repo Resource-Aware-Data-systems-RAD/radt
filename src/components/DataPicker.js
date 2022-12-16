@@ -75,8 +75,16 @@ class DataPicker extends React.Component {
 		let newSelectedWorkloads = [...selectedWorkloads];
 		let newSelectedRuns = [...selectedRuns];
 
-		// four different ways the yser can add data to selection
-		if (run === null) {
+		// five different ways the user can add/remove data to selection
+		if (workload === "null" && run === null) {
+			newSelectedRuns.forEach(run => {	
+				if (run.workload.substring(run.workload.indexOf("-") + 1) === "null") {
+					const runIndex = newSelectedRuns.findIndex(el => el.name === run.name);
+					newSelectedRuns = newSelectedRuns.slice(0, runIndex).concat(newSelectedRuns.slice(runIndex + 1));
+				}
+			});
+		}
+		else if (run === null) {
 			// add all runs from this workload to selection if they are not already added
 			let workloadIndex = newSelectedWorkloads.indexOf(workload);
 			if (workloadIndex === -1) {
@@ -305,10 +313,7 @@ function Selections(props) {
 	}
 
 	return (   
-
-		<div 
-			id="selectionsWrapper"
-		>
+		<div id="selectionsWrapper">
 			{ /* render all workloads */ }
 			{visibleSelection.map(visibleWorkload => (
 				<div

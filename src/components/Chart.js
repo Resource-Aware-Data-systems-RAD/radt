@@ -111,8 +111,7 @@ class Chart extends React.Component {
                         boostThreshold: 1,
                         marker: {
                             radius: 1
-                        },      
-                        showInNavigator: false,    
+                        },       
                         states: {
                             hover: {
                                 enabled: false,
@@ -130,7 +129,7 @@ class Chart extends React.Component {
                                 'millisecond', 
                                 [1] 
                             ]]
-                        }
+                        },
                     },
                 },
             },
@@ -197,7 +196,6 @@ class Chart extends React.Component {
         });
     
         // update state which will update render of chart
-        const { metric } = this.state;
         this.setState({
             id: chartData.id,
             data: chartData.data,
@@ -215,7 +213,7 @@ class Chart extends React.Component {
     }
 
     componentDidUpdate(prevProps, prevState) {
-        if (prevState.loading != this.state.loading) {
+        if (prevState.loading !== this.state.loading) {
             //console.log("Finished!"); // debugging
         }
     }

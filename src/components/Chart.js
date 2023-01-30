@@ -1,4 +1,5 @@
 import React from 'react';
+import { useId, useState } from 'react';
 import Highcharts from 'highcharts/highstock';
 import HighchartsReact from 'highcharts-react-official';
 import '../styles/Chart.css';
@@ -11,7 +12,7 @@ class Chart extends React.Component {
             loading: true,
             id: null,
             data: [],
-            series: [],
+            smoothing: 0,
             options: {
                 exporting: {
                     scale: 3,
@@ -134,13 +135,15 @@ class Chart extends React.Component {
                 },
             },
 		};    
+        this.slider = React.createRef();
 	}
 
     componentDidMount() {
-        this.generateSeries(this.props.chartData);
+        this.generateSeries(this.props.chartData, 0); // generate the initial state of the series
+        this.slider.current.addEventListener('change', e => this.setSmoothness(e.target.value)); // ref to set smoothing only after user releases slider
     }
 
-    generateSeries(chartData) {
+    generateSeries(chartData, smoothing) {
 
         let data = chartData.data;
 
@@ -194,7 +197,19 @@ class Chart extends React.Component {
             // prevent duplicate ids in highcharts api
             delete series.id;
         });
-    
+
+
+
+        if (smoothing > 0) {
+            //let test = calcEMA(allSeries[0].data, smoothing);
+
+            allSeries.forEach(series => {
+                series.data = calcEMA(series.data, smoothing);
+            });
+        }
+        
+
+
         // update state which will update render of chart
         this.setState({
             id: chartData.id,
@@ -212,6 +227,14 @@ class Chart extends React.Component {
         });
     }
 
+    setSmoothness(smoothing) {
+        console.log(smoothing);          
+        this.generateSeries(this.props.chartData, smoothing);
+        this.setState({
+            smoothing: smoothing
+        })
+    }
+
     componentDidUpdate(prevProps, prevState) {
         if (prevState.loading !== this.state.loading) {
             //console.log("Finished!"); // debugging
@@ -219,7 +242,7 @@ class Chart extends React.Component {
     }
 
     render() {
-        const { options, id } = this.state;
+        const { options, id, smoothing } = this.state;
         return (
             <div className="chartWrapper">
                 <button 
@@ -235,6 +258,10 @@ class Chart extends React.Component {
                     options={options}         
                     ref={ this.chartRef }
                 />
+                <div id="smootherWrapper">
+                    <label htmlFor="smoother">Smoothness: </label>
+                    <input ref={this.slider} defaultValue="0" type="range" name="smoother" min="0" max="100" /> {smoothing}
+                </div>
             </div>
         );
     }
@@ -253,6 +280,32 @@ function milliToMinsSecs(ms) {
     }
     return label;
 }
+function calcEMA(series, smoothing) {
+
+
+    smoothing = smoothing * 0.2;
+
+    console.log(series);
+
+    let time = series.map(a => a[0]); 
+    let data = series.map(a => a[1]);
+    
+    let emaData = [data[0]];
+
+    const k = 2 / (smoothing + 1);
+    for (var i = 1; i < series.length; i++) {
+        const emaResult = data[i] * k + emaData[i - 1] * (1 - k);
+        emaData.push(emaResult.toFixed(4) * 1);
+    }
+
+    let parsedData = [];
+    for (let i = 0; i < emaData.length; i++) {           
+        parsedData.push([time[i], emaData[i]]);
+    }
+    
+    console.log(parsedData);
+
+    return parsedData;
+}
 
 export default Chart;
-

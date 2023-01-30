@@ -4,14 +4,16 @@
     width: 80%;
     max-width: 1500px;
     margin: auto;
-    padding: 0;
+    padding: 10px 0 10px 0;
+
+    margin: 10px auto 20px auto;
+    border: 1px solid black;
 }
 .chart {
     display: block;
     height: 750px;
     width: 100%;
-    margin: 10px auto 20px auto;
-    border: 1px solid black;
+
 }
 .highcharts-navigator {
     cursor: pointer !important;
@@ -35,7 +37,11 @@
     border: none;
     font-weight: bold;
     cursor: pointer;
+    margin: 0;
 }
 .removeChartBtn:hover { 
-    filter: invert(63%) sepia(51%) saturate(1315%) hue-rotate(355deg) brightness(100%) contrast(91%);
+    filter: brightness(1.5);
+}
+#smootherWrapper input {
+    cursor: pointer;
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useId, useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Highcharts from 'highcharts/highstock';
 import HighchartsReact from 'highcharts-react-official';
 import '../styles/Chart.css';
@@ -12,7 +12,6 @@ class Chart extends React.Component {
             loading: true,
             id: null,
             data: [],
-            smoothing: 0,
             options: {
                 exporting: {
                     scale: 3,
@@ -134,13 +133,11 @@ class Chart extends React.Component {
                     },
                 },
             },
-		};    
-        this.slider = React.createRef();
+		}; 
 	}
 
     componentDidMount() {
         this.generateSeries(this.props.chartData, 0); // generate the initial state of the series
-        this.slider.current.addEventListener('change', e => this.setSmoothness(e.target.value)); // ref to set smoothing only after user releases slider
     }
 
     generateSeries(chartData, smoothing) {
@@ -201,8 +198,6 @@ class Chart extends React.Component {
 
 
         if (smoothing > 0) {
-            //let test = calcEMA(allSeries[0].data, smoothing);
-
             allSeries.forEach(series => {
                 series.data = calcEMA(series.data, smoothing);
             });
@@ -230,9 +225,6 @@ class Chart extends React.Component {
     setSmoothness(smoothing) {
         console.log(smoothing);          
         this.generateSeries(this.props.chartData, smoothing);
-        this.setState({
-            smoothing: smoothing
-        })
     }
 
     componentDidUpdate(prevProps, prevState) {
@@ -242,7 +234,7 @@ class Chart extends React.Component {
     }
 
     render() {
-        const { options, id, smoothing } = this.state;
+        const { options, id } = this.state;
         return (
             <div className="chartWrapper">
                 <button 
@@ -258,14 +250,36 @@ class Chart extends React.Component {
                     options={options}         
                     ref={ this.chartRef }
                 />
-                <div id="smootherWrapper">
-                    <label htmlFor="smoother">Smoothness: </label>
-                    <input ref={this.slider} defaultValue="0" type="range" name="smoother" min="0" max="100" /> {smoothing}
-                </div>
+                <Slider 
+                    onSetSmoothness={this.setSmoothness.bind(this)}
+                />
             </div>
         );
     }
+}
 
+class Slider extends React.Component { 
+    constructor(props) {
+		super(props);
+		this.state = {
+            smoothness: 0
+        } 
+        this.slider = React.createRef();
+	}
+
+    componentDidMount() {
+        this.slider.current.addEventListener('change', e => this.props.onSetSmoothness(e.target.value));
+    }
+
+    render () {
+        const { smoothness } = this.state;
+        return (
+            <div id="smootherWrapper">
+                <label htmlFor="smoother">Smoothness: </label>
+                <input ref={this.slider} onChange={e => this.setState({smoothness: e.target.value})} defaultValue="0" type="range" name="smoother" min="0" max="100" /> {smoothness}
+            </div>
+        )       
+    }
 }
 
 /* Chart component helper functions */
@@ -280,32 +294,33 @@ function milliToMinsSecs(ms) {
     }
     return label;
 }
-function calcEMA(series, smoothing) {
+function calcEMA(series, range) {
 
+    // UI smooth range is normalised between 1 and 100, which is high, so reduce
+    range = range * 0.2;
 
-    smoothing = smoothing * 0.2;
-
-    console.log(series);
-
+    // separate data from timestamps
     let time = series.map(a => a[0]); 
-    let data = series.map(a => a[1]);
-    
-    let emaData = [data[0]];
+    let data = series.map(a => a[1]);  
 
-    const k = 2 / (smoothing + 1);
+    // first item is just first data item
+    let emaData = [data[0]]; 
+
+    // apply smoothing according to range and add to new EMA array
+    const k = 2 / (range + 1);    
     for (var i = 1; i < series.length; i++) {
         const emaResult = data[i] * k + emaData[i - 1] * (1 - k);
         emaData.push(emaResult.toFixed(4) * 1);
     }
 
-    let parsedData = [];
+    // recombine the new EMA array with the timestamp array
+    let emaSeries = [];
     for (let i = 0; i < emaData.length; i++) {           
-        parsedData.push([time[i], emaData[i]]);
+        emaSeries.push([time[i], emaData[i]]);
     }
-    
-    console.log(parsedData);
 
-    return parsedData;
+    // return final series for highcharts API
+    return emaSeries;
 }
 
 export default Chart;

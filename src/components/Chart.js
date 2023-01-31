@@ -250,7 +250,8 @@ class Chart extends React.Component {
                     options={options}         
                     ref={ this.chartRef }
                 />
-                <Slider 
+                
+                <TestSlider 
                     onSetSmoothness={this.setSmoothness.bind(this)}
                 />
             </div>
@@ -280,6 +281,27 @@ class Slider extends React.Component {
             </div>
         )       
     }
+}
+
+
+function TestSlider(props) {
+    const [smoothness, showSmoothness,] = useState(0);
+    const slider = useRef();
+
+    useEffect(() => {
+        slider.current.addEventListener('change', e => props.onSetSmoothness(e.target.value));
+    }, []);
+    
+    const handleShowSmoothness = e => {
+        showSmoothness(e.target.value);
+    };
+
+    return (
+        <div id="smootherWrapper">
+                <label htmlFor="smoother">Smoothness: </label>
+                <input ref={slider} onChange={handleShowSmoothness} defaultValue="0" type="range" name="smoother" min="0" max="100" /> {smoothness}
+        </div>
+    );
 }
 
 /* Chart component helper functions */

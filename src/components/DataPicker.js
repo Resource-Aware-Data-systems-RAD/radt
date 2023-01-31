@@ -351,6 +351,7 @@ function Selections(props) {
 	);
 }
 
+/* DataPicker helper functions */
 function milliToMinsSecs(ms) {
     let label;
     let numOfDays = Math.trunc(ms / 86400000);

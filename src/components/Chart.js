@@ -44,8 +44,8 @@ class Chart extends React.Component {
                                     align: 'right'
                                 }).add().align({
                                     align: 'right',
-                                    x: -15,
-                                    y: 40
+                                    x: -10,
+                                    y: 710
                                 }, false, null);
                             }
                             if(!event.min && !event.max){
@@ -137,7 +137,7 @@ class Chart extends React.Component {
 	}
 
     componentDidMount() {
-        this.generateSeries(this.props.chartData, 0); // generate the initial state of the series
+        this.generateSeries(this.props.chartData, 0); 
     }
 
     generateSeries(chartData, smoothing) {
@@ -195,16 +195,29 @@ class Chart extends React.Component {
             delete series.id;
         });
 
-
-
+        // apply smoothing to each series if over zero
         if (smoothing > 0) {
             allSeries.forEach(series => {
                 series.data = calcEMA(series.data, smoothing);
             });
         }
+
+        allSeries.forEach(series => {
+            for (let i = 0; i < series.data.length; i++) {     
+
+                //console.log(series.data[i][1]);
+                
+                
+                if (series.data[i][0] === undefined || series.data[i][0] === null || isNaN(series.data[i][0])) {
+                    console.log("TIME: " + series.data[i][0]);
+                }
+
+                if (series.data[i][1] === undefined || series.data[i][1] === null || isNaN(series.data[i][1])) {
+                    console.log("DATA: " + series.data[i][1]);
+                }
+            }
+        });
         
-
-
         // update state which will update render of chart
         this.setState({
             id: chartData.id,
@@ -222,8 +235,7 @@ class Chart extends React.Component {
         });
     }
 
-    setSmoothness(smoothing) {
-        console.log(smoothing);          
+    applySmoothness(smoothing) { 
         this.generateSeries(this.props.chartData, smoothing);
     }
 
@@ -249,42 +261,17 @@ class Chart extends React.Component {
                     containerProps={{className: "chart"}}
                     options={options}         
                     ref={ this.chartRef }
-                />
-                
-                <TestSlider 
-                    onSetSmoothness={this.setSmoothness.bind(this)}
+                />          
+                <Slider 
+                    onSetSmoothness={this.applySmoothness.bind(this)}
                 />
             </div>
         );
     }
 }
 
-class Slider extends React.Component { 
-    constructor(props) {
-		super(props);
-		this.state = {
-            smoothness: 0
-        } 
-        this.slider = React.createRef();
-	}
-
-    componentDidMount() {
-        this.slider.current.addEventListener('change', e => this.props.onSetSmoothness(e.target.value));
-    }
-
-    render () {
-        const { smoothness } = this.state;
-        return (
-            <div id="smootherWrapper">
-                <label htmlFor="smoother">Smoothness: </label>
-                <input ref={this.slider} onChange={e => this.setState({smoothness: e.target.value})} defaultValue="0" type="range" name="smoother" min="0" max="100" /> {smoothness}
-            </div>
-        )       
-    }
-}
-
-
-function TestSlider(props) {
+/* Chart functional components */
+function Slider(props) {
     const [smoothness, showSmoothness,] = useState(0);
     const slider = useRef();
 
@@ -299,12 +286,13 @@ function TestSlider(props) {
     return (
         <div id="smootherWrapper">
                 <label htmlFor="smoother">Smoothness: </label>
-                <input ref={slider} onChange={handleShowSmoothness} defaultValue="0" type="range" name="smoother" min="0" max="100" /> {smoothness}
+                <input ref={slider} onChange={handleShowSmoothness} defaultValue="0" type="range" name="smoother" min="0" max="100" /> 
+                {smoothness}
         </div>
     );
 }
 
-/* Chart component helper functions */
+/* Chart helper functions */
 function milliToMinsSecs(ms) {
     let label;
     let numOfDays = Math.trunc(ms / 86400000);

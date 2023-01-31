@@ -38,8 +38,11 @@ class ChartPicker extends React.Component {
 			showMetrics: false
 		});
 
+		// deep clone run selections and fetch chart data for each run
 		const chartRuns = structuredClone(this.props.pushSelectedRuns);
 		const chartData = await HTTP.fetchChart(chartRuns, metric);
+
+		// add the run data to the cloned run selections
 		chartData.forEach(data => {	
 			chartRuns.forEach(run => {
 				if (run.name === data.name) {			
@@ -54,7 +57,11 @@ class ChartPicker extends React.Component {
 				}
 			});
 		});
+
+		// grab the current chart data from the current state
 		const { charts } = this.state;
+
+		// add the new chart data to the state with a unique ID based on unix timestamp
 		let newCharts = [...charts];
 		const chartId = Date.now().toString();
 		newCharts.push({ 
@@ -62,10 +69,9 @@ class ChartPicker extends React.Component {
 			data: chartRuns,
 			metric: metric
 		});
-		this.setState({ 
-			charts: newCharts,
-			loading: false,
-		});
+
+		// update chart state with new data
+		this.setCharts(newCharts);
 	}
 
 	/* check if metrics button should be visible */
@@ -81,14 +87,58 @@ class ChartPicker extends React.Component {
 
 	/* removes chart from state using its id */
 	removeChart(id) {
-		let newCharts = [...this.state.charts];
+		let newCharts = [...this.state.charts].filter(chart => chart.id !== id);
+		this.setCharts(newCharts);
+	}
+
+	setCharts(newChartData) {
 		this.setState({
-			charts: newCharts.filter(chart => chart.id !== id)
+			charts: newChartData,
+			loading: false,
 		});
+
+		localStorage.removeItem("localCharts");
+		if (newChartData.length > 0) {
+			const newChartsString = JSON.stringify(newChartData);
+			localStorage.setItem("localCharts", newChartsString);
+
+
+
+			/*
+			console.log("ATTEMPTING TO SAVE");
+			const blob = new Blob([newChartsString], {type: 'text/plain'});
+			if(window.navigator.msSaveOrOpenBlob) {
+				window.navigator.msSaveBlob(blob, "test");
+			}
+			else{
+				const elem = window.document.createElement('a');
+				elem.href = window.URL.createObjectURL(blob);
+				elem.download = "test";        
+				document.body.appendChild(elem);
+				elem.click();        
+				document.body.removeChild(elem);
+			}
+			*/
+
+
+
+		}
+		else {
+			this.props.toggleDataPicker(true);
+		}
 	}
 
 	componentDidMount() {
+		// fetch available metrics for any selected runs
 		this.fetchMetrics(this.props.pushSelectedRuns);
+
+		// check localSStorage for pre-existing chart data
+		const localCharts = JSON.parse(localStorage.getItem("localCharts"))
+		if (localCharts !== null) {
+			this.setCharts(localCharts);
+			this.props.toggleDataPicker(false);
+			console.log("GET: charts loaded from localStorage");
+		}
 	}
 
 	componentDidUpdate(prevProps) {

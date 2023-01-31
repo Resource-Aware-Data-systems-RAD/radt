@@ -3,8 +3,6 @@ import DataPicker from './DataPicker';
 import ChartPicker from './ChartPicker';
 import '../styles/App.css';
 
-import LocalDataTest from './LocalDataTest';
-
 class App extends React.Component {
 
 	constructor(props) {

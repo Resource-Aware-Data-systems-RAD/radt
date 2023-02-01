@@ -92,38 +92,18 @@ class ChartPicker extends React.Component {
 	}
 
 	setCharts(newChartData) {
+
+		// apply chart data to state
 		this.setState({
 			charts: newChartData,
 			loading: false,
 		});
 
-		localStorage.removeItem("localCharts");
-		if (newChartData.length > 0) {
-			const newChartsString = JSON.stringify(newChartData);
-			localStorage.setItem("localCharts", newChartsString);
+		// save data to local storage to persist through refreshes
+		storeInLocalStorage(newChartData);
 
-
-
-			/*
-			console.log("ATTEMPTING TO SAVE");
-			const blob = new Blob([newChartsString], {type: 'text/plain'});
-			if(window.navigator.msSaveOrOpenBlob) {
-				window.navigator.msSaveBlob(blob, "test");
-			}
-			else{
-				const elem = window.document.createElement('a');
-				elem.href = window.URL.createObjectURL(blob);
-				elem.download = "test";        
-				document.body.appendChild(elem);
-				elem.click();        
-				document.body.removeChild(elem);
-			}
-			*/
-
-
-
-		}
-		else {
+		// open data picker if not charts loaded
+		if (newChartData.length === 0) {
 			this.props.toggleDataPicker(true);
 		}
 	}
@@ -134,7 +114,7 @@ class ChartPicker extends React.Component {
 
 		// check localSStorage for pre-existing chart data
 		const localCharts = JSON.parse(localStorage.getItem("localCharts"))
-		if (localCharts !== null) {
+		if (localCharts !== null && localCharts.length !== 0) {
 			this.setCharts(localCharts);
 			this.props.toggleDataPicker(false);
 			console.log("GET: charts loaded from localStorage");
@@ -169,7 +149,7 @@ class ChartPicker extends React.Component {
 					className={this.checkVisibility()}
 					disabled={loading ? true : ""}
 				>
-					{loading ? <img src={LoadingIcon} className="loadingIcon" /> : "+"}
+					{loading ? <img src={LoadingIcon} className="loadingIcon" alt="Loading..." /> : "+"}
 				</button>
 				<div 
 					id="metricBtnList"
@@ -196,6 +176,43 @@ class ChartPicker extends React.Component {
 			</div>
 		);
 	}
+}
+
+
+
+/* ChartPicker helper functions */
+function downloadChartData(dataString) {
+	
+	const fileName = "data_" + new Date().toISOString();
+	console.log("Downloading data... " + fileName);
+
+	const blob = new Blob([dataString], {type: 'text/plain'});
+	if(window.navigator.msSaveOrOpenBlob) {
+		console.log("foo");
+		window.navigator.msSaveBlob(blob, fileName);
+	}
+	else{
+		console.log("bar");
+		const elem = window.document.createElement('a');
+		elem.href = window.URL.createObjectURL(blob);
+		elem.download = fileName;        
+		document.body.appendChild(elem);
+		elem.click();        
+		document.body.removeChild(elem);
+	}
+}
+function storeInLocalStorage(dataString) {
+
+	const newChartsString = JSON.stringify(dataString);
+	try {
+		localStorage.setItem("localCharts", newChartsString);
+
+		console.log("Saving to localStorage...");
+	} 
+	catch (e) {
+		alert(e);
+	}
+
 }
 
 export default ChartPicker;

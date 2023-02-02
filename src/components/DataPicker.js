@@ -130,11 +130,28 @@ class DataPicker extends React.Component {
 
 		// pull copy of selected runs up to parent
 		this.props.pullSelectedRuns(newSelectedRuns);
+
+
+
+		submitToLocalStorage(newSelectedWorkloads, newSelectedRuns);
+
+
 	}
 
 	componentDidMount() {
+		// fetch data to populate pickers
 		this.fetchExperiments();
 		this.fetchRuns();
+
+		// check if any selected runs are in local storage
+		const localRunsAndWorkloadData = pullFromLocalStorage();
+		if (localRunsAndWorkloadData.runData != undefined && localRunsAndWorkloadData.workloadData != undefined) {
+			this.setState({
+				selectedWorkloads: localRunsAndWorkloadData.workloadData,
+				selectedRuns: localRunsAndWorkloadData.runData
+			});
+			this.props.pullSelectedRuns(localRunsAndWorkloadData.runData);
+		}
 	}
 
 	render() {
@@ -362,6 +379,35 @@ function milliToMinsSecs(ms) {
         label = new Date(ms).toISOString().slice(11, 19);
     }
     return label;
+}
+function submitToLocalStorage(workloadData, runData) {
+
+	const workloadDataString = JSON.stringify(workloadData);
+	localStorage.setItem("selectedWorkloads", workloadDataString);
+
+	const runDataString = JSON.stringify(runData);
+	localStorage.setItem("selectedRuns", runDataString);
+
+}
+function pullFromLocalStorage() {
+
+	// pull workload data (just for data picker)
+	const workloadDataString = localStorage.getItem("selectedWorkloads");
+	const workloadData = JSON.parse(workloadDataString);
+
+	// pull run data (important stuff)
+	const runDataString = localStorage.getItem("selectedRuns");
+	const runData = JSON.parse(runDataString);
+	
+	// combine and return it
+	const runsAndWorkloadData = [];
+	if (runData != null) {
+		runsAndWorkloadData.runData = runData;
+	}
+	if (workloadData != null) {
+		runsAndWorkloadData.workloadData = workloadData;
+	}
+	return runsAndWorkloadData;
 }
 
 export default DataPicker;

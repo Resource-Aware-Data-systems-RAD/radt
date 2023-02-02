@@ -286,8 +286,8 @@ function Slider(props) {
     return (
         <div id="smootherWrapper">
                 <label htmlFor="smoother">Smoothness: </label>
-                <input ref={slider} onChange={handleShowSmoothness} defaultValue="0" type="range" name="smoother" min="0" max="100" /> 
-                {smoothness}
+                <input ref={slider} onChange={handleShowSmoothness} defaultValue="0" type="range" name="smoother" min="0" max="99" /> 
+                {smoothness}%
         </div>
     );
 }
@@ -304,10 +304,10 @@ function milliToMinsSecs(ms) {
     }
     return label;
 }
-function calcEMA(series, range) {
+function calcEMA(series, smoothingWeight) {
 
-    // UI smooth range is normalised between 1 and 100, which is high, so reduce
-    range = range * 0.2;
+    // calculate smoothness using the smoothingWeight divided by the max smoothness
+    const smoothness = smoothingWeight / 100;
 
     // separate data from timestamps
     let time = series.map(a => a[0]); 
@@ -317,9 +317,9 @@ function calcEMA(series, range) {
     let emaData = [data[0]]; 
 
     // apply smoothing according to range and add to new EMA array
-    const k = 2 / (range + 1);    
+    const k = 2 / (smoothness + 1);    
     for (var i = 1; i < series.length; i++) {
-        const emaResult = data[i] * k + emaData[i - 1] * (1 - k);
+        const emaResult = data[i] * (1 - smoothness) + emaData[i - 1] * (smoothness);
         emaData.push(emaResult.toFixed(4) * 1);
     }
 

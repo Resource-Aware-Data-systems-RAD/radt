@@ -31,7 +31,7 @@ class ChartPicker extends React.Component {
 	}
 
 	/* fetch all data for each run */
-	async fetchChart(metric) {
+	async fetchChartData(metric) {
 
 		this.setState({ 
 			loading: true,
@@ -40,7 +40,13 @@ class ChartPicker extends React.Component {
 
 		// deep clone run selections and fetch chart data for each run
 		const chartRuns = structuredClone(this.props.pushSelectedRuns);
-		const chartData = await HTTP.fetchChart(chartRuns, metric);
+		let chartData = await HTTP.fetchChart(chartRuns, metric);
+
+		// prevent app getting stuck on load if server fails to fetch
+		if (chartData.length === 0) {
+			this.setState({ loading: false });
+			return;
+		}
 
 		// add the run data to the cloned run selections
 		chartData.forEach(data => {	
@@ -99,12 +105,14 @@ class ChartPicker extends React.Component {
 			loading: false,
 		});
 
-		// save data to local storage to persist through refreshes
-		storeInLocalStorage(newChartData);
-
-		// open data picker if not charts loaded
+		// open data picker if no charts loaded
 		if (newChartData.length === 0) {
-			this.props.toggleDataPicker(true);
+			localStorage.removeItem("localCharts");
+			this.props.toggleDataPicker(true);	
+		}
+		else {
+			// save data to local storage to persist through refreshes
+			//storeInLocalStorage(newChartData);
 		}
 	}
 
@@ -159,7 +167,7 @@ class ChartPicker extends React.Component {
 						<button
 							key={metric}
 							className="metricBtn"
-							onClick={() => this.fetchChart(metric)}
+							onClick={() => this.fetchChartData(metric)}
 						>
 							{metric}
 						</button>
@@ -177,7 +185,6 @@ class ChartPicker extends React.Component {
 		);
 	}
 }
-
 
 
 /* ChartPicker helper functions */
@@ -201,18 +208,20 @@ function downloadChartData(dataString) {
 		document.body.removeChild(elem);
 	}
 }
-function storeInLocalStorage(dataString) {
+function storeInLocalStorage(chartData) {
+	let chartDataToBeLoaded = chartData.sort((a, b) => b.id - a.id);
+	for (let i = 1; i < chartData.length + 1; i++) {	
+		try {
+			const newChartsString = JSON.stringify(chartDataToBeLoaded);
+			localStorage.setItem("localCharts", newChartsString);
+			break;
+		}
+		catch {
 
-	const newChartsString = JSON.stringify(dataString);
-	try {
-		localStorage.setItem("localCharts", newChartsString);
-
-		console.log("Saving to localStorage...");
-	} 
-	catch (e) {
-		alert(e);
+			chartDataToBeLoaded = chartData.slice(0, i * -1);
+			continue;
+		}
 	}
-
 }
 
 export default ChartPicker;

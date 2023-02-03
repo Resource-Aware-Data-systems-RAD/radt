@@ -17,20 +17,20 @@ class ChartPicker extends React.Component {
 		};
 	}
 
-	/* fetch all available metrics for the current selected runs */
+	// fetch all available metrics for the current selected runs 
 	async fetchMetrics() {
 		const selectedRuns = this.props.pushSelectedRuns;	
 		const data = await HTTP.fetchMetrics(selectedRuns);
 		this.setState({availableMetrics: data});
 	}
 
-	/* toggle metric list visibility */
+	// toggle metric list visibility 
 	toggleMetrics() {
 		const toShow = this.state.showMetrics;
 		this.setState({ showMetrics: !toShow})
 	}
 
-	/* fetch all data for each run */
+	// fetch all data for each run 
 	async fetchChartData(metric) {
 
 		this.setState({ 
@@ -80,7 +80,7 @@ class ChartPicker extends React.Component {
 		this.setCharts(newCharts);
 	}
 
-	/* check if metrics button should be visible */
+	// check if metrics button should be visible 
 	checkVisibility() {
 		const { availableMetrics } = this.state;
 		if (availableMetrics.length === 0) {
@@ -91,12 +91,13 @@ class ChartPicker extends React.Component {
 		}
 	}
 
-	/* removes chart from state using its id */
+	// removes chart from state using its id 
 	removeChart(id) {
 		let newCharts = [...this.state.charts].filter(chart => chart.id !== id);
 		this.setCharts(newCharts);
 	}
 
+	// add chart data to state for rendering 
 	setCharts(newChartData) {
 
 		// apply chart data to state
@@ -112,8 +113,63 @@ class ChartPicker extends React.Component {
 		}
 		else {
 			// save data to local storage to persist through refreshes
-			//storeInLocalStorage(newChartData);
+			//storeChartDataInLocalStorage(newChartData);
+			this.props.toggleDataPicker(false);	
 		}
+	}
+
+	// upload data from a locally saved .txt file
+	async uploadLocalData() {
+		const localChartData = await new Promise((resolve) => {
+			if (window.File && window.FileReader && window.FileList && window.Blob) {
+				var file = document.querySelector('input[type=file]').files[0];
+				var reader = new FileReader()
+				var textFile = /text.*/;
+				if (file.type.match(textFile)) {
+					reader.onload = function (event) {
+						try {
+							const data = JSON.parse(event.target.result);
+							resolve(data);
+						}
+						catch {
+							alert("Incompatible data file!");
+						}			
+					}
+				} 
+				else {
+				   alert("Incompatible data file!");
+				}
+				reader.readAsText(file);
+			} 
+			else {
+				alert("This browser is too old to support uploading data.");
+			}
+		});
+		this.setCharts(localChartData);
+	}
+
+	// download data to a locally saved .txt file
+	downloadLocalData() {
+		if (this.state.charts.length > 0) {
+			const chartDataString = JSON.stringify(this.state.charts);
+			const fileName = "data_" + new Date().toISOString() + ".txt";
+			const blob = new Blob([chartDataString], {type: 'text/plain'});
+			if(window.navigator.msSaveOrOpenBlob) {
+				window.navigator.msSaveBlob(blob, fileName);
+			}
+			else{
+				const elem = window.document.createElement('a');
+				elem.href = window.URL.createObjectURL(blob);
+				elem.download = fileName;        
+				document.body.appendChild(elem);
+				elem.click();        
+				document.body.removeChild(elem);
+			}
+			console.log("Downloading data... " + fileName);
+		}
+		else {
+			alert("No charts loaded.")
+		}	
 	}
 
 	componentDidMount() {
@@ -143,6 +199,14 @@ class ChartPicker extends React.Component {
 			<div
 				id="chartPickerWrapper"
 			>
+				{/*} Download & Upload Buttons {*/}
+				<div id="downloadUploadWrapper">
+					<button className="localDataUpload" onClick={() => this.downloadLocalData()}>Download Charts</button>
+					<label id="localDataUploadButton" htmlFor="localDataUpload">Upload Charts</label>
+					<input id="localDataUpload" type="file" onChange={this.uploadLocalData.bind(this)} />
+				</div>
+
+				{/*} Data Button {*/}
 				<button 
 					id="dataLogo"
 					onClick={() => this.props.toggleDataPicker(true)}
@@ -151,6 +215,7 @@ class ChartPicker extends React.Component {
 					<img src={DataLogo} className="dataSVG" alt="Change Data" />
 				</button>
 
+				{/*} Pick Chart Button {*/}
 				<button 
 					id="pickChartBtn"
 					onClick={() => this.toggleMetrics()}
@@ -159,6 +224,8 @@ class ChartPicker extends React.Component {
 				>
 					{loading ? <img src={LoadingIcon} className="loadingIcon" alt="Loading..." /> : "+"}
 				</button>
+
+				{/*} Metrics List {*/}
 				<div 
 					id="metricBtnList"
 					className={showMetrics ? null : "hide"}
@@ -174,6 +241,7 @@ class ChartPicker extends React.Component {
 					))}
 				</div>
 
+				{/*} Charts List {*/}
 				{charts.sort((a, b) => b.id - a.id).map(chart => (
 					<Chart 
 						key={chart.id} 
@@ -188,27 +256,7 @@ class ChartPicker extends React.Component {
 
 
 /* ChartPicker helper functions */
-function downloadChartData(dataString) {
-	
-	const fileName = "data_" + new Date().toISOString();
-	console.log("Downloading data... " + fileName);
-
-	const blob = new Blob([dataString], {type: 'text/plain'});
-	if(window.navigator.msSaveOrOpenBlob) {
-		console.log("foo");
-		window.navigator.msSaveBlob(blob, fileName);
-	}
-	else{
-		console.log("bar");
-		const elem = window.document.createElement('a');
-		elem.href = window.URL.createObjectURL(blob);
-		elem.download = fileName;        
-		document.body.appendChild(elem);
-		elem.click();        
-		document.body.removeChild(elem);
-	}
-}
-function storeInLocalStorage(chartData) {
+function storeChartDataInLocalStorage(chartData) {
 	let chartDataToBeLoaded = chartData.sort((a, b) => b.id - a.id);
 	for (let i = 1; i < chartData.length + 1; i++) {	
 		try {

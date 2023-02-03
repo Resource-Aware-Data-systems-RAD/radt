@@ -79,3 +79,30 @@
     cursor: pointer;
     text-align: left;
 }
+#downloadUploadWrapper .localDataUpload {
+    display: inline-block;
+    border: 1px solid black;
+    cursor: pointer;
+    padding: 5px;
+    margin: 5px;
+    background-color: lightgray;
+    font-size: 16px;
+}
+#downloadUploadWrapper .localDataUpload:hover {
+    background-color: white;
+}
+#downloadUploadWrapper #localDataUpload {
+    display: none;
+}
+#downloadUploadWrapper #localDataUploadButton {
+    display: inline-block;
+    border: 1px solid black;
+    cursor: pointer;
+    padding: 5px;
+    margin: 5px;
+    background-color: lightgray;
+    font-size: 16px;
+}
+#downloadUploadWrapper #localDataUploadButton:hover {
+    background-color: white;
+}

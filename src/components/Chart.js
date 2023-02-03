@@ -149,6 +149,11 @@ class Chart extends React.Component {
         data.forEach(run => {
             if (run.data !== undefined) {
 
+
+                console.log(run.workload);
+                console.log(run.data);
+
+
                 // check for unsorted runs
                 let workloadId = run.workload;
                 if (workloadId.substring(workloadId.indexOf("-") + 1) === "null") {
@@ -173,8 +178,12 @@ class Chart extends React.Component {
                     })
                 }
 
+
+                console.log(allSeries);
+
+
             }
-        });       
+        });
 
         // sort all series by unix timestamp
         allSeries.forEach(series => {
@@ -201,22 +210,6 @@ class Chart extends React.Component {
                 series.data = calcEMA(series.data, smoothing);
             });
         }
-
-        allSeries.forEach(series => {
-            for (let i = 0; i < series.data.length; i++) {     
-
-                //console.log(series.data[i][1]);
-                
-                
-                if (series.data[i][0] === undefined || series.data[i][0] === null || isNaN(series.data[i][0])) {
-                    console.log("TIME: " + series.data[i][0]);
-                }
-
-                if (series.data[i][1] === undefined || series.data[i][1] === null || isNaN(series.data[i][1])) {
-                    console.log("DATA: " + series.data[i][1]);
-                }
-            }
-        });
         
         // update state which will update render of chart
         this.setState({

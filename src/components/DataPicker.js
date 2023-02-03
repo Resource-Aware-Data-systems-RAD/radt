@@ -19,19 +19,19 @@ class DataPicker extends React.Component {
 		};
 	}
 
-	/* fetch all experiemnts */
+	// fetch all experiemnts 
 	async fetchExperiments() {
 		const data = await HTTP.fetchExperiments();
 		this.setState({ experimentData: data });
 	};
 
-	/* fetch all runs */
+	// fetch all runs 
 	async fetchRuns() {
 		const data = await HTTP.fetchRuns();
 		this.setState({ runData: data });
 	};
 
-	/* select experiment and render its workloads to the workloads component */
+	// select experiment and render its workloads to the workloads component 
 	setVisibleWorkloads(experimentId) {
 		const { runData } = this.state;
 		let filteredWorkloads = [];
@@ -51,7 +51,7 @@ class DataPicker extends React.Component {
 		});
 	}
 
-	/* select workload and render its runs to the runs component */
+	// select workload and render its runs to the runs component 
 	setVisibleRuns(workload) {
 		const { runData } = this.state;
 		let filteredRuns = [];
@@ -67,7 +67,7 @@ class DataPicker extends React.Component {
 		});
 	}
 
-	/* adds or removes runs and workloads to a selection array */
+	// adds or removes runs and workloads to a selection array 
 	toggleRunWorkloadSelection(workload, run = null) {
 
 		// grab current state and clone it for changes
@@ -131,11 +131,8 @@ class DataPicker extends React.Component {
 		// pull copy of selected runs up to parent
 		this.props.pullSelectedRuns(newSelectedRuns);
 
-
-
+		// add selected runs and workloads to local storage to persist through refresh
 		submitToLocalStorage(newSelectedWorkloads, newSelectedRuns);
-
-
 	}
 
 	componentDidMount() {
@@ -388,6 +385,10 @@ function submitToLocalStorage(workloadData, runData) {
 	const runDataString = JSON.stringify(runData);
 	localStorage.setItem("selectedRuns", runDataString);
 
+	if (workloadData.length === 0 && runData.length === 0) {
+		localStorage.removeItem("selectedWorkloads");
+		localStorage.removeItem("selectedRuns");
+	}
 }
 function pullFromLocalStorage() {
 

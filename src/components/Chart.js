@@ -12,6 +12,9 @@ class Chart extends React.Component {
             loading: true,
             id: null,
             data: [],
+            workloads: [],
+            unGroupedWorkloadIds: [],
+            smoothing: 0,
             options: {
                 exporting: {
                     scale: 3,
@@ -134,34 +137,47 @@ class Chart extends React.Component {
                 },
             },
 		}; 
+        this.handleWorkloadGroupingCheckbox = (workloadId) => (event) => this.toggleWorkloadGrouping(workloadId, event);
 	}
 
     componentDidMount() {
-        this.generateSeries(this.props.chartData, 0); 
+        // get initial list of all normal workload ID's
+        const workloads = [];
+        this.props.chartData.data.forEach(run => {
+            if (run.workload.substring(run.workload.indexOf("-") + 1) != "null") {
+                if (workloads.indexOf(run.workload) === -1) {
+                    workloads.push(run.workload);
+                }       
+            }
+        })
+        this.setState({workloads: workloads})
+
+        // generate series with default settings (e.g. no smoothing and combined as workloads)
+        this.generateSeries(this.props.chartData, [], 0); 
     }
 
-    generateSeries(chartData, smoothing) {
+    generateSeries(newChartData, newUngroupedWorkloadIds, newSmoothing) {
 
-        let data = chartData.data;
+        const data = newChartData.data;
 
         // format data into series for highcharts
-        let allSeries = [];
+        const allSeries = [];
         data.forEach(run => {
-            if (run.data !== undefined) {
-
-
-                console.log(run.workload);
-                console.log(run.data);
-
+            if (run.data !== undefined) {      
+                let workloadId = run.workload;
 
                 // check for unsorted runs
-                let workloadId = run.workload;
                 if (workloadId.substring(workloadId.indexOf("-") + 1) === "null") {
-                    workloadId = workloadId + "-" + run.name;
+                    workloadId = workloadId + "-" + run.name.substring(0, 5);
                 }
 
+                // check for ungrouped workloads
+                if (newUngroupedWorkloadIds.indexOf(workloadId) > -1) {
+                    workloadId = workloadId + "-" + run.name.substring(0, 5);
+                } 
+
                 // add all runs to one series per workload, unless they are unsorted runs
-                let seriesIndex = allSeries.findIndex(series => series.id === workloadId);
+                const seriesIndex = allSeries.findIndex(series => series.id === workloadId);
                 if (seriesIndex === -1) {                  
                     let newSeries = {
                         id: workloadId,
@@ -177,11 +193,6 @@ class Chart extends React.Component {
                         allSeries[seriesIndex].data.push([data.timestamp, data.value]);
                     })
                 }
-
-
-                console.log(allSeries);
-
-
             }
         });
 
@@ -202,22 +213,29 @@ class Chart extends React.Component {
 
             // prevent duplicate ids in highcharts api
             delete series.id;
+
+            // make sure all series are toggled visible (except when smoothing)
+            if (newSmoothing === this.state.smoothing) {
+                series.visible = true;
+            }
         });
 
         // apply smoothing to each series if over zero
-        if (smoothing > 0) {
+        if (newSmoothing > 0) {
             allSeries.forEach(series => {
-                series.data = calcEMA(series.data, smoothing);
+                series.data = calcEMA(series.data, newSmoothing);
             });
         }
         
         // update state which will update render of chart
         this.setState({
-            id: chartData.id,
-            data: chartData.data,
+            id: newChartData.id,
+            data: newChartData.data,
+            unGroupedWorkloadIds: newUngroupedWorkloadIds,
+            smoothing: newSmoothing,
             options: {
                 title: {
-                    text: chartData.metric
+                    text: newChartData.metric
                 },
                 series: allSeries,
                 navigator: {
@@ -229,17 +247,28 @@ class Chart extends React.Component {
     }
 
     applySmoothness(smoothing) { 
-        this.generateSeries(this.props.chartData, smoothing);
+        this.generateSeries(this.props.chartData, this.state.unGroupedWorkloadIds, smoothing);
     }
 
-    componentDidUpdate(prevProps, prevState) {
-        if (prevState.loading !== this.state.loading) {
-            //console.log("Finished!"); // debugging
+    toggleWorkloadGrouping(workloadId, event) {
+        const toAdd = event.target.checked;
+        const unGroupedWorkloadIds = this.state.unGroupedWorkloadIds;
+        const workloadIdIndex = unGroupedWorkloadIds.indexOf(workloadId);
+        if (toAdd) {
+            if (workloadIdIndex === -1) {
+                unGroupedWorkloadIds.push(workloadId);
+            }        
         }
+        else{
+            if (workloadIdIndex > -1) {
+                unGroupedWorkloadIds.splice(workloadIdIndex, 1);
+            }
+        }
+        this.generateSeries(this.props.chartData, unGroupedWorkloadIds, this.state.smoothing);
     }
 
     render() {
-        const { options, id } = this.state;
+        const { options, id, workloads } = this.state;
         return (
             <div className="chartWrapper">
                 <button 
@@ -258,6 +287,22 @@ class Chart extends React.Component {
                 <Slider 
                     onSetSmoothness={this.applySmoothness.bind(this)}
                 />
+                <div id="workloadGroupingControlsWrapper">
+                    Show Runs:
+                {workloads.map(workload => (
+
+                    <div key={workload}>
+                        {workload}
+                        <label className="switch">
+                            <input 
+                                type="checkbox" 
+                                onChange={this.handleWorkloadGroupingCheckbox(workload)} 
+                            />
+                            <span className="slider round"></span>
+                        </label>
+                    </div>                    
+                ))}
+                </div>         
             </div>
         );
     }
@@ -278,9 +323,9 @@ function Slider(props) {
 
     return (
         <div id="smootherWrapper">
-                <label htmlFor="smoother">Smoothness: </label>
-                <input ref={slider} onChange={handleShowSmoothness} defaultValue="0" type="range" name="smoother" min="0" max="99" /> 
-                {smoothness}%
+            <label htmlFor="smoother">Smoothness: </label>
+            <input ref={slider} onChange={handleShowSmoothness} defaultValue="0" type="range" name="smoother" min="0" max="99" /> 
+            {smoothness}%
         </div>
     );
 }

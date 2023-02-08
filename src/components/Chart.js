@@ -13,10 +13,20 @@ class Chart extends React.Component {
             id: null,
             data: [],
             workloads: [],
-            unGroupedWorkloadIds: [],
+
+            showRuns: [],
             smoothing: 0,
+
             options: {
                 exporting: {
+                    buttons: {
+                        contextButton: {
+                            align: 'left',
+                            x: 0,
+                            y: -5,
+                            verticalAlign: 'top'
+                        }
+                    },
                     scale: 3,
                     sourceWidth: 1200,
                     sourceHeight: 800,
@@ -44,16 +54,18 @@ class Chart extends React.Component {
                                     zIndex: 20
                                 }).attr({
                                     id: 'resetZoom',
-                                    align: 'right'
+                                    align: 'left'
                                 }).add().align({
-                                    align: 'right',
-                                    x: -10,
-                                    y: 710
-                                }, false, null);
+                                    align: 'left',
+                                    x: 50,
+                                    y: 0
+                                }, false, null);                    
                             }
                             if(!event.min && !event.max){
-                                this.zoomButton.destroy();
-                                this.zoomButton = null;
+                                if (this.zoomButton != null) {
+                                    this.zoomButton.destroy();
+                                    this.zoomButton = null;
+                                }                      
                             }
                         }
                     },
@@ -85,7 +97,7 @@ class Chart extends React.Component {
                     shared: false,
                     split: false,
                     formatter: function() {
-                        return  '<b>Series:</b>' + this.series.name +'<br/><b>Value:</b> ' + this.y + '<br/><b>Time:</b> ' + milliToMinsSecs(this.x);
+                        return  '<b>Series:</b>' + this.series.name +'<br/><br/><b>Value:</b> ' + this.y + '<br/><b>Time:</b> ' + milliToMinsSecs(this.x);
                     }
                 },
                 navigator: {
@@ -137,6 +149,8 @@ class Chart extends React.Component {
                 },
             },
 		}; 
+
+        this.chartRef = React.createRef();
         this.handleWorkloadGroupingCheckbox = (workloadId) => (event) => this.toggleWorkloadGrouping(workloadId, event);
 	}
 
@@ -153,7 +167,19 @@ class Chart extends React.Component {
         this.setState({workloads: workloads})
 
         // generate series with default settings (e.g. no smoothing and combined as workloads)
-        this.generateSeries(this.props.chartData, [], 0); 
+        this.generateSeries(this.props.chartData, [], 0);      
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+
+        console.log(this.chartRef.current.chart);
+
+        //this.chartRef.current.chart.series[5].hide();
+
+        this.chartRef.current.chart.series.forEach(series => {
+            console.log(series.visible);
+        });
+
     }
 
     generateSeries(newChartData, newUngroupedWorkloadIds, newSmoothing) {
@@ -247,12 +273,12 @@ class Chart extends React.Component {
     }
 
     applySmoothness(smoothing) { 
-        this.generateSeries(this.props.chartData, this.state.unGroupedWorkloadIds, smoothing);
+        this.generateSeries(this.props.chartData, this.state.showRuns, smoothing);
     }
 
     toggleWorkloadGrouping(workloadId, event) {
         const toAdd = event.target.checked;
-        const unGroupedWorkloadIds = this.state.unGroupedWorkloadIds;
+        const unGroupedWorkloadIds = this.state.showRuns;
         const workloadIdIndex = unGroupedWorkloadIds.indexOf(workloadId);
         if (toAdd) {
             if (workloadIdIndex === -1) {
@@ -288,20 +314,20 @@ class Chart extends React.Component {
                     onSetSmoothness={this.applySmoothness.bind(this)}
                 />
                 <div id="workloadGroupingControlsWrapper">
-                    Show Runs:
-                {workloads.map(workload => (
+                    Toggle Runs:
+                    {workloads.map(workload => (
 
-                    <div key={workload}>
-                        {workload}
-                        <label className="switch">
-                            <input 
-                                type="checkbox" 
-                                onChange={this.handleWorkloadGroupingCheckbox(workload)} 
-                            />
-                            <span className="slider round"></span>
-                        </label>
-                    </div>                    
-                ))}
+                        <div key={workload}>
+                            {workload}
+                            <label className="switch">
+                                <input 
+                                    type="checkbox" 
+                                    onChange={this.handleWorkloadGroupingCheckbox(workload)} 
+                                />
+                                <span className="slider round"></span>
+                            </label>
+                        </div>                    
+                    ))}
                 </div>         
             </div>
         );

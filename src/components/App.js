@@ -35,7 +35,6 @@ class App extends React.Component {
 					pushSelectedRuns={selectedRuns}
 					toggleDataPicker={this.toggleDataPicker}
 				/>
-				{/*}<LocalDataTest />{*/}
 			</div>
 		);
 	}

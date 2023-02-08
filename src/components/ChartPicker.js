@@ -2,7 +2,9 @@ import React from 'react';
 import { HTTP } from '../api';
 import Chart from './Chart';
 import '../styles/ChartPicker.css';
-import DataLogo from '../images/data.svg';
+import DataIcon from '../images/data.svg';
+import UploadIcon from '../images/upload.svg';
+import DownloadIcon from '../images/download.svg';
 import LoadingIcon from '../images/cogwheel.svg';
 
 class ChartPicker extends React.Component {
@@ -112,9 +114,11 @@ class ChartPicker extends React.Component {
 			this.props.toggleDataPicker(true);	
 		}
 		else {
+			// toggle data picker off if on
+			this.props.toggleDataPicker(false);	
+
 			// save data to local storage to persist through refreshes
 			//storeChartDataInLocalStorage(newChartData);
-			this.props.toggleDataPicker(false);	
 		}
 	}
 
@@ -124,11 +128,16 @@ class ChartPicker extends React.Component {
 			if (window.File && window.FileReader && window.FileList && window.Blob) {
 				var file = document.querySelector('input[type=file]').files[0];
 				var reader = new FileReader()
-				var textFile = /text.*/;
+				var textFile = /json.*/;
 				if (file.type.match(textFile)) {
 					reader.onload = function (event) {
 						try {
 							const data = JSON.parse(event.target.result);
+
+							data.forEach(chart => {
+								console.log(chart);
+							});
+
 							resolve(data);
 						}
 						catch {
@@ -145,6 +154,7 @@ class ChartPicker extends React.Component {
 				alert("This browser is too old to support uploading data.");
 			}
 		});
+
 		this.setCharts(localChartData);
 	}
 
@@ -152,7 +162,7 @@ class ChartPicker extends React.Component {
 	downloadLocalData() {
 		if (this.state.charts.length > 0) {
 			const chartDataString = JSON.stringify(this.state.charts);
-			const fileName = "data_" + new Date().toISOString() + ".txt";
+			const fileName = "data_" + new Date().toISOString() + ".json";
 			const blob = new Blob([chartDataString], {type: 'text/plain'});
 			if(window.navigator.msSaveOrOpenBlob) {
 				window.navigator.msSaveBlob(blob, fileName);
@@ -168,7 +178,7 @@ class ChartPicker extends React.Component {
 			console.log("Downloading data... " + fileName);
 		}
 		else {
-			alert("No charts loaded.")
+			alert("No chart data to download.")
 		}	
 	}
 
@@ -196,15 +206,7 @@ class ChartPicker extends React.Component {
 	render() {
 		const { availableMetrics, showMetrics, charts, loading } = this.state;
 		return (
-			<div
-				id="chartPickerWrapper"
-			>
-				{/*} Download & Upload Buttons {*/}
-				<div id="downloadUploadWrapper">
-					<button className="localDataUpload" onClick={() => this.downloadLocalData()}>Download Charts</button>
-					<label id="localDataUploadButton" htmlFor="localDataUpload">Upload Charts</label>
-					<input id="localDataUpload" type="file" onChange={this.uploadLocalData.bind(this)} />
-				</div>
+			<div id="chartPickerWrapper">
 
 				{/*} Data Button {*/}
 				<button 
@@ -212,8 +214,23 @@ class ChartPicker extends React.Component {
 					onClick={() => this.props.toggleDataPicker(true)}
 					className={this.props.toHide ? null : "hide"}
 				>
-					<img src={DataLogo} className="dataSVG" alt="Change Data" />
+					<img src={DataIcon} className="dataSVG" alt="Change Data" />
 				</button>
+
+				{/*} Download & Upload Buttons {*/}
+				<div 
+					id="downloadUploadWrapper"
+					className={this.props.toHide ? null : "hide"}
+				>			
+					<label className="upload" htmlFor="hiddenUpload">
+						<input id="hiddenUpload" type="file" onChange={this.uploadLocalData.bind(this)} />
+						<img src={UploadIcon} className="uploadSVG" alt="Upload Charts" />
+					</label>
+					
+					<button className="download" onClick={() => this.downloadLocalData()}>
+						<img src={DownloadIcon} className="downloadSVG" alt="Download Charts" />
+					</button>
+				</div>
 
 				{/*} Pick Chart Button {*/}
 				<button 
@@ -242,13 +259,15 @@ class ChartPicker extends React.Component {
 				</div>
 
 				{/*} Charts List {*/}
-				{charts.sort((a, b) => b.id - a.id).map(chart => (
-					<Chart 
-						key={chart.id} 
-						chartData={chart}
-						removeChart={this.removeChart.bind(this)}
-					/>
-				))}
+				<div id="chartsWrapper">
+					{charts.sort((a, b) => b.id - a.id).map(chart => (
+						<Chart 
+							key={chart.id} 
+							chartData={chart}
+							removeChart={this.removeChart.bind(this)}
+						/>
+					))}
+				</div>		
 			</div>
 		);
 	}

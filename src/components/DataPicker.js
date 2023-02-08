@@ -17,6 +17,8 @@ class DataPicker extends React.Component {
 			selectedWorkloads: [],
 			selectedRuns: [],
 		};
+
+		this.bottomOfScrollRef = React.createRef();
 	}
 
 	// fetch all experiemnts 
@@ -123,6 +125,12 @@ class DataPicker extends React.Component {
 			}
 		});
 
+		// scroll to bottom of list when adding, but not removing
+		if (newSelectedWorkloads.length > selectedWorkloads.length) {
+			this.bottomOfScrollRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+		}
+
+		// update state
 		this.setState({
 			selectedWorkloads: newSelectedWorkloads,
 			selectedRuns: newSelectedRuns
@@ -188,6 +196,7 @@ class DataPicker extends React.Component {
 				<Selections 
 					selectedRuns={selectedRuns}
 					onClickToggleWorkloadSelection={this.toggleRunWorkloadSelection.bind(this)}
+					bottomOfScrollRef={this.bottomOfScrollRef}
 				/>
 				<button 
 					className="selectionConfirmBtn"
@@ -283,13 +292,6 @@ function Runs(props) {
 	)
 }
 function Selections(props) {
-
-	// scroll to bottom of container when new props are added
-	const bottomOfScrollRef = useRef(null);
-	useEffect(() => {
-		bottomOfScrollRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
-	});
-
 	// create new data object to render workloads and runs nicely in Selections
 	let visibleSelection = [];
 	props.selectedRuns.forEach(run => {
@@ -360,7 +362,7 @@ function Selections(props) {
 				</div>
 			))}
 			{ /* div ref to scroll to bottom of */ }
-			<div ref={bottomOfScrollRef} />
+			<div ref={props.bottomOfScrollRef} />
 		</div>
 	);
 }

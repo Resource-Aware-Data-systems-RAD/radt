@@ -14,7 +14,8 @@ class Chart extends React.Component {
             data: [],
             workloads: [],
 
-            showRuns: [],
+            shownRuns: [],
+            hiddenSeries: [],
             smoothing: 0,
 
             options: {
@@ -145,17 +146,22 @@ class Chart extends React.Component {
                                 [1] 
                             ]]
                         },
+                        events: {
+                            legendItemClick: this.toggleSeriesVisibility.bind(this)
+                        }
                     },
                 },
             },
 		}; 
 
         this.chartRef = React.createRef();
-        this.handleWorkloadGroupingCheckbox = (workloadId) => (event) => this.toggleWorkloadGrouping(workloadId, event);
+        this.handleShowRunsSwitch = (workloadId) => (event) => this.toggleShownRuns(workloadId, event);
 	}
 
+    
+
     componentDidMount() {
-        // get initial list of all normal workload ID's
+        // get initial list of all normal workload ID's for rendering
         const workloads = [];
         this.props.chartData.data.forEach(run => {
             if (run.workload.substring(run.workload.indexOf("-") + 1) != "null") {
@@ -167,23 +173,19 @@ class Chart extends React.Component {
         this.setState({workloads: workloads})
 
         // generate series with default settings (e.g. no smoothing and combined as workloads)
-        this.generateSeries(this.props.chartData, [], 0);      
+        this.generateSeries(this.props.chartData, 0, [], []); 
     }
 
     componentDidUpdate(prevProps, prevState) {
 
-        console.log(this.chartRef.current.chart);
-
-        //this.chartRef.current.chart.series[5].hide();
-
-        this.chartRef.current.chart.series.forEach(series => {
-            console.log(series.visible);
-        });
+        ////////////////////////////////////////////////// these need to be pushed to parent to be downloaded
+        console.log(this.state.smoothing);
+        console.log(this.state.shownRuns);
+        console.log(this.state.hiddenSeries);
 
     }
 
-    generateSeries(newChartData, newUngroupedWorkloadIds, newSmoothing) {
-
+    generateSeries(newChartData, newSmoothing, newShownRuns, newHiddenSeries) {
         const data = newChartData.data;
 
         // format data into series for highcharts
@@ -192,14 +194,19 @@ class Chart extends React.Component {
             if (run.data !== undefined) {      
                 let workloadId = run.workload;
 
-                // check for unsorted runs
-                if (workloadId.substring(workloadId.indexOf("-") + 1) === "null") {
-                    workloadId = workloadId + "-" + run.name.substring(0, 5);
-                }
-
-                // check for ungrouped workloads
-                if (newUngroupedWorkloadIds.indexOf(workloadId) > -1) {
-                    workloadId = workloadId + "-" + run.name.substring(0, 5);
+                // check for ungrouped workloads or unsorted workloads
+                if (workloadId.substring(workloadId.indexOf("-") + 1) === "null" || newShownRuns.indexOf(workloadId) > -1) {
+                    if (run.letter === null) {
+                        workloadId = workloadId + "-" + run.name.substring(0, 5);
+                    }
+                    else {
+                        if (run.letter.length > 1) {
+                            workloadId = workloadId + " " + run.letter;
+                        }
+                        else {
+                            workloadId = workloadId + " " + run.letter + " (" + run.name.substring(0, 5) + ")";
+                        }             
+                    }   
                 } 
 
                 // add all runs to one series per workload, unless they are unsorted runs
@@ -240,10 +247,14 @@ class Chart extends React.Component {
             // prevent duplicate ids in highcharts api
             delete series.id;
 
-            // make sure all series are toggled visible (except when smoothing)
-            if (newSmoothing === this.state.smoothing) {
-                series.visible = true;
-            }
+
+            // hide any series which are supposed to be invisible
+            series.visible = true;
+            newHiddenSeries.forEach(seriesToHide => {
+                if (series.name === seriesToHide) {
+                    series.visible = false;
+                }
+            })
         });
 
         // apply smoothing to each series if over zero
@@ -257,7 +268,8 @@ class Chart extends React.Component {
         this.setState({
             id: newChartData.id,
             data: newChartData.data,
-            unGroupedWorkloadIds: newUngroupedWorkloadIds,
+            shownRuns: newShownRuns,
+            hiddenSeries: newHiddenSeries,
             smoothing: newSmoothing,
             options: {
                 title: {
@@ -273,24 +285,50 @@ class Chart extends React.Component {
     }
 
     applySmoothness(smoothing) { 
-        this.generateSeries(this.props.chartData, this.state.showRuns, smoothing);
+        this.generateSeries(this.props.chartData, smoothing, this.state.shownRuns, this.state.hiddenSeries);
     }
 
-    toggleWorkloadGrouping(workloadId, event) {
+    toggleShownRuns(workloadId, event) {
         const toAdd = event.target.checked;
-        const unGroupedWorkloadIds = this.state.showRuns;
-        const workloadIdIndex = unGroupedWorkloadIds.indexOf(workloadId);
+        const shownRuns = [...this.state.shownRuns];
+        const workloadIdIndex = shownRuns.indexOf(workloadId);
         if (toAdd) {
             if (workloadIdIndex === -1) {
-                unGroupedWorkloadIds.push(workloadId);
+                shownRuns.push(workloadId);
             }        
         }
         else{
             if (workloadIdIndex > -1) {
-                unGroupedWorkloadIds.splice(workloadIdIndex, 1);
+                shownRuns.splice(workloadIdIndex, 1);
             }
         }
-        this.generateSeries(this.props.chartData, unGroupedWorkloadIds, this.state.smoothing);
+        this.generateSeries(this.props.chartData, this.state.smoothing, shownRuns, this.state.hiddenSeries);
+    }
+
+    toggleSeriesVisibility(event) {
+        // prevent default highcharts behaviour
+        event.preventDefault();
+
+        // add/remove series name from an array
+        const newHiddenSeries = [...this.state.hiddenSeries];
+        if (event.target.visible === true) {
+            // will be set to invisible
+            const seriesName = event.target.legendItem.textStr;
+
+            if (newHiddenSeries.indexOf(seriesName) === -1) {
+                newHiddenSeries.push(seriesName);
+            }  
+        }
+        else {
+            // will be set to visible
+            const seriesName = event.target.legendItem.textStr;
+            if (newHiddenSeries.indexOf(seriesName) > -1) {
+                newHiddenSeries.splice(newHiddenSeries.indexOf(seriesName), 1);
+            } 
+        }
+
+        // update chart and state
+        this.generateSeries(this.props.chartData, this.state.smoothing, this.state.shownRuns, newHiddenSeries); 
     }
 
     render() {
@@ -322,7 +360,7 @@ class Chart extends React.Component {
                             <label className="switch">
                                 <input 
                                     type="checkbox" 
-                                    onChange={this.handleWorkloadGroupingCheckbox(workload)} 
+                                    onChange={this.handleShowRunsSwitch(workload)} 
                                 />
                                 <span className="slider round"></span>
                             </label>

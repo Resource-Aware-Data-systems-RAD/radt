@@ -122,7 +122,7 @@ class ChartPicker extends React.Component {
 		}
 	}
 
-	// upload data from a locally saved .txt file
+	// upload data from a locally saved .json file
 	async uploadLocalData() {
 		const localChartData = await new Promise((resolve) => {
 			if (window.File && window.FileReader && window.FileList && window.Blob) {
@@ -158,7 +158,7 @@ class ChartPicker extends React.Component {
 		this.setCharts(localChartData);
 	}
 
-	// download data to a locally saved .txt file
+	// download data to a locally saved .json file
 	downloadLocalData() {
 		if (this.state.charts.length > 0) {
 			const chartDataString = JSON.stringify(this.state.charts);

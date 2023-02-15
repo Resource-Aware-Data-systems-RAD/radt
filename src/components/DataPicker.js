@@ -283,7 +283,7 @@ function Runs(props) {
 				>
 					{/*}<span className="text">Run {run.name.substring(0, 6)}</span>{*/}
 					<span className="text">
-						{run.letter} | {milliToMinsSecs(run.duration)}
+						{run.letter != null ? run.letter : run.name.substring(0,6)} | {milliToMinsSecs(run.duration)}
 					</span>
 					<div className="checkbox">{props.selectedRuns.findIndex(el => el.name === run.name) > -1 ? "X" : " "}</div>
 				</button>

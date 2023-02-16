@@ -79,7 +79,7 @@ class Chart extends React.Component {
                         formatter:function(){
                             return (milliToMinsSecs(this.value))            
                         },
-                     },
+                    },
                 },
                 yAxis: {
                     opposite: false

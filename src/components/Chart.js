@@ -9,15 +9,6 @@ class Chart extends React.Component {
     constructor(props) {
 		super(props);
 		this.state = {
-            loading: true,
-            id: null,
-            data: [],
-            workloads: [],
-
-            shownRuns: [],
-            hiddenSeries: [],
-            smoothing: 0,
-
             options: {
                 exporting: {
                     buttons: {
@@ -152,40 +143,53 @@ class Chart extends React.Component {
                     },
                 },
             },
+            loading: true,
+            id: null,
+            data: [],
+            workloads: [],
+            shownRuns: [],
+            hiddenSeries: [],
+            smoothing: 0
 		}; 
 
         this.chartRef = React.createRef();
         this.handleShowRunsSwitch = (workloadId) => (event) => this.toggleShownRuns(workloadId, event);
 	}
 
-    
-
     componentDidMount() {
         // get initial list of all normal workload ID's for rendering
         const workloads = [];
         this.props.chartData.data.forEach(run => {
-            if (run.workload.substring(run.workload.indexOf("-") + 1) != "null") {
+            if (run.workload.substring(run.workload.indexOf("-") + 1) !== "null") {
                 if (workloads.indexOf(run.workload) === -1) {
                     workloads.push(run.workload);
                 }       
             }
         })
-        this.setState({workloads: workloads})
+        this.setState({workloads: workloads});
 
-        // generate series with default settings (e.g. no smoothing and combined as workloads)
-        this.generateSeries(this.props.chartData, 0, [], []); 
+        // generate series
+        if (this.props.chartData.context) {
+            // with local uploaded settings 
+            this.generateSeries(this.props.chartData, this.props.chartData.context.smoothing, this.props.chartData.context.shownRuns, this.props.chartData.context.hiddenSeries); 
+        }   
+        else {
+            // with default settings (e.g. no smoothing and combined as workloads)
+            this.generateSeries(this.props.chartData, 0, [], []); 
+        }
     }
 
+    // sync contextual chart information to ChartPicker parent for local downloading
     componentDidUpdate(prevProps, prevState) {
-
-        ////////////////////////////////////////////////// these need to be pushed to parent to be downloaded
-        console.log(this.state.smoothing);
-        console.log(this.state.shownRuns);
-        console.log(this.state.hiddenSeries);
-
+        if (prevState.smoothing !== this.state.smoothing || prevState.shownRuns.length !== this.state.shownRuns.length || prevState.hiddenSeries.length !== this.state.hiddenSeries.length) {     
+            this.props.pullChartExtras(this.state.id, this.state.smoothing, this.state.shownRuns, this.state.hiddenSeries);
+        }
     }
 
     generateSeries(newChartData, newSmoothing, newShownRuns, newHiddenSeries) {
+
+        console.log("Generating..."); // debugging
+
         const data = newChartData.data;
 
         // format data into series for highcharts
@@ -268,9 +272,6 @@ class Chart extends React.Component {
         this.setState({
             id: newChartData.id,
             data: newChartData.data,
-            shownRuns: newShownRuns,
-            hiddenSeries: newHiddenSeries,
-            smoothing: newSmoothing,
             options: {
                 title: {
                     text: newChartData.metric
@@ -280,12 +281,18 @@ class Chart extends React.Component {
                     series: allSeries
                 }
             },
-            loading: false
+            loading: false,
+
+            shownRuns: newShownRuns,
+            hiddenSeries: newHiddenSeries,
+            smoothing: newSmoothing
         });
     }
 
     applySmoothness(smoothing) { 
-        this.generateSeries(this.props.chartData, smoothing, this.state.shownRuns, this.state.hiddenSeries);
+        if (smoothing !== this.state.smoothing) {
+            this.generateSeries(this.props.chartData, smoothing, this.state.shownRuns, this.state.hiddenSeries);
+        }
     }
 
     toggleShownRuns(workloadId, event) {
@@ -332,7 +339,7 @@ class Chart extends React.Component {
     }
 
     render() {
-        const { options, id, workloads } = this.state;
+        const { options, id, workloads, smoothing } = this.state;
         return (
             <div className="chartWrapper">
                 <button 
@@ -350,6 +357,7 @@ class Chart extends React.Component {
                 />          
                 <Slider 
                     onSetSmoothness={this.applySmoothness.bind(this)}
+                    defaultValue={smoothing}
                 />
                 <div id="workloadGroupingControlsWrapper">
                     Toggle Runs:
@@ -374,21 +382,23 @@ class Chart extends React.Component {
 
 /* Chart functional components */
 function Slider(props) {
-    const [smoothness, showSmoothness,] = useState(0);
+    const [smoothness, setSmoothness] = useState(0);
     const slider = useRef();
 
     useEffect(() => {
-        slider.current.addEventListener('change', e => props.onSetSmoothness(e.target.value));
-    }, []);
-    
-    const handleShowSmoothness = e => {
-        showSmoothness(e.target.value);
-    };
+        setSmoothness(props.defaultValue);
+    }, [props.defaultValue]);
 
+    useEffect(() => {
+        slider.current.addEventListener('change', e => props.onSetSmoothness(e.target.value));
+    }, [props]);
+    const handleShowSmoothness = e => {
+        setSmoothness(e.target.value);
+    };
     return (
         <div id="smootherWrapper">
             <label htmlFor="smoother">Smoothness: </label>
-            <input ref={slider} onChange={handleShowSmoothness} defaultValue="0" type="range" name="smoother" min="0" max="99" /> 
+            <input ref={slider} onChange={handleShowSmoothness} value={smoothness} type="range" name="smoother" min="0" max="99" /> 
             {smoothness}%
         </div>
     );
@@ -418,8 +428,7 @@ function calcEMA(series, smoothingWeight) {
     // first item is just first data item
     let emaData = [data[0]]; 
 
-    // apply smoothing according to range and add to new EMA array
-    const k = 2 / (smoothness + 1);    
+    // apply smoothing according to range and add to new EMA array    
     for (var i = 1; i < series.length; i++) {
         const emaResult = data[i] * (1 - smoothness) + emaData[i - 1] * (smoothness);
         emaData.push(emaResult.toFixed(4) * 1);

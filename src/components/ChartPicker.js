@@ -15,7 +15,8 @@ class ChartPicker extends React.Component {
 			loading: false,
 			availableMetrics: [],
 			showMetrics: false,
-			charts: []
+			charts: [], 
+			chartsContextData: []
 		};
 	}
 
@@ -80,6 +81,25 @@ class ChartPicker extends React.Component {
 
 		// update chart state with new data
 		this.setCharts(newCharts);
+
+
+
+
+
+
+		const newChartsContextData = [];
+		newCharts.map(chart => {
+			const newChartContextData = {
+				id: chart.id,
+				smoothing: 0,
+				shownRuns: [],
+				hiddenSeries: []
+			};
+			newChartsContextData.push(newChartContextData);
+		})
+		this.setState({
+			chartsContextData: newChartsContextData,
+		});
 	}
 
 	// check if metrics button should be visible 
@@ -122,9 +142,27 @@ class ChartPicker extends React.Component {
 		}
 	}
 
+	// update custom chart state for local data download
+	syncData(id, newSmoothing, newShownRuns, newHiddenSeries) {
+
+		console.log("Syncing...");
+
+		const newChartsContextData = [...this.state.chartsContextData];
+		newChartsContextData.map(chart => {
+			if (chart.id === id) {
+				chart.smoothing = newSmoothing;
+				chart.shownRuns = newShownRuns;
+				chart.hiddenSeries = newHiddenSeries;			
+			}
+		})
+		this.setState({
+			chartsContextData: newChartsContextData,
+		});
+	}
+
 	// upload data from a locally saved .json file
 	async uploadLocalData() {
-		const localChartData = await new Promise((resolve) => {
+		const uploadedData = await new Promise((resolve) => {
 			if (window.File && window.FileReader && window.FileList && window.Blob) {
 				var file = document.querySelector('input[type=file]').files[0];
 				var reader = new FileReader()
@@ -135,7 +173,7 @@ class ChartPicker extends React.Component {
 							const data = JSON.parse(event.target.result);
 
 							data.forEach(chart => {
-								console.log(chart);
+								//console.log(chart); // debugging
 							});
 
 							resolve(data);
@@ -155,13 +193,28 @@ class ChartPicker extends React.Component {
 			}
 		});
 
+		const localChartData = [...uploadedData[0]];
+		const localChartContext = [...uploadedData[1]];
+
+		localChartData.map(chart => {
+			localChartContext.map(context => {
+				if (chart.id === context.id) {
+					chart.context = {
+						smoothing: context.smoothing,
+						shownRuns: context.shownRuns,
+						hiddenSeries: context.hiddenSeries
+					};	
+				}		
+			})
+		})
+
 		this.setCharts(localChartData);
 	}
 
 	// download data to a locally saved .json file
 	downloadLocalData() {
 		if (this.state.charts.length > 0) {
-			const chartDataString = JSON.stringify(this.state.charts);
+			const chartDataString = JSON.stringify([this.state.charts, this.state.chartsContextData]);
 			const fileName = "data_" + new Date().toISOString() + ".json";
 			const blob = new Blob([chartDataString], {type: 'text/plain'});
 			if(window.navigator.msSaveOrOpenBlob) {
@@ -264,6 +317,7 @@ class ChartPicker extends React.Component {
 						<Chart 
 							key={chart.id} 
 							chartData={chart}
+							pullChartExtras={this.syncData.bind(this)}
 							removeChart={this.removeChart.bind(this)}
 						/>
 					))}
@@ -275,6 +329,7 @@ class ChartPicker extends React.Component {
 
 
 /* ChartPicker helper functions */
+/*
 function storeChartDataInLocalStorage(chartData) {
 	let chartDataToBeLoaded = chartData.sort((a, b) => b.id - a.id);
 	for (let i = 1; i < chartData.length + 1; i++) {	
@@ -290,5 +345,5 @@ function storeChartDataInLocalStorage(chartData) {
 		}
 	}
 }
-
+*/
 export default ChartPicker;

@@ -144,6 +144,7 @@ class DataPicker extends React.Component {
 	}
 
 	componentDidMount() {
+
 		// fetch data to populate pickers
 		this.fetchExperiments();
 		this.fetchRuns();

@@ -173,39 +173,39 @@ class DataPicker extends React.Component {
 		} = this.state;
 
 		return (
-			<div 
-				id="dataPickerWrapper"
-				className={this.props.toHide ? null : "hide"}
-			>
-				<Experiments
-					data={experimentData}
-					activeExperimentId={activeExperimentId}
-					onClickSetVisibleWorkloads={this.setVisibleWorkloads.bind(this)}
-				/>
-				<Workloads
-					data={visibleWorkloads}
-					activeWorkload={activeWorkload}
-					selectedWorkloads={selectedWorkloads}
-					onClickSetVisibleRuns={this.setVisibleRuns.bind(this)}
-					onClickToggleWorkloadSelection={this.toggleRunWorkloadSelection.bind(this)}
-				/>
-				<Runs 
-					data={visibleRuns}
-					selectedRuns={selectedRuns}
-					onClickToggleRunSelection={this.toggleRunWorkloadSelection.bind(this)}	
-				/>
-				<Selections 
-					selectedRuns={selectedRuns}
-					onClickToggleWorkloadSelection={this.toggleRunWorkloadSelection.bind(this)}
-					bottomOfScrollRef={this.bottomOfScrollRef}
-				/>
-				<button 
-					className="selectionConfirmBtn"
-					onClick={() => this.props.toggleDataPicker(false)}
-				>
-					Confirm
-				</button>
+			<div id="dataPickerWrapperBackground" className={this.props.toHide ? null : "hide"}>
+				<div id="dataPickerWrapper">
+					<Experiments
+						data={experimentData}
+						activeExperimentId={activeExperimentId}
+						onClickSetVisibleWorkloads={this.setVisibleWorkloads.bind(this)}
+					/>
+					<Workloads
+						data={visibleWorkloads}
+						activeWorkload={activeWorkload}
+						selectedWorkloads={selectedWorkloads}
+						onClickSetVisibleRuns={this.setVisibleRuns.bind(this)}
+						onClickToggleWorkloadSelection={this.toggleRunWorkloadSelection.bind(this)}
+					/>
+					<Runs 
+						data={visibleRuns}
+						selectedRuns={selectedRuns}
+						onClickToggleRunSelection={this.toggleRunWorkloadSelection.bind(this)}	
+					/>
+					<Selections 
+						selectedRuns={selectedRuns}
+						onClickToggleWorkloadSelection={this.toggleRunWorkloadSelection.bind(this)}
+						bottomOfScrollRef={this.bottomOfScrollRef}
+					/>
+					<button 
+						className="selectionConfirmBtn"
+						onClick={() => this.props.toggleDataPicker(false)}
+					>
+						Confirm
+					</button>
+				</div>
 			</div>
+			
 		);
 
 	}
@@ -221,7 +221,10 @@ function Experiments(props) {
 					className={props.activeExperimentId === experiment.id ? "active" : null}
 					onClick= {() => props.onClickSetVisibleWorkloads(experiment.id)}
 				>
-					<span className="text">{experiment.id}: {experiment.name}</span>
+					<span className="text">
+						<span>{experiment.id}</span>
+						{experiment.name}
+					</span>
 				</button>
 			))}
 		</div>
@@ -266,7 +269,7 @@ function Workloads(props) {
 							className="checkbox"
 							onClick={() => props.onClickToggleWorkloadSelection(workload)}
 						>
-							{props.selectedWorkloads.includes(workload) ? "X" : " "}
+							{props.selectedWorkloads.includes(workload) ? "✔" : " "}
 						</div>
 					</div>		
 				</div>
@@ -286,7 +289,7 @@ function Runs(props) {
 					<span className="text">
 						{run.letter != null ? run.letter : run.name.substring(0,6)} | {milliToMinsSecs(run.duration)}
 					</span>
-					<div className="checkbox">{props.selectedRuns.findIndex(el => el.name === run.name) > -1 ? "X" : " "}</div>
+					<div className="checkbox">{props.selectedRuns.findIndex(el => el.name === run.name) > -1 ? "✔" : " "}</div>
 				</button>
 			))}
 		</div>

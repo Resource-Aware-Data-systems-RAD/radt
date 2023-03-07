@@ -1,16 +1,28 @@
 /********************************************** DATA PICKER */
+#dataPickerWrapperBackground {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%; 
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(3px);
+    box-sizing: border-box;
+    z-index: 99;
+}
 #dataPickerWrapper {
     display: flex;
     flex-direction: row;
     height: 80%;
-    width: 80%;
+    width: 85%;
     position: fixed;
     bottom: 50%;
     right: 50%;
-    transform: translate(50%, 50%);
-    border: 3px solid black; 
-    background-color: white;
-    z-index: 999;
+    transform: translate(50%, 50%); 
+    background-color: #fafafa;
+    z-index: 100;
+    border: 1px solid lightgray; 
+    filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.3));
 }
 .selectionConfirmBtn {
     position: absolute;
@@ -36,30 +48,49 @@
     overflow-x: hidden;
     overflow-y: scroll;
     scrollbar-width: none;  /* Firefox */
-    border-right: 1px solid black;
     box-sizing: border-box;
+    text-align: center;
 }
 #experimentWrapper::-webkit-scrollbar {
-    display: none;
+     /* display: none; */
 }
 #experimentWrapper button {
     display: flex;
     align-items: center; 
     justify-content: left; 
-    width: 100%;
+    width: 92%;
     height: 60px;
     cursor: pointer;
     font-size: 14px;
+    border: none;
+    filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.3));
+    margin: 10px auto 0 auto;
+    background-color: white;
+}
+#experimentWrapper button:hover {
+    background-color: #c6e2f5;
 }
 #experimentWrapper button .text {
     overflow: hidden;
     white-space: nowrap;
     display: block;
     text-overflow: ellipsis;
-    margin-left: 10px;
+    margin-left: 5px;
+}
+#experimentWrapper button .text span {
+    display: inline-block;
+    width: 25px;
+    height: 25px;
+    line-height: 26px;
+    border-radius: 25px;
+    background-color: #2980b9;
+    box-sizing: border-box;
+    margin-right: 10px;
+    color: white;
+    font-weight: bold;
 }
 #experimentWrapper button.active {
-	background-color: blue;
+	background-color: #2980b9;
     color: white;
 }
 
@@ -72,33 +103,34 @@
     overflow-x: hidden;
     overflow-y: scroll;
     scrollbar-width: none;  /* Firefox */
-    border-right: 1px solid black;
     box-sizing: border-box;
+    padding-left: 5px;
 }
 #workloadsWrapper::-webkit-scrollbar {
-    display: none;
+    /* display: none; */
 }
 #workloadsWrapper .workload {
     display: flex;
-    width: 100%;
+    width: 90%;
     height: 60px;
     cursor: pointer;
-    border: 1px solid black;
+
     box-sizing: border-box;
-    background-color: lightgrey;
+    background-color: white;
     font-size: 14px;
+
+    filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.3));
+    margin: 10px auto 0 auto;
 }
 #workloadsWrapper .workload.active {
-    background-color: blue;
+    background-color: #2980b9;
     color: white;
 }
 #workloadsWrapper .workload.active:hover {
-    background-color: blue;
-    color: white;
+    background-color: #2980b9;
 }
-
 #workloadsWrapper .workload:hover {
-    background-color: lightblue;
+    background-color: #c6e2f5;
 }
 #workloadsWrapper .info {
     display: flex;
@@ -110,10 +142,6 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-
-    /* testing */
-    border: 0px solid blue;
-    box-sizing: border-box;
 }
 #workloadsWrapper .checkboxWrapper {
     display: flex;
@@ -121,10 +149,6 @@
     height: 100%;
     align-items: center; 
     justify-content: center;
-
-    /* testing */
-    border: 0px solid red;
-    box-sizing: border-box;
 }
 #workloadsWrapper .checkbox {
     background-color: white;
@@ -132,31 +156,38 @@
     width: 20px;
     height: 20px;
     line-height: 20px;
-    border: 2px solid black;
+    border: 1px solid #b8b8b8;
     font-weight: bold;
     text-align: center;
+}
+#workloadsWrapper .checkbox:hover {
+    border: 1px solid #2980b9;
 }
 
 /********************************************** RUNS */
 #runsWrapper {
 	display: block;
-	float: left;
 	width: 40%;
     height: 100%;
     overflow-x: hidden;
     overflow-y: scroll;
     scrollbar-width: none;  /* Firefox */
-    border-right: 1px solid black;
     box-sizing: border-box;
+    text-align: center;
 }
 #runsWrapper::-webkit-scrollbar {
-    display: none;
+    /* display: none; */
 }
 #runsWrapper button {
     font-size: 14px;
-    width: 100%;
+    width: 92%;
     height: 60px;
     cursor: pointer;
+
+    border: none;
+    filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.3));
+    margin: 10px auto 0 auto;
+    background-color: white;
 }
 #runsWrapper button .text {
     overflow: hidden;
@@ -164,10 +195,6 @@
     display: block;
     text-overflow: ellipsis;
     text-align: center;
-}
-#runsWrapper button.active {
-	background-color: blue;
-    color: white;
 }
 #runsWrapper button span {
     float: left;
@@ -177,10 +204,6 @@
     line-height: 22px;
     text-align: center;
     vertical-align: middle;
-
-    /* testing */
-    border: 0px solid red;
-    box-sizing: border-box;
 }
 #runsWrapper button .checkbox {
     float: right;
@@ -189,9 +212,12 @@
     width: 20px;
     height: 20px;
     line-height: 20px;
-    border: 2px solid black;
+    border: 1px solid #b8b8b8;
     font-weight: bold;
     text-align: center;
+}
+#runsWrapper button .checkbox:hover {
+    border: 1px solid #2980b9;
 }
 
 /********************************************** SELECTIONS */

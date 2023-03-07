@@ -82,11 +82,7 @@ class ChartPicker extends React.Component {
 		// update chart state with new data
 		this.setCharts(newCharts);
 
-
-
-
-
-
+		// update chart context state
 		const newChartsContextData = [];
 		newCharts.map(chart => {
 			const newChartContextData = {
@@ -273,7 +269,7 @@ class ChartPicker extends React.Component {
 				{/*} Download & Upload Buttons {*/}
 				<div 
 					id="downloadUploadWrapper"
-					className={this.props.toHide ? null : "hide"}
+					//className={this.props.toHide ? null : "hide"}
 				>			
 					<label className="upload" htmlFor="hiddenUpload">
 						<input id="hiddenUpload" type="file" onChange={this.uploadLocalData.bind(this)} />
@@ -289,7 +285,6 @@ class ChartPicker extends React.Component {
 				<button 
 					id="pickChartBtn"
 					onClick={() => this.toggleMetrics()}
-					className={this.checkVisibility()}
 					disabled={loading ? true : ""}
 				>
 					{loading ? <img src={LoadingIcon} className="loadingIcon" alt="Loading..." /> : "+"}

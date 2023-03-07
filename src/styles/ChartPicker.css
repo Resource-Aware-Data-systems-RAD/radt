@@ -46,7 +46,7 @@
     box-sizing: border-box;
 }
 #chartPickerWrapper #metricBtnList::-webkit-scrollbar {
-    display: none;
+    /* display: none; */
 }
 #chartPickerWrapper .metricBtn {
     width: 50%;

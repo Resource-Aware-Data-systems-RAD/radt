@@ -98,17 +98,6 @@ class ChartPicker extends React.Component {
 		});
 	}
 
-	// check if metrics button should be visible 
-	checkVisibility() {
-		const { availableMetrics } = this.state;
-		if (availableMetrics.length === 0) {
-			return "hide";
-		}
-		else if (!this.props.toHide) {
-			return "hide"; 
-		}
-	}
-
 	// removes chart from state using its id 
 	removeChart(id) {
 		let newCharts = [...this.state.charts].filter(chart => chart.id !== id);
@@ -263,7 +252,7 @@ class ChartPicker extends React.Component {
 					onClick={() => this.props.toggleDataPicker(true)}
 					className={this.props.toHide ? null : "hide"}
 				>
-					<img src={DataIcon} className="dataSVG" alt="Change Data" />
+					<img src={DataIcon} className="dataSVG" alt="Choose Data" title="Choose Data" />
 				</button>
 
 				{/*} Download & Upload Buttons {*/}
@@ -273,11 +262,11 @@ class ChartPicker extends React.Component {
 				>			
 					<label className="upload" htmlFor="hiddenUpload">
 						<input id="hiddenUpload" type="file" onChange={this.uploadLocalData.bind(this)} />
-						<img src={UploadIcon} className="uploadSVG" alt="Upload Charts" />
+						<img src={UploadIcon} className="uploadSVG" alt="Upload Charts" title="Upload Charts" />
 					</label>
 					
 					<button className="download" onClick={() => this.downloadLocalData()}>
-						<img src={DownloadIcon} className="downloadSVG" alt="Download Charts" />
+						<img src={DownloadIcon} className="downloadSVG" alt="Download Charts" title="Download Charts" />
 					</button>
 				</div>
 
@@ -286,6 +275,8 @@ class ChartPicker extends React.Component {
 					id="pickChartBtn"
 					onClick={() => this.toggleMetrics()}
 					disabled={loading ? true : ""}
+					title="Choose Metric"
+					className={availableMetrics.length === 0 ? "hide" : null}
 				>
 					{loading ? <img src={LoadingIcon} className="loadingIcon" alt="Loading..." /> : "+"}
 				</button>

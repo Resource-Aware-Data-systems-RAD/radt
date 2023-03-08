@@ -18,13 +18,15 @@
     border: 0px solid #34495e;   
     background-color: #34495e;
 }
-#chartPickerWrapper #pickChartBtn:hover {
+#chartPickerWrapper #pickChartBtn:hover:not([disabled]) {
     filter: brightness(1.25);
 }
 #chartPickerWrapper #pickChartBtn:disabled {
     cursor: default;
-    filter: brightness(1.25);
+    background-color: #4d4d4d;
 }
+
+
 .loadingIcon {
     height: 70%;
     position: absolute;

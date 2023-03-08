@@ -125,11 +125,6 @@ class DataPicker extends React.Component {
 			}
 		});
 
-		// scroll to bottom of list when adding, but not removing
-		if (newSelectedWorkloads.length > selectedWorkloads.length) {
-			this.bottomOfScrollRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
-		}
-
 		// update state
 		this.setState({
 			selectedWorkloads: newSelectedWorkloads,
@@ -141,6 +136,24 @@ class DataPicker extends React.Component {
 
 		// add selected runs and workloads to local storage to persist through refresh
 		submitToLocalStorage(newSelectedWorkloads, newSelectedRuns);
+	}
+
+	// clear all selections
+	clearAllSelections() {
+		const confirm = window.confirm("Confirm clear all selections?");
+		if(confirm) {
+			// update state
+			this.setState({
+				selectedWorkloads: [],
+				selectedRuns: []
+			});
+
+			// pull copy of selected runs up to parent
+			this.props.pullSelectedRuns([]);
+
+			// add selected runs and workloads to local storage to persist through refresh
+			submitToLocalStorage([], []);
+		}
 	}
 
 	componentDidMount() {
@@ -159,6 +172,13 @@ class DataPicker extends React.Component {
 			this.props.pullSelectedRuns(localRunsAndWorkloadData.runData);
 		}
 	}
+
+	componentDidUpdate(prevProps, prevState) {
+		// scroll to bottom of list when adding selections, but not removing
+		if (this.state.selectedWorkloads.length > prevState.selectedWorkloads.length) {
+			this.bottomOfScrollRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+		}
+	  }
 
 	render() {
 
@@ -197,11 +217,11 @@ class DataPicker extends React.Component {
 						onClickToggleWorkloadSelection={this.toggleRunWorkloadSelection.bind(this)}
 						bottomOfScrollRef={this.bottomOfScrollRef}
 					/>
-					<button 
-						className="selectionConfirmBtn"
-						onClick={() => this.props.toggleDataPicker(false)}
-					>
-						Confirm
+					<button className="clearBtn" onClick={() => this.clearAllSelections()}>
+						Clear All
+					</button>
+					<button className="selectionConfirmBtn" onClick={() => this.props.toggleDataPicker(false)}>
+						Save
 					</button>
 				</div>
 			</div>
@@ -278,18 +298,31 @@ function Workloads(props) {
 	)
 }
 function Runs(props) {
+
+	const checkRunStatus = (status) => {
+		if (status === "FINISHED") {
+			return "complete";
+		}
+		else if (status === "RUNNING") {
+			return "running";
+		}
+		else if (status === "FAILED") {
+			return "failed";
+		}
+	}
+
 	return (
 		<div id="runsWrapper">
 			{props.data.slice().sort((a, b) => a.startTime - b.startTime).map(run => (
-				<button
-					key={run.name}
-					onClick={() => props.onClickToggleRunSelection(run.workload, run)}
-				>
-					{/*}<span className="text">Run {run.name.substring(0, 6)}</span>{*/}
-					<span className="text">
-						{run.letter != null ? run.letter : run.name.substring(0,6)} | {milliToMinsSecs(run.duration)}
-					</span>
+				<button key={run.name} onClick={() => props.onClickToggleRunSelection(run.workload, run)}>
+					<span className={checkRunStatus(run.status)} title={run.status.charAt(0) + run.status.substring(1).toLowerCase()}>•</span>
+					<span className="letter">{run.letter === null || run.letter === "0" ? run.name.substring(0,6) : run.letter}</span>
+					
 					<div className="checkbox">{props.selectedRuns.findIndex(el => el.name === run.name) > -1 ? "✔" : " "}</div>
+
+					<span className="info" title={"𝗣𝗮𝗿𝗮𝗺𝘀: " + run.params + "\n" + "𝗦𝗼𝘂𝗿𝗰𝗲: " + run.source}>i</span>
+					<span className="duration">{milliToMinsSecs(run.duration)}</span>
+					
 				</button>
 			))}
 		</div>
@@ -341,19 +374,19 @@ function Selections(props) {
 					key={visibleWorkload.workload}
 				>
 					<div className='workload'>
-						{formatWorkloadLabel(visibleWorkload.workload)}
 						<button 
-							className="removeBtn"
+							className="removeWorkloadBtn"
 							onClick={() => props.onClickToggleWorkloadSelection(visibleWorkload.workload)}
 						>
 							X
 						</button>
+						{formatWorkloadLabel(visibleWorkload.workload)}
 					</div>
 					<ul>
 						{ /* render all runs */ }
 						{visibleWorkload.runs.sort((a, b) => a.startTime - b.startTime).map(visibleRun => (
 							<li key={visibleRun.name}>
-								{visibleRun.name.substring(0, 6)}
+								{visibleRun.letter != null ? visibleRun.letter : visibleRun.name.substring(0,6)}
 								<button 
 									className="removeBtn"
 									onClick={() => props.onClickToggleWorkloadSelection(visibleWorkload.workload, visibleRun)}

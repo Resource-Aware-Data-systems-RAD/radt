@@ -58,6 +58,9 @@
 .clearBtn:hover { 
     filter: brightness(1.2);
 }
+.highlightSelection {
+    border: 1px solid #2980b9 !important;
+}
 
 /********************************************** EXPERIMENTS */
 #experimentWrapper {
@@ -178,6 +181,7 @@
 }
 #workloadsWrapper .checkbox:hover {
     border: 1px solid #2980b9;
+    background-color: #99c8e8;
 }
 
 /********************************************** RUNS */
@@ -208,8 +212,6 @@
     float: left;
     line-height: 14px;
     padding: 5px;
-
-
 }
 #runsWrapper button .complete {
     margin: 0 0 0 5px;
@@ -225,7 +227,7 @@
 #runsWrapper button .failed {
     margin: 0 0 0 5px;
     font-size: 30px;
-    color: #7f8c8d;
+    color: #831515;
 }
 #runsWrapper button .letter {
     width: 120px;
@@ -241,6 +243,7 @@
     float: right;
 }
 #runsWrapper button .info {
+    font-family: serif;
     font-style: italic;
     font-weight: bold;
     background-color: #7f8c8d;
@@ -265,6 +268,10 @@
 }
 #runsWrapper button:hover .checkbox {
     border: 1px solid #2980b9;
+    background-color: #99c8e8;
+}
+#runsWrapper button .noDuration {
+    color: #a6a6a6;
 }
 
 /********************************************** SELECTIONS */

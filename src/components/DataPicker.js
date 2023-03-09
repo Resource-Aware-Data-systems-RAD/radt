@@ -276,7 +276,7 @@ function Workloads(props) {
 			{props.data.slice().sort((a, b) => sortWorkloads(a, b)).map(workload => (
 				<div 
 					key={workload}
-					className={`workload ${props.activeWorkload === workload ? "active" : null}`}
+					className={`workload ${props.activeWorkload === workload ? "active" : ""} ${props.selectedWorkloads.includes(workload) ? "highlightSelection" : ""}`}
 					onClick={() => props.onClickSetVisibleRuns(workload)}
 				>
 					<div className="info">
@@ -314,15 +314,17 @@ function Runs(props) {
 	return (
 		<div id="runsWrapper">
 			{props.data.slice().sort((a, b) => a.startTime - b.startTime).map(run => (
-				<button key={run.name} onClick={() => props.onClickToggleRunSelection(run.workload, run)}>
+				<button 
+					key={run.name} 
+					onClick={() => props.onClickToggleRunSelection(run.workload, run)}
+					className={props.selectedRuns.findIndex(el => el.name === run.name) > -1 ? "highlightSelection" : null}
+				>
 					<span className={checkRunStatus(run.status)} title={run.status.charAt(0) + run.status.substring(1).toLowerCase()}>•</span>
-					<span className="letter">{run.letter === null || run.letter === "0" ? run.name.substring(0,6) : run.letter}</span>
-					
+					<span className="letter" title="Identifier">{run.letter === null || run.letter === "0" ? run.name.substring(0,6) : run.letter}</span>
 					<div className="checkbox">{props.selectedRuns.findIndex(el => el.name === run.name) > -1 ? "✔" : " "}</div>
+					<span className="info" title={"𝗠𝗼𝗱𝗲𝗹: " + run.model + "\n" +"𝗣𝗮𝗿𝗮𝗺𝘀: " + run.params + "\n" + "𝗦𝗼𝘂𝗿𝗰𝗲: " + run.source}>i</span>
+					<span className={`duration ${run.duration === null ? "noDuration" : ""}`} title="Duration">{milliToMinsSecs(run.duration)}</span>	
 
-					<span className="info" title={"𝗣𝗮𝗿𝗮𝗺𝘀: " + run.params + "\n" + "𝗦𝗼𝘂𝗿𝗰𝗲: " + run.source}>i</span>
-					<span className="duration">{milliToMinsSecs(run.duration)}</span>
-					
 				</button>
 			))}
 		</div>
@@ -386,7 +388,8 @@ function Selections(props) {
 						{ /* render all runs */ }
 						{visibleWorkload.runs.sort((a, b) => a.startTime - b.startTime).map(visibleRun => (
 							<li key={visibleRun.name}>
-								{visibleRun.letter != null ? visibleRun.letter : visibleRun.name.substring(0,6)}
+								{visibleRun.letter === null || visibleRun.letter === "0" ? visibleRun.name.substring(0,6) : visibleRun.letter}
+
 								<button 
 									className="removeBtn"
 									onClick={() => props.onClickToggleWorkloadSelection(visibleWorkload.workload, visibleRun)}

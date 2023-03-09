@@ -10,6 +10,11 @@ class Chart extends React.Component {
 		super(props);
 		this.state = {
             options: {
+                title: {
+                    style: {
+                        fontWeight: 'bold'
+                    }
+                },
                 exporting: {
                     buttons: {
                         contextButton: {
@@ -30,7 +35,7 @@ class Chart extends React.Component {
                 },
                 chart: {
                     type: "line",
-                    zoomType: 'x'
+                    zoomType: 'x',
                 },
                 legend: {
                     enabled: true
@@ -64,7 +69,10 @@ class Chart extends React.Component {
                     ordinal: false,
                     type: "datetime",
                     title: {
-                        text: "Time"
+                        text: "Time Elapsed",
+                        style: {
+                            fontWeight: 'bold'
+                        }
                     },
                     labels:{
                         formatter:function(){
@@ -73,7 +81,13 @@ class Chart extends React.Component {
                     },
                 },
                 yAxis: {
-                    opposite: false
+                    opposite: false,
+                    title: {
+                        text: "Value",
+                        style: {
+                            fontWeight: 'bold'
+                        }
+                    },
                 },
                 credits: {
                     enabled: false
@@ -89,7 +103,7 @@ class Chart extends React.Component {
                     shared: false,
                     split: false,
                     formatter: function() {
-                        return  '<b>Series:</b>' + this.series.name +'<br/><br/><b>Value:</b> ' + this.y + '<br/><b>Time:</b> ' + milliToMinsSecs(this.x);
+                        return  '<b>Series:</b>' + this.series.name +'<br/><br/><b>Value:</b> ' + this.y + '<br/><b>Time Elapsed:</b> ' + milliToMinsSecs(this.x);
                     }
                 },
                 navigator: {
@@ -188,7 +202,7 @@ class Chart extends React.Component {
 
     generateSeries(newChartData, newSmoothing, newShownRuns, newHiddenSeries) {
 
-        console.log("Generating..."); // debugging
+        //console.log("Generating..."); // debugging
 
         const data = newChartData.data;
 
@@ -251,9 +265,13 @@ class Chart extends React.Component {
             // prevent duplicate ids in highcharts api
             delete series.id;
 
-
             // hide any series which are supposed to be invisible
             series.visible = true;
+
+            /*series.custom = {
+                legendTooltip: series.name
+            }*/
+
             newHiddenSeries.forEach(seriesToHide => {
                 if (series.name === seriesToHide) {
                     series.visible = false;
@@ -279,7 +297,21 @@ class Chart extends React.Component {
                 series: allSeries,
                 navigator: {
                     series: allSeries
-                }
+                },
+                /*legend: {
+                    labelFormatter: function () {
+
+                        console.log(this.options.custom.legendTooltip);
+
+                        if (this.options.custom && this.options.custom.legendTooltip) {
+                            return '<span>' + this.name + '</span> <span title="WILLIES"> INFO</span>';
+                        }
+                        else {
+                            return '<span>' + this.name + '</span>';
+                        }
+                        
+                    }
+                },*/
             },
             loading: false,
 
@@ -338,6 +370,25 @@ class Chart extends React.Component {
         this.generateSeries(this.props.chartData, this.state.smoothing, this.state.shownRuns, newHiddenSeries); 
     }
 
+    getChartMetadata() {
+
+        const params = new Set();
+        const models = new Set();
+        const sources = new Set();
+
+        this.state.data.map(data => {
+            params.add(data.params);
+            models.add(data.model);
+            sources.add(data.source);
+        });
+
+        console.log(params);
+        console.log(models);
+        console.log(sources);
+
+        return "𝗠𝗼𝗱𝗲𝗹s: \n" + [...models].join(',\n') + "\n\n" +"𝗣𝗮𝗿𝗮𝗺𝘀: \n" + [...params].join(',\n') + "\n\n" + "𝗦𝗼𝘂𝗿𝗰𝗲: \n" + [...sources].join(',\n')
+    }
+
     render() {
         const { options, id, workloads, smoothing } = this.state;
         return (
@@ -372,9 +423,10 @@ class Chart extends React.Component {
                                 />
                                 <span className="slider round"></span>
                             </label>
-                        </div>                    
+                        </div>        
                     ))}
-                </div>         
+                </div>
+                <div title={this.getChartMetadata()}>info</div>   
             </div>
         );
     }

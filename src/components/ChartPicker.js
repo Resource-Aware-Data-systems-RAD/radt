@@ -18,6 +18,8 @@ class ChartPicker extends React.Component {
 			charts: [], 
 			chartsContextData: []
 		};
+
+		this.inputField = React.createRef();
 	}
 
 	// fetch all available metrics for the current selected runs 
@@ -130,7 +132,7 @@ class ChartPicker extends React.Component {
 	// update custom chart state for local data download
 	syncData(id, newSmoothing, newShownRuns, newHiddenSeries) {
 
-		console.log("Syncing...");
+		// console.log("Syncing..."); // debugging
 
 		const newChartsContextData = [...this.state.chartsContextData];
 		newChartsContextData.map(chart => {
@@ -147,6 +149,7 @@ class ChartPicker extends React.Component {
 
 	// upload data from a locally saved .json file
 	async uploadLocalData() {
+
 		const uploadedData = await new Promise((resolve) => {
 			if (window.File && window.FileReader && window.FileList && window.Blob) {
 				var file = document.querySelector('input[type=file]').files[0];
@@ -156,11 +159,7 @@ class ChartPicker extends React.Component {
 					reader.onload = function (event) {
 						try {
 							const data = JSON.parse(event.target.result);
-
-							data.forEach(chart => {
-								//console.log(chart); // debugging
-							});
-
+							//console.log(data); // debugging
 							resolve(data);
 						}
 						catch {
@@ -178,12 +177,15 @@ class ChartPicker extends React.Component {
 			}
 		});
 
+		this.inputField.current.value = "";
+
 		const localChartData = [...uploadedData[0]];
 		const localChartContext = [...uploadedData[1]];
 
 		localChartData.map(chart => {
 			localChartContext.map(context => {
 				if (chart.id === context.id) {
+					chart.id = new Date();
 					chart.context = {
 						smoothing: context.smoothing,
 						shownRuns: context.shownRuns,
@@ -192,8 +194,9 @@ class ChartPicker extends React.Component {
 				}		
 			})
 		})
-
-		this.setCharts(localChartData);
+	
+		const newCharts = [...localChartData, ...this.state.charts];
+		this.setCharts(newCharts);
 	}
 
 	// download data to a locally saved .json file
@@ -261,7 +264,7 @@ class ChartPicker extends React.Component {
 					//className={this.props.toHide ? null : "hide"}
 				>			
 					<label className="upload" htmlFor="hiddenUpload">
-						<input id="hiddenUpload" type="file" onChange={this.uploadLocalData.bind(this)} />
+						<input id="hiddenUpload" type="file" ref={this.inputField} onChange={this.uploadLocalData.bind(this)} />
 						<img src={UploadIcon} className="uploadSVG" alt="Upload Charts" title="Upload Charts" />
 					</label>
 					
@@ -276,7 +279,7 @@ class ChartPicker extends React.Component {
 					onClick={() => this.toggleMetrics()}
 					disabled={loading ? true : ""}
 					title="Choose Metric"
-					className={availableMetrics.length === 0 ? "hide" : null}
+					//className={availableMetrics.length === 0 ? "hide" : null}
 				>
 					{loading ? <img src={LoadingIcon} className="loadingIcon" alt="Loading..." /> : "+"}
 				</button>
@@ -295,6 +298,7 @@ class ChartPicker extends React.Component {
 							{metric}
 						</button>
 					))}
+					<div id="noData" className={availableMetrics.length === 0 ? null : "hide"}>No data available for current selection.</div>
 				</div>
 
 				{/*} Charts List {*/}

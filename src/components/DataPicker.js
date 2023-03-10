@@ -73,7 +73,7 @@ class DataPicker extends React.Component {
 	toggleRunWorkloadSelection(workload, run = null) {
 
 		// grab current state and clone it for changes
-		const { selectedWorkloads, selectedRuns, runData } = this.state;
+		const { selectedWorkloads, selectedRuns, runData, experimentData } = this.state;
 		let newSelectedWorkloads = [...selectedWorkloads];
 		let newSelectedRuns = [...selectedRuns];
 
@@ -116,13 +116,19 @@ class DataPicker extends React.Component {
 			}
 		}
 
-		// update list of selected workloads based on new selected runs
+		// update list of selected workloads based on new selected runs, and add experiment name to data 
 		newSelectedWorkloads = [];
 		newSelectedRuns.forEach(run => {	
 			let workloadIndex = newSelectedWorkloads.indexOf(run.workload);
 			if (workloadIndex === -1) {
 				newSelectedWorkloads.push(run.workload);
 			}
+
+			experimentData.forEach(experiment => {
+				if (run.experimentId === experiment.id) {
+					run.experimentName = experiment.name;
+				}
+			})
 		});
 
 		// update state
@@ -322,7 +328,7 @@ function Runs(props) {
 					<span className={checkRunStatus(run.status)} title={run.status.charAt(0) + run.status.substring(1).toLowerCase()}>•</span>
 					<span className="letter" title="Identifier">{run.letter === null || run.letter === "0" ? run.name.substring(0,6) : run.letter}</span>
 					<div className="checkbox">{props.selectedRuns.findIndex(el => el.name === run.name) > -1 ? "✔" : " "}</div>
-					<span className="info" title={"𝗠𝗼𝗱𝗲𝗹: " + run.model + "\n" +"𝗣𝗮𝗿𝗮𝗺𝘀: " + run.params + "\n" + "𝗦𝗼𝘂𝗿𝗰𝗲: " + run.source}>i</span>
+					<span className="info" title={"𝗠𝗼𝗱𝗲𝗹: " + run.model + "\n" + "𝗦𝗼𝘂𝗿𝗰𝗲: " + run.source + "\n" + "𝗣𝗮𝗿𝗮𝗺𝘀: " + run.params}>i</span>
 					<span className={`duration ${run.duration === null ? "noDuration" : ""}`} title="Duration">{milliToMinsSecs(run.duration)}</span>	
 
 				</button>

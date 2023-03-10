@@ -8,6 +8,9 @@
     margin: 30px auto 30px auto;
     background-color: white;
     filter: drop-shadow(1px 1px 4px rgba(0,0,0,0.3));
+
+    text-align: center;
+    border: 1px solid blue;
 }
 .chart {
     display: block;
@@ -119,4 +122,32 @@ input:checked + .slider:before {
 }
 .slider.round:before {
     border-radius: 50%;
+}
+
+/************************************** METADATA */
+#chartMetadataWrapper {
+    display: flex;
+
+    flex-wrap: wrap;
+    justify-content: left;
+
+    margin: 0 auto 0 10px;
+    font-size: 12px;
+
+    box-sizing: border-box;
+    border: 1px solid red;
+}
+.seriesMetadata {
+    text-align: left;
+    padding: 5px;
+    margin: 5px;
+
+    box-sizing: border-box;
+    border: 1px solid green;
+}
+.seriesMetadata .label {
+    font-weight: bold;
+}
+.seriesMetadata .metadata {
+    font-style: italic;
 }

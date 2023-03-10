@@ -119,23 +119,21 @@
     margin: 0 auto 10px auto;
     background-color: transparent;
     border: none;
-
-    background-color: #f1c40f;
+    background-color: #3498db;
 }
 .uploadSVG {
     position: relative;
-    top: 11px;
-    left: 3px;
+    top: 13px;
     width: 35px;
-    filter: invert(89%) sepia(23%) saturate(0%) hue-rotate(76deg) brightness(108%) contrast(103%);
+    filter: invert(89%) sepia(23%) saturate(0%) hue-rotate(76deg) brightness(108%) contrast(103%); /* white */
 }
 #downloadUploadWrapper .upload:hover {
     background-color: white;
-    border: 2px solid #f39c12;
+    border: 2px solid #3498db;
     box-sizing: border-box;
 }
 #downloadUploadWrapper .upload:hover .uploadSVG {
-    filter: invert(76%) sepia(79%) saturate(1490%) hue-rotate(359deg) brightness(104%) contrast(89%);
+    filter: invert(52%) sepia(98%) saturate(1376%) hue-rotate(177deg) brightness(92%) contrast(86%); /* #3498db */
 }
 #downloadUploadWrapper .download {
     display: block;
@@ -144,24 +142,23 @@
     cursor: pointer;
     margin: auto;
     background-color: transparent;
-    border: none;
-    
-    background-color: #3498db;
+    border: none; 
+    background-color: #f1c40f;
 }
 .downloadSVG {
     position: relative;
     top: 2px;
     left: 2px;
     width: 35px;
-    filter: invert(89%) sepia(23%) saturate(0%) hue-rotate(76deg) brightness(108%) contrast(103%);
+    filter: invert(89%) sepia(23%) saturate(0%) hue-rotate(76deg) brightness(108%) contrast(103%); /* white */
 }
 #downloadUploadWrapper .download:hover {
     background-color: white;
-    border: 2px solid #3498db;
+    border: 2px solid #f1c40f;
     box-sizing: border-box;
 }
 #downloadUploadWrapper .download:hover .downloadSVG {
-    filter: invert(52%) sepia(98%) saturate(1376%) hue-rotate(177deg) brightness(92%) contrast(86%);
+    filter: invert(76%) sepia(79%) saturate(1490%) hue-rotate(359deg) brightness(104%) contrast(89%); /* #f39c12 */ 
 }
 #downloadUploadWrapper #hiddenUpload {
     display: none;

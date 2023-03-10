@@ -9,6 +9,7 @@ require('highcharts/modules/boost')(Highcharts)
 require('highcharts/indicators/indicators')(Highcharts)
 require('highcharts/modules/exporting')(Highcharts)
 require('highcharts/modules/offline-exporting')(Highcharts)
+require('highcharts-export-data')(Highcharts)
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

@@ -31,7 +31,8 @@ class Chart extends React.Component {
                         navigator: {
                             enabled: false       
                         },
-                    }
+                    },
+                    fallbackToExportServer: false
                 },
                 chart: {
                     type: "line",
@@ -101,10 +102,7 @@ class Chart extends React.Component {
                         dashStyle: '5'
                     },
                     shared: false,
-                    split: false,
-                    formatter: function() {
-                        return  '<b>Series:</b>' + this.series.name +'<br/><br/><b>Value:</b> ' + this.y + '<br/><b>Time Elapsed:</b> ' + milliToMinsSecs(this.x);
-                    }
+                    split: false
                 },
                 navigator: {
                     xAxis: {
@@ -114,7 +112,7 @@ class Chart extends React.Component {
                     },
                     height: 75,
                     enabled: true,
-                    boostThreshold: 1,
+                    boostThreshold: 0,
                     series: {
                         dataGrouping: {
                             enabled: false
@@ -129,7 +127,7 @@ class Chart extends React.Component {
                 },
                 plotOptions: {
                     series: {
-                        boostThreshold: 1,
+                        boostThreshold: 0,
                         marker: {
                             radius: 1
                         },       
@@ -202,6 +200,16 @@ class Chart extends React.Component {
 
     generateSeries(newChartData, newSmoothing, newShownRuns, newHiddenSeries) {
 
+
+        //console.log(this.chartRef.current.chart.series);
+        this.chartRef.current.chart.series.forEach(series => {
+            if (series.navigatorSeries) {
+                //series.remove();
+                //console.log("SERIES REMOVED!");
+            }
+        })
+
+
         //console.log("Generating..."); // debugging
 
         const data = newChartData.data;
@@ -215,7 +223,8 @@ class Chart extends React.Component {
                 // check for ungrouped workloads or unsorted workloads
                 if (workloadId.substring(workloadId.indexOf("-") + 1) === "null" || newShownRuns.indexOf(workloadId) > -1) {
                     if (run.letter === null) {
-                        workloadId = workloadId + "-" + run.name.substring(0, 5);
+                        const removeNull = workloadId.substring(0, workloadId.indexOf("-"));
+                        workloadId = removeNull + " (" + run.name.substring(0, 5) + ")";
                     }
                     else {
                         if (run.letter.length > 1) {
@@ -227,13 +236,24 @@ class Chart extends React.Component {
                     }   
                 } 
 
+
                 // add all runs to one series per workload, unless they are unsorted runs
                 const seriesIndex = allSeries.findIndex(series => series.id === workloadId);
-                if (seriesIndex === -1) {                  
+                if (seriesIndex === -1) {      
+
                     let newSeries = {
                         id: workloadId,
-                        data: []
+                        data: [],
+                        custom: {
+                            ids: new Set() 
+                        }
                     };
+                    
+
+                    newSeries.custom.ids.add(run.name);
+
+
+
                     run.data.forEach(data => {
                         newSeries.data.push([data.timestamp, data.value]);
                     })
@@ -243,6 +263,10 @@ class Chart extends React.Component {
                     run.data.forEach(data => {
                         allSeries[seriesIndex].data.push([data.timestamp, data.value]);
                     })
+
+                    
+                    allSeries[seriesIndex].custom.ids.add(run.name); 
+
                 }
             }
         });
@@ -268,10 +292,6 @@ class Chart extends React.Component {
             // hide any series which are supposed to be invisible
             series.visible = true;
 
-            /*series.custom = {
-                legendTooltip: series.name
-            }*/
-
             newHiddenSeries.forEach(seriesToHide => {
                 if (series.name === seriesToHide) {
                     series.visible = false;
@@ -285,7 +305,7 @@ class Chart extends React.Component {
                 series.data = calcEMA(series.data, newSmoothing);
             });
         }
-        
+
         // update state which will update render of chart
         this.setState({
             id: newChartData.id,
@@ -298,27 +318,19 @@ class Chart extends React.Component {
                 navigator: {
                     series: allSeries
                 },
-                /*legend: {
-                    labelFormatter: function () {
-
-                        console.log(this.options.custom.legendTooltip);
-
-                        if (this.options.custom && this.options.custom.legendTooltip) {
-                            return '<span>' + this.name + '</span> <span title="WILLIES"> INFO</span>';
-                        }
-                        else {
-                            return '<span>' + this.name + '</span>';
-                        }
-                        
+                tooltip: {
+                    formatter: function() {
+                        return '<b>Series:</b>' + this.series.name +'<br/><br/><b>ID(s):</b><br />' + [...this.series.userOptions.custom.ids].join('<br />');
+                        //return  '<b>Series:</b>' + this.series.name +'<br/><br/><b>Value:</b> ' + this.y + '<br/><b>Time Elapsed:</b> ' + milliToMinsSecs(this.x);
                     }
-                },*/
-            },
-            loading: false,
-
+                },
+            },   
             shownRuns: newShownRuns,
             hiddenSeries: newHiddenSeries,
-            smoothing: newSmoothing
+            smoothing: newSmoothing,
+            loading: false
         });
+              
     }
 
     applySmoothness(smoothing) { 
@@ -370,27 +382,21 @@ class Chart extends React.Component {
         this.generateSeries(this.props.chartData, this.state.smoothing, this.state.shownRuns, newHiddenSeries); 
     }
 
-    getChartMetadata() {
+    componentDidUpdate() {
 
-        const params = new Set();
-        const models = new Set();
-        const sources = new Set();
+        this.chartRef.current.chart.series.forEach(series => {
+            //console.log(series);
+            //series.userOptions.custom.models.add("WILLIES");
+            series.userOptions.custom.ids.forEach(model => {
+                //console.log(model);
+            })
+            //console.log("------------------------")
 
-        this.state.data.map(data => {
-            params.add(data.params);
-            models.add(data.model);
-            sources.add(data.source);
-        });
-
-        console.log(params);
-        console.log(models);
-        console.log(sources);
-
-        return "𝗠𝗼𝗱𝗲𝗹s: \n" + [...models].join(',\n') + "\n\n" +"𝗣𝗮𝗿𝗮𝗺𝘀: \n" + [...params].join(',\n') + "\n\n" + "𝗦𝗼𝘂𝗿𝗰𝗲: \n" + [...sources].join(',\n')
+        })
     }
 
     render() {
-        const { options, id, workloads, smoothing } = this.state;
+        const { data, options, id, workloads, smoothing } = this.state;
         return (
             <div className="chartWrapper">
                 <button 
@@ -405,6 +411,7 @@ class Chart extends React.Component {
                     containerProps={{className: "chart"}}
                     options={options}         
                     ref={ this.chartRef }
+                    callback={this.afterChartCreated}
                 />          
                 <Slider 
                     onSetSmoothness={this.applySmoothness.bind(this)}
@@ -413,7 +420,6 @@ class Chart extends React.Component {
                 <div id="workloadGroupingControlsWrapper">
                     Toggle Runs:
                     {workloads.map(workload => (
-
                         <div key={workload}>
                             {workload}
                             <label className="switch">
@@ -426,7 +432,20 @@ class Chart extends React.Component {
                         </div>        
                     ))}
                 </div>
-                <div title={this.getChartMetadata()}>info</div>   
+                <div id="chartMetadataWrapper">
+                    {data.map(series => (
+                        <div className="seriesMetadata" key={series.name}>
+                            <span className="label" style={{color: "black"}}>Experiment: </span><span className="metadata">{series.experimentName}</span><br />
+                            <span className="label">Workload: </span>{series.workload}<br />
+                            <span className="label">Letter: </span>{series.letter}<br />
+                            <span className="label">ID: </span>{series.name.substring(0, 6)}<br />
+                            <span className="label">Duration: </span>{milliToMinsSecs(series.duration)}<br />
+                            <span className="label">Model: </span>{series.model}<br />
+                            <span className="label">Source: </span>{series.source}<br />
+                            <span className="label">Params: </span>{series.params}<br />
+                        </div>        
+                    ))}
+                </div>
             </div>
         );
     }

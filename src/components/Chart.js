@@ -127,6 +127,11 @@ class Chart extends React.Component {
                 },
                 plotOptions: {
                     series: {
+                        point: {
+                            events: {
+                                //mouseOver: this.setHoverData.bind(this)
+                            }
+                        },
                         boostThreshold: 0,
                         marker: {
                             radius: 1
@@ -150,7 +155,7 @@ class Chart extends React.Component {
                             ]]
                         },
                         events: {
-                            legendItemClick: this.toggleSeriesVisibility.bind(this)
+                            //legendItemClick: this.toggleSeriesVisibility.bind(this)
                         }
                     },
                 },
@@ -167,7 +172,6 @@ class Chart extends React.Component {
         this.chartRef = React.createRef();
         this.handleShowRunsSwitch = (workloadId) => (event) => this.toggleShownRuns(workloadId, event);
 	}
-
     componentDidMount() {
         // get initial list of all normal workload ID's for rendering
         const workloads = [];
@@ -198,26 +202,55 @@ class Chart extends React.Component {
         }
     }
 
-    generateSeries(newChartData, newSmoothing, newShownRuns, newHiddenSeries) {
+    static formatTooltip(tooltip, toShow) {
 
+        const xAxisTitle = tooltip.series.xAxis.axisTitle.textStr;
+        const yAxisTitle = tooltip.series.yAxis.axisTitle.textStr;
 
-        //console.log(this.chartRef.current.chart.series);
-        this.chartRef.current.chart.series.forEach(series => {
-            if (series.navigatorSeries) {
-                //series.remove();
-                //console.log("SERIES REMOVED!");
+        let tooltipData = "<div class='tooltipStyle' style='color:" + tooltip.color + ";'>" + tooltip.series.name + "</div><br /><br/><b>" + yAxisTitle + ":</b> " + tooltip.y + "<br/><b>"+ xAxisTitle +":</b> " + milliToMinsSecs(tooltip.x) + "<br /><br />";
+
+        if (toShow) {
+            const letters = new Set();
+            const models = new Set();
+            const sources = new Set();
+            const params = new Set();
+            tooltip.series.userOptions.custom.runs.forEach(run => {  
+                letters.add(run.letter);
+                models.add(run.model);
+                sources.add(run.source);
+                params.add(run.params);
+            });
+
+            let lettersString = "";
+            if (tooltip.series.userOptions.custom.runs.length > 1) {
+                lettersString = "<b>Run(s): </b><br />" + [...letters].join("<br />") + "<br /><br />";
             }
-        })
 
+            const modelsString = "<b>Model(s): </b><br />" + [...models].join("<br />") + "<br /><br />";
+            const sourcesString = "<b>Source(s): </b><br />" + [...sources].join("<br />") + "<br /><br />";
+            const paramsString = "<b>Param(s): </b><br />" + [...params].join("<br />") + "<br /><br />";
+
+            tooltipData = tooltipData + modelsString + sourcesString + paramsString + lettersString;
+        }
+        
+        return tooltipData;
+    }
+
+    generateSeries(newChartData, newSmoothing, newShownRuns, newHiddenSeries, showDetailedTooltip = false) {
 
         //console.log("Generating..."); // debugging
-
         const data = newChartData.data;
 
         // format data into series for highcharts
+        const experimentList = new Set();
         const allSeries = [];
         data.forEach(run => {
             if (run.data !== undefined) {      
+
+                // prepare for chart title
+                
+                experimentList.add(run.experimentName);
+
                 let workloadId = run.workload;
 
                 // check for ungrouped workloads or unsorted workloads
@@ -245,14 +278,14 @@ class Chart extends React.Component {
                         id: workloadId,
                         data: [],
                         custom: {
-                            ids: new Set() 
+                            runs: []
                         }
                     };
                     
-
-                    newSeries.custom.ids.add(run.name);
-
-
+                    // add series (runs) metadata to HC api for tooltip
+                    const metadata = {...run};
+                    delete metadata.data;
+                    newSeries.custom.runs.push(metadata);
 
                     run.data.forEach(data => {
                         newSeries.data.push([data.timestamp, data.value]);
@@ -264,9 +297,10 @@ class Chart extends React.Component {
                         allSeries[seriesIndex].data.push([data.timestamp, data.value]);
                     })
 
-                    
-                    allSeries[seriesIndex].custom.ids.add(run.name); 
-
+                    // add series (runs) metadata to HC api for tooltip
+                    const metadata = {...run};
+                    delete metadata.data;
+                    allSeries[seriesIndex].custom.runs.push(metadata);
                 }
             }
         });
@@ -306,24 +340,37 @@ class Chart extends React.Component {
             });
         }
 
+        // get chart title based on number of experiments
+        let chartTitle = "Loading..."
+        if (experimentList.size === 1) {
+            [chartTitle] = experimentList;
+        }
+        else {
+            chartTitle = "Multiple Experiments (" + experimentList.size + ")";
+        }
+
         // update state which will update render of chart
         this.setState({
             id: newChartData.id,
             data: newChartData.data,
             options: {
                 title: {
-                    text: newChartData.metric
+                    text: chartTitle
+                },
+                yAxis: {
+                    title: {
+                        text: newChartData.metric,
+                    },
                 },
                 series: allSeries,
                 navigator: {
                     series: allSeries
                 },
                 tooltip: {
-                    formatter: function() {
-                        return '<b>Series:</b>' + this.series.name +'<br/><br/><b>ID(s):</b><br />' + [...this.series.userOptions.custom.ids].join('<br />');
-                        //return  '<b>Series:</b>' + this.series.name +'<br/><br/><b>Value:</b> ' + this.y + '<br/><b>Time Elapsed:</b> ' + milliToMinsSecs(this.x);
+                    formatter() {
+                        return Chart.formatTooltip(this, showDetailedTooltip);
                     }
-                },
+                }
             },   
             shownRuns: newShownRuns,
             hiddenSeries: newHiddenSeries,
@@ -382,19 +429,6 @@ class Chart extends React.Component {
         this.generateSeries(this.props.chartData, this.state.smoothing, this.state.shownRuns, newHiddenSeries); 
     }
 
-    componentDidUpdate() {
-
-        this.chartRef.current.chart.series.forEach(series => {
-            //console.log(series);
-            //series.userOptions.custom.models.add("WILLIES");
-            series.userOptions.custom.ids.forEach(model => {
-                //console.log(model);
-            })
-            //console.log("------------------------")
-
-        })
-    }
-
     render() {
         const { data, options, id, workloads, smoothing } = this.state;
         return (
@@ -432,6 +466,7 @@ class Chart extends React.Component {
                         </div>        
                     ))}
                 </div>
+                {/*}
                 <div id="chartMetadataWrapper">
                     {data.map(series => (
                         <div className="seriesMetadata" key={series.name}>
@@ -446,6 +481,7 @@ class Chart extends React.Component {
                         </div>        
                     ))}
                 </div>
+                {*/}
             </div>
         );
     }

@@ -8,9 +8,6 @@
     margin: 30px auto 30px auto;
     background-color: white;
     filter: drop-shadow(1px 1px 4px rgba(0,0,0,0.3));
-
-    text-align: center;
-    border: 1px solid blue;
 }
 .chart {
     display: block;
@@ -43,6 +40,11 @@
 }
 .removeChartBtn:hover { 
     filter: brightness(1.5);
+}
+.tooltipStyle {
+    font-size: 20px;
+    font-weight: bold;
+    /* color controlled inline */
 }
 
 /************************************** SMOOTH SLIDER */

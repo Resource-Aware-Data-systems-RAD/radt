@@ -13,10 +13,12 @@ class App extends React.Component {
 		};
 	}
 
+	// pull data from data picker when it updates
 	updateSelectedRuns = (newSelectedRuns) => {
 		this.setState({selectedRuns: newSelectedRuns});
 	}
 
+	// show or hide the data picker
 	toggleDataPicker = (toShow) => {
 		this.setState({ dataPickerOpen: toShow });
 	}

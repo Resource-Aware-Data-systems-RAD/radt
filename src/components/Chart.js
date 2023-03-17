@@ -21,7 +21,8 @@ class Chart extends React.Component {
                             align: 'left',
                             x: 0,
                             y: -5,
-                            verticalAlign: 'top'
+                            verticalAlign: 'top',
+                            menuItems: ["viewFullscreen", "printChart", "separator", "downloadPNG", "downloadJPEG", "separator", "downloadCSV", "downloadXLS"]
                         }
                     },
                     scale: 3,
@@ -43,7 +44,7 @@ class Chart extends React.Component {
                 },
                 xAxis: {
                     events: {
-                        setExtremes: function(event){
+                        setExtremes: function(event) {
                             if (!this.zoomButton) {
                                 const chart = this.chart;
                                 this.zoomButton = chart.renderer.button('Reset Zoom', null, null, function() {
@@ -65,7 +66,8 @@ class Chart extends React.Component {
                                     this.zoomButton = null;
                                 }                      
                             }
-                        }
+                        },
+                        afterSetExtremes: this.handleAfterSetExtremes.bind(this)
                     },
                     ordinal: false,
                     type: "datetime",
@@ -112,7 +114,7 @@ class Chart extends React.Component {
                     },
                     height: 75,
                     enabled: true,
-                    boostThreshold: 0,
+                    boostThreshold: 1,
                     series: {
                         dataGrouping: {
                             enabled: false
@@ -127,12 +129,8 @@ class Chart extends React.Component {
                 },
                 plotOptions: {
                     series: {
-                        point: {
-                            events: {
-                                //mouseOver: this.setHoverData.bind(this)
-                            }
-                        },
-                        boostThreshold: 0,
+                        lineWidth: 1,
+                        boostThreshold: 1, 
                         marker: {
                             radius: 1
                         },       
@@ -155,7 +153,7 @@ class Chart extends React.Component {
                             ]]
                         },
                         events: {
-                            //legendItemClick: this.toggleSeriesVisibility.bind(this)
+                            legendItemClick: this.toggleSeriesVisibility.bind(this)
                         }
                     },
                 },
@@ -166,42 +164,43 @@ class Chart extends React.Component {
             workloads: [],
             shownRuns: [],
             hiddenSeries: [],
-            smoothing: 0
+            smoothing: 0,
+            range: {min: 0, max: 0},
+            showDetailedTooltip: false, 
+            monochromeMode: false,
+            boostMode: true,
+            chartLineWidth: 1.0
 		}; 
 
         this.chartRef = React.createRef();
         this.handleShowRunsSwitch = (workloadId) => (event) => this.toggleShownRuns(workloadId, event);
 	}
+
     componentDidMount() {
-        // get initial list of all normal workload ID's for rendering
-        const workloads = [];
-        this.props.chartData.data.forEach(run => {
-            if (run.workload.substring(run.workload.indexOf("-") + 1) !== "null") {
-                if (workloads.indexOf(run.workload) === -1) {
-                    workloads.push(run.workload);
-                }       
-            }
-        })
-        this.setState({workloads: workloads});
+
+        // only show workload ID's which contain more than 1 run in Toggle Run section
+        const workloads = this.props.chartData.data.map(run => run.workload);
+        const nonUnique = [...new Set(workloads.filter((item,i) => workloads.includes(item, i+1)))];
+        this.setState({workloads: nonUnique});
 
         // generate series
         if (this.props.chartData.context) {
             // with local uploaded settings 
-            this.generateSeries(this.props.chartData, this.props.chartData.context.smoothing, this.props.chartData.context.shownRuns, this.props.chartData.context.hiddenSeries); 
+            this.generateSeries(this.props.chartData, this.props.chartData.context.smoothing, this.props.chartData.context.shownRuns, this.props.chartData.context.hiddenSeries, this.props.chartData.context.range, this.state.monochromeMode); 
         }   
         else {
             // with default settings (e.g. no smoothing and combined as workloads)
-            this.generateSeries(this.props.chartData, 0, [], []); 
+            this.generateSeries(this.props.chartData, 0, [], [], {min: 0, max: 0}, false); 
         }
     }
 
-    // sync contextual chart information to ChartPicker parent for local downloading
     componentDidUpdate(prevProps, prevState) {
-        if (prevState.smoothing !== this.state.smoothing || prevState.shownRuns.length !== this.state.shownRuns.length || prevState.hiddenSeries.length !== this.state.hiddenSeries.length) {     
-            this.props.pullChartExtras(this.state.id, this.state.smoothing, this.state.shownRuns, this.state.hiddenSeries);
+        if (prevState.smoothing !== this.state.smoothing || prevState.shownRuns.length !== this.state.shownRuns.length || prevState.hiddenSeries.length !== this.state.hiddenSeries.length || prevState.range.min !== this.state.range.min || prevState.range.max !== this.state.range.max) {     
+            this.props.pullChartExtras(this.state.id, this.state.smoothing, this.state.shownRuns, this.state.hiddenSeries, this.state.range);
         }
     }
 
+    // format detailed tooltip if it is enabled
     static formatTooltip(tooltip, toShow) {
 
         const xAxisTitle = tooltip.series.xAxis.axisTitle.textStr;
@@ -236,7 +235,8 @@ class Chart extends React.Component {
         return tooltipData;
     }
 
-    generateSeries(newChartData, newSmoothing, newShownRuns, newHiddenSeries, showDetailedTooltip = false) {
+    // takes the run data, parses it to an object Highcharts can render, and applies it to state (which will auto-update the chart)
+    generateSeries(newChartData, newSmoothing, newShownRuns, newHiddenSeries, newRange, monoMode) {
 
         //console.log("Generating..."); // debugging
         const data = newChartData.data;
@@ -247,13 +247,11 @@ class Chart extends React.Component {
         data.forEach(run => {
             if (run.data !== undefined) {      
 
-                // prepare for chart title
-                
+                // prepare for chart title    
                 experimentList.add(run.experimentName);
 
-                let workloadId = run.workload;
-
                 // check for ungrouped workloads or unsorted workloads
+                let workloadId = run.workload;
                 if (workloadId.substring(workloadId.indexOf("-") + 1) === "null" || newShownRuns.indexOf(workloadId) > -1) {
                     if (run.letter === null) {
                         const removeNull = workloadId.substring(0, workloadId.indexOf("-"));
@@ -267,8 +265,7 @@ class Chart extends React.Component {
                             workloadId = workloadId + " " + run.letter + " (" + run.name.substring(0, 5) + ")";
                         }             
                     }   
-                } 
-
+                }
 
                 // add all runs to one series per workload, unless they are unsorted runs
                 const seriesIndex = allSeries.findIndex(series => series.id === workloadId);
@@ -310,8 +307,13 @@ class Chart extends React.Component {
             series.data.sort((a, b) => a[0] - b[0]);
         });
 
-        // subtract earliest time from all timestamps to get ms passed
+        // styling for monochrome mode
+        let monoSeriesCounter = 0;
+        const dashStyles = ["Solid", "Solid", "Solid ", "Dot", "LongDash"];
+        const monoColors = ["#000000", "#cccccc", "#7f7f7f ", "#999999", "#666666"];
+
         allSeries.forEach(series => {
+            // subtract earliest time from all timestamps to get ms passed
             const earliestTime = series.data[0][0];
             series.data.forEach(timeAndValue => {
                 timeAndValue[0] = timeAndValue[0] - earliestTime;
@@ -331,6 +333,19 @@ class Chart extends React.Component {
                     series.visible = false;
                 }
             })
+
+            // update series styles/colors for for monochrome mode
+            if (monoMode) {
+                series.dashStyle = dashStyles[monoSeriesCounter];
+                series.color = monoColors[monoSeriesCounter];
+            }
+            else {
+                series.dashStyle = "solid";
+                series.color = null;
+                series.colorIndex = monoSeriesCounter;
+            }
+            monoSeriesCounter++;
+
         });
 
         // apply smoothing to each series if over zero
@@ -349,13 +364,30 @@ class Chart extends React.Component {
             chartTitle = "Multiple Experiments (" + experimentList.size + ")";
         }
 
+        // check if should be detailed tooltip
+        const showDetailedTooltip = this.state.showDetailedTooltip;
+
+        // if range is the deault range, don't specify it for Highcharts API
+        let minRange = newRange.min;
+        let maxRange = newRange.max;
+        if (minRange < 1) {
+            minRange = null;
+        }
+        if (maxRange < 1) {
+            maxRange = null;
+        }
+        
         // update state which will update render of chart
         this.setState({
             id: newChartData.id,
             data: newChartData.data,
-            options: {
+            options: { 
                 title: {
                     text: chartTitle
+                },
+                xAxis: {
+                    min: minRange,
+                    max: maxRange
                 },
                 yAxis: {
                     title: {
@@ -364,7 +396,8 @@ class Chart extends React.Component {
                 },
                 series: allSeries,
                 navigator: {
-                    series: allSeries
+                    series: allSeries,
+                    //enabled: !monoMode,
                 },
                 tooltip: {
                     formatter() {
@@ -375,17 +408,20 @@ class Chart extends React.Component {
             shownRuns: newShownRuns,
             hiddenSeries: newHiddenSeries,
             smoothing: newSmoothing,
+            monochromeMode: monoMode,
             loading: false
         });
               
     }
 
-    applySmoothness(smoothing) { 
+    // updates smoothness state 
+    handleSetSmoothness(smoothing) { 
         if (smoothing !== this.state.smoothing) {
-            this.generateSeries(this.props.chartData, smoothing, this.state.shownRuns, this.state.hiddenSeries);
+            this.generateSeries(this.props.chartData, smoothing, this.state.shownRuns, this.state.hiddenSeries, this.state.range, this.state.monochromeMode);
         }
     }
 
+    // controls which workloads show their runs
     toggleShownRuns(workloadId, event) {
         const toAdd = event.target.checked;
         const shownRuns = [...this.state.shownRuns];
@@ -400,9 +436,10 @@ class Chart extends React.Component {
                 shownRuns.splice(workloadIdIndex, 1);
             }
         }
-        this.generateSeries(this.props.chartData, this.state.smoothing, shownRuns, this.state.hiddenSeries);
+        this.generateSeries(this.props.chartData, this.state.smoothing, shownRuns, this.state.hiddenSeries, this.state.range, false);
     }
 
+    // controls the series visibility after the legend item is clicked
     toggleSeriesVisibility(event) {
         // prevent default highcharts behaviour
         event.preventDefault();
@@ -426,11 +463,103 @@ class Chart extends React.Component {
         }
 
         // update chart and state
-        this.generateSeries(this.props.chartData, this.state.smoothing, this.state.shownRuns, newHiddenSeries); 
+        this.generateSeries(this.props.chartData, this.state.smoothing, this.state.shownRuns, newHiddenSeries, this.state.range, this.state.monochromeMode); 
+    }
+
+    // controls the boost setting
+    handleBoostSwitch(event) {
+        let forceBoost;
+        let menuItems;
+        if (event.currentTarget.checked) {
+            forceBoost = 1;
+            menuItems = ["viewFullscreen", "printChart", "separator", "downloadPNG", "downloadJPEG", "separator", "downloadCSV", "downloadXLS"]
+        }
+        else {
+            forceBoost = 0;
+            menuItems = ["viewFullscreen", "printChart", "separator", "downloadPNG", "downloadJPEG", "downloadPDF", "downloadSVG", "separator", "downloadCSV", "downloadXLS"]
+        }
+
+        this.setState({
+            boostMode: event.currentTarget.checked,
+            options: {
+                navigator: {
+                    boostThreshold: forceBoost,     
+                },
+                plotOptions: {
+                    series: {
+                        boostThreshold: forceBoost,
+                    },
+                },
+                exporting: {
+                    buttons: {
+                        contextButton: {
+                            menuItems: menuItems
+                        }
+                    },
+                },
+            }
+        });
+    }
+
+    // controls the detailed tooltip setting
+    handleDetailedTooltipSwitch(event) {
+        const setDetailedTooltip = event.currentTarget.checked;
+        this.setState({
+            showDetailedTooltip: setDetailedTooltip,
+            options: {
+                tooltip: {
+                    formatter() {
+                        return Chart.formatTooltip(this, setDetailedTooltip);
+                    }
+                }
+            },
+        });
+    }
+
+    // controls the monochrome setting
+    handleMonochromeModeSwitch(event) {
+        let setMonochromeMode;
+        if (event.currentTarget.checked) {
+            setMonochromeMode = true;
+        }
+        else {
+            setMonochromeMode = false;
+        }
+        const seriesCount = (this.chartRef.current.chart.series.length - 1) / 2;
+        if (seriesCount <= 5) {
+            this.generateSeries(this.props.chartData, this.state.smoothing, this.state.shownRuns, this.state.hiddenSeries, this.state.range, setMonochromeMode);
+        }
+        else {
+            this.setState({
+                monochromeMode: false
+            })  
+            alert("Monochrome mode incompatible with more than 5 series.")
+        }  
+    }
+
+    // records the range (zoom) setting so it is saved when you download/upload charts
+    handleAfterSetExtremes = (event) => {
+        const newRange = {min: event.min, max: event.max}
+        this.setState({range: newRange});
+    }
+
+    // controls the line width setting
+    handleSetLineWidth(newLineWidth) { 
+        newLineWidth = parseFloat(newLineWidth);
+        this.setState({
+            lineWidth: newLineWidth,
+            options: {
+                plotOptions: {
+                    series: {
+                        lineWidth: newLineWidth
+                    },
+                },
+            },
+        });
     }
 
     render() {
-        const { data, options, id, workloads, smoothing } = this.state;
+        const { options, id, workloads, smoothing, shownRuns } = this.state;
         return (
             <div className="chartWrapper">
                 <button 
@@ -447,26 +576,65 @@ class Chart extends React.Component {
                     ref={ this.chartRef }
                     callback={this.afterChartCreated}
                 />          
-                <Slider 
-                    onSetSmoothness={this.applySmoothness.bind(this)}
-                    defaultValue={smoothing}
-                />
-                <div id="workloadGroupingControlsWrapper">
+                <div id="workloadGroupingControlsWrapper" className={workloads.length === 0 ? "hide" : null}>
                     Toggle Runs:
                     {workloads.map(workload => (
                         <div key={workload}>
                             {workload}
-                            <label className="switch">
+                            <label className="switch" title={"Show individual runs for " + workload}>
                                 <input 
                                     type="checkbox" 
                                     onChange={this.handleShowRunsSwitch(workload)} 
+                                    checked={shownRuns.includes(workload)}
                                 />
                                 <span className="slider round"></span>
                             </label>
                         </div>        
                     ))}
                 </div>
-                {/*}
+                <SmoothnessSlider 
+                    onSetSmoothness={this.handleSetSmoothness.bind(this)}
+                    defaultValue={smoothing}
+                />
+                <div id="exportOptionsWrapper">
+                    <div title="Enable to see more metadata when hovering (slower)">
+                        Detailed Tooltip: <label className="switch">
+                            <input 
+                                type="checkbox" 
+                                onChange={this.handleDetailedTooltipSwitch.bind(this)} 
+                                checked={this.state.showDetailedTooltip}
+                            />
+                            <span className="slider round"></span>
+                        </label>
+                    </div>
+                    <div title="Convert chart to black and white (only supports 5 series)">
+                        Monochrome Mode: <label className="switch">
+                            <input 
+                                type="checkbox" 
+                                onChange={this.handleMonochromeModeSwitch.bind(this)} 
+                                checked={this.state.monochromeMode}
+                            />
+                            <span className="slider round"></span>
+                        </label>
+                    </div>   
+                    <div title="Disable boost to adjust Line Width and PDF/SVG export (slower)">
+                        Boost Chart: <label className="switch">
+                            <input 
+                                type="checkbox" 
+                                onChange={this.handleBoostSwitch.bind(this)} 
+                                checked={this.state.boostMode}
+                            />
+                            <span className="slider round"></span>
+                        </label>         
+                    </div> 
+                    <div title="Adjust series line width (only compatible with unboosted charts)" className={this.state.boostMode ? "frozen" : null}>
+                        <LineWidthSlider 
+                            onSetLineWidth={this.handleSetLineWidth.bind(this)}
+                            defaultValue={this.state.chartLineWidth}
+                        />        
+                    </div>
+                </div>           
+                {/* DEBUGGING: }
                 <div id="chartMetadataWrapper">
                     {data.map(series => (
                         <div className="seriesMetadata" key={series.name}>
@@ -488,25 +656,49 @@ class Chart extends React.Component {
 }
 
 /* Chart functional components */
-function Slider(props) {
-    const [smoothness, setSmoothness] = useState(0);
-    const slider = useRef();
-
+function SmoothnessSlider(props) {
+    const smoothSlider = useRef();
+    const { onSetSmoothness } = props;
+    const [smoothness, setSmoothness] = useState(0);   
+    
     useEffect(() => {
         setSmoothness(props.defaultValue);
     }, [props.defaultValue]);
 
     useEffect(() => {
-        slider.current.addEventListener('change', e => props.onSetSmoothness(e.target.value));
-    }, [props]);
+        smoothSlider.current.addEventListener('change', e => onSetSmoothness(e.target.value));
+    }, [onSetSmoothness]);
     const handleShowSmoothness = e => {
         setSmoothness(e.target.value);
     };
     return (
         <div id="smootherWrapper">
             <label htmlFor="smoother">Smoothness: </label>
-            <input ref={slider} onChange={handleShowSmoothness} value={smoothness} type="range" name="smoother" min="0" max="99" /> 
+            <input ref={smoothSlider} onChange={handleShowSmoothness} value={smoothness} type="range" name="smoother" min="0" max="99" /> 
             {smoothness}%
+        </div>
+    );
+}
+function LineWidthSlider(props) {
+    const lineWidthSlider = useRef();
+    const { onSetLineWidth } = props;
+    const [lineWidth, setLineWidth] = useState(0);
+
+    useEffect(() => {
+        setLineWidth(props.defaultValue);
+    }, [props.defaultValue]);
+
+    useEffect(() => {
+        lineWidthSlider.current.addEventListener('change', e => onSetLineWidth(e.target.value));
+    }, [onSetLineWidth]);
+    const handleShowLineWidth = e => {
+        setLineWidth(e.target.value);
+    };
+    return (
+        <div id="lineWidthWrapper">
+            <label htmlFor="lineWidthSetter">Line Width: </label>
+            <input ref={lineWidthSlider} onChange={handleShowLineWidth} value={lineWidth} type="range" name="lineWidthSetter" min="0.1" max="5.0" step="0.1" /> 
+            <span>{lineWidth}</span>
         </div>
     );
 }

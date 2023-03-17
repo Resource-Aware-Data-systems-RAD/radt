@@ -32,6 +32,7 @@
     color: white;
     width: 25px;
     height: 25px;
+    border-radius: 25px;
     line-height: 25px;
     border: none;
     font-weight: bold;
@@ -62,11 +63,12 @@
     cursor: pointer;
 }
 
-/************************************** CHECKBOXES */
+/************************************** TOGGLE RUNS */
 #workloadGroupingControlsWrapper {
     width: 90%;
     margin: auto;
     padding: 10px;
+    cursor: default;
 }
 #workloadGroupingControlsWrapper div {
     display: inline-block;
@@ -109,10 +111,10 @@
     transition: .4s;
 }
 input:checked + .slider {
-    background-color: #0075ff;
+    background-color: #2980b9;
 }
 input:focus + .slider {
-    box-shadow: 0 0 1px #0075ff;
+    box-shadow: 0 0 1px #2980b9;
 }
 input:checked + .slider:before {
     -webkit-transform: translateX(13px);
@@ -126,7 +128,49 @@ input:checked + .slider:before {
     border-radius: 50%;
 }
 
-/************************************** METADATA */
+/************************************** EXPORT OPTIONS */
+#exportOptionsWrapper {
+    width: 90%;
+    display: flex;
+    justify-content: center;
+    padding: 12px;
+    margin: auto;
+}
+#exportOptionsWrapper div {
+    margin: 0 15px 0 15px;
+    cursor: default;
+}
+#exportOptionsWrapper input:checked + .slider {
+    background-color: #6e6e6e;
+}
+#exportOptionsWrapper input:focus + .slider {
+    box-shadow: 0 0 1px #6e6e6e;
+}
+#lineWidthWrapper {
+    margin: 0 !important;
+}
+#lineWidthWrapper label {
+    position: relative;
+    top: -3px;
+}
+#lineWidthWrapper input {
+    width: 75px;
+    position: relative;
+    top: -1px;
+    cursor: pointer;
+}
+#lineWidthWrapper span {
+    width: 75px;
+    position: relative;
+    top: -3px;
+    left: 3px;
+}
+.frozen {
+    pointer-events: none !important;
+    opacity: 0.4 !important;
+}
+
+/************************************** METADATA (debug) */
 #chartMetadataWrapper {
     display: flex;
 

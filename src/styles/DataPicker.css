@@ -230,18 +230,24 @@
     color: #831515;
 }
 #runsWrapper button .letter {
-    width: 120px;
     overflow: hidden;
     white-space: nowrap;
     display: block;
     text-overflow: ellipsis;
     text-align: left;
+    margin-right: 5px;
 }
 #runsWrapper button .duration {
     margin-right: 10px;
     padding-top: 2px;
     float: right;
 }
+#runsWrapper button .startTime {
+    font-style: italic;
+    color: #7f8c8d;
+}
+
+
 #runsWrapper button .info {
     font-family: serif;
     font-style: italic;

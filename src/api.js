@@ -20,7 +20,7 @@ export const HTTP = {
             return json;
 		})
 		.catch((error) => {
-			alert("\n" + error.message + "." + "\n\nCheck browser console for more information. ");
+			alert("\n" + error.message + "\n\nCheck browser console for more information. ");
             return [];
 		})
     },

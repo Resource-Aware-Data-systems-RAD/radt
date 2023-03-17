@@ -15,11 +15,31 @@ class ChartPicker extends React.Component {
 			loading: false,
 			availableMetrics: [],
 			showMetrics: false,
-			charts: [], 
-			chartsContextData: []
+			charts: []
 		};
 
 		this.inputField = React.createRef();
+	}
+
+	componentDidMount() {
+		// fetch available metrics for any selected runs
+		this.fetchMetrics(this.props.pushSelectedRuns);
+
+		// check localSStorage for pre-existing chart data
+		const localCharts = JSON.parse(localStorage.getItem("localCharts"))
+		if (localCharts !== null && localCharts.length !== 0) {
+			this.setCharts(localCharts);
+			this.props.toggleDataPicker(false);
+			console.log("GET: charts loaded from localStorage");
+		}
+	}
+
+	componentDidUpdate(prevProps) {
+		const toHide =  this.props.toHide;
+		if (prevProps.toHide !== toHide) {
+			const selectedRuns = this.props.pushSelectedRuns;
+			this.fetchMetrics(selectedRuns);
+		}
 	}
 
 	// fetch all available metrics for the current selected runs 
@@ -69,35 +89,23 @@ class ChartPicker extends React.Component {
 			});
 		});
 
-		// grab the current chart data from the current state
-		const { charts } = this.state;
-
 		// add the new chart data to the state with a unique ID based on unix timestamp
-		let newCharts = [...charts];
-		const chartId = Date.now().toString();
+		let newCharts = [...this.state.charts];
+		const chartId = Date.now();
 		newCharts.push({ 
 			id: chartId,
 			data: chartRuns,
-			metric: metric
+			metric: metric,
+			context: {
+				smoothing: 0,
+				shownRuns: [],
+				hiddenSeries: [],
+				range: {min: 0, max: 0}
+			}
 		});
 
 		// update chart state with new data
 		this.setCharts(newCharts);
-
-		// update chart context state
-		const newChartsContextData = [];
-		newCharts.map(chart => {
-			const newChartContextData = {
-				id: chart.id,
-				smoothing: 0,
-				shownRuns: [],
-				hiddenSeries: []
-			};
-			newChartsContextData.push(newChartContextData);
-		})
-		this.setState({
-			chartsContextData: newChartsContextData,
-		});
 	}
 
 	// removes chart from state using its id 
@@ -118,7 +126,7 @@ class ChartPicker extends React.Component {
 		// open data picker if no charts loaded
 		if (newChartData.length === 0) {
 			localStorage.removeItem("localCharts");
-			this.props.toggleDataPicker(true);	
+			//this.props.toggleDataPicker(true);	
 		}
 		else {
 			// toggle data picker off if on
@@ -130,20 +138,18 @@ class ChartPicker extends React.Component {
 	}
 
 	// update custom chart state for local data download
-	syncData(id, newSmoothing, newShownRuns, newHiddenSeries) {
-
-		// console.log("Syncing..."); // debugging
-
-		const newChartsContextData = [...this.state.chartsContextData];
-		newChartsContextData.map(chart => {
+	syncData(id, newSmoothing, newShownRuns, newHiddenSeries, newRange) {
+		const chartData = [...this.state.charts];
+		chartData.forEach(chart => {
 			if (chart.id === id) {
-				chart.smoothing = newSmoothing;
-				chart.shownRuns = newShownRuns;
-				chart.hiddenSeries = newHiddenSeries;			
+				chart.context.smoothing = newSmoothing;
+				chart.context.shownRuns = newShownRuns;
+				chart.context.hiddenSeries = newHiddenSeries;		
+				chart.context.range = newRange;
 			}
 		})
 		this.setState({
-			chartsContextData: newChartsContextData,
+			charts: chartData,
 		});
 	}
 
@@ -177,32 +183,26 @@ class ChartPicker extends React.Component {
 			}
 		});
 
+		// clear file from hidden upload input
 		this.inputField.current.value = "";
+		
+		const reversedUploadedData = uploadedData.reverse();
 
-		const localChartData = [...uploadedData[0]];
-		const localChartContext = [...uploadedData[1]];
+		// update with new id's so they are unique 
+		for (let i = 0; i < reversedUploadedData.length; i++) {
+			const chart = reversedUploadedData[i];
+			chart.id = Date.now() + i;
+		}
+		const newChartData = [...this.state.charts, ...reversedUploadedData];
 
-		localChartData.map(chart => {
-			localChartContext.map(context => {
-				if (chart.id === context.id) {
-					chart.id = new Date();
-					chart.context = {
-						smoothing: context.smoothing,
-						shownRuns: context.shownRuns,
-						hiddenSeries: context.hiddenSeries
-					};	
-				}		
-			})
-		})
-	
-		const newCharts = [...localChartData, ...this.state.charts];
-		this.setCharts(newCharts);
+		// set uploaded data as new charts
+		this.setCharts(newChartData);
 	}
 
 	// download data to a locally saved .json file
 	downloadLocalData() {
 		if (this.state.charts.length > 0) {
-			const chartDataString = JSON.stringify([this.state.charts, this.state.chartsContextData]);
+			const chartDataString = JSON.stringify(this.state.charts);
 			const fileName = "data_" + new Date().toISOString() + ".json";
 			const blob = new Blob([chartDataString], {type: 'text/plain'});
 			if(window.navigator.msSaveOrOpenBlob) {
@@ -221,27 +221,6 @@ class ChartPicker extends React.Component {
 		else {
 			alert("No chart data to download.")
 		}	
-	}
-
-	componentDidMount() {
-		// fetch available metrics for any selected runs
-		this.fetchMetrics(this.props.pushSelectedRuns);
-
-		// check localSStorage for pre-existing chart data
-		const localCharts = JSON.parse(localStorage.getItem("localCharts"))
-		if (localCharts !== null && localCharts.length !== 0) {
-			this.setCharts(localCharts);
-			this.props.toggleDataPicker(false);
-			console.log("GET: charts loaded from localStorage");
-		}
-	}
-
-	componentDidUpdate(prevProps) {
-		const toHide =  this.props.toHide;
-		if (prevProps.toHide !== toHide) {
-			const selectedRuns = this.props.pushSelectedRuns;
-			this.fetchMetrics(selectedRuns);
-		}
 	}
 
 	render() {

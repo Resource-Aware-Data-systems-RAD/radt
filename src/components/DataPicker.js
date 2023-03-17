@@ -432,12 +432,13 @@ function howLongAgo(startTime) {
 	let howLongAgo; 
 
 	let diffTime = Date.now() - startTime;
-	let years = diffTime / (365*24*60*60*1000);
+	let years = diffTime / (365*24*60*60*1000);	
+	let months = diffTime / (30*24*60*60*1000);
 	let days = diffTime / (24*60*60*1000);
 	let hours = (days % 1) * 24;
 	let minutes = (hours % 1) * 60;
 	let secs = (minutes % 1) * 60;
-	[years, days, hours, minutes, secs] = [Math.floor(years), Math.floor(days), Math.floor(hours), Math.floor(minutes), Math.floor(secs)];
+	[years, months, days, hours, minutes, secs] = [Math.floor(years), Math.floor(months), Math.floor(days), Math.floor(hours), Math.floor(minutes), Math.floor(secs)];
 
 	if (years > 0) {
 		if (years === 1) {
@@ -445,6 +446,14 @@ function howLongAgo(startTime) {
 		}
 		else {
 			howLongAgo = years + " years ago";
+		}
+	}
+	else if (months > 0) {
+		if (months === 1) {
+			howLongAgo = months + " month ago";
+		}
+		else {
+			howLongAgo = months + " months ago";
 		}
 	}
 	else if (days > 0) {

@@ -694,13 +694,15 @@ function LineWidthSlider(props) {
     const handleShowLineWidth = e => {
         setLineWidth(e.target.value);
     };
+
     return (
         <div id="lineWidthWrapper">
             <label htmlFor="lineWidthSetter">Line Width: </label>
             <input ref={lineWidthSlider} onChange={handleShowLineWidth} value={lineWidth} type="range" name="lineWidthSetter" min="0.1" max="5.0" step="0.1" /> 
-            <span>{lineWidth}</span>
+            <span>{lineWidth.toString().length === 1 ? lineWidth + ".0" : lineWidth}</span>
         </div>
     );
+
 }
 
 /* Chart helper functions */

@@ -427,8 +427,6 @@ function milliToMinsSecs(ms) {
 }
 function howLongAgo(startTime) {
 
-	console.log(Date.now() + "-" + startTime + " = " )
-
 	let howLongAgo; 
 
 	let diffTime = Date.now() - startTime;

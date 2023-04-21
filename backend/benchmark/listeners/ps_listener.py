@@ -14,7 +14,6 @@ class PSThread(Process):
         self.parent_pid = os.getpid()
 
     def run(self):
-        mlflow.set_tracking_uri("https://res17.itu.dk")
 
         while True:
             output = (

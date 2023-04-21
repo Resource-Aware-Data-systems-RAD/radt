@@ -15,7 +15,6 @@ class SMIThread(Process):
         self.experiment_id = experiment_id
 
     def run(self):
-        mlflow.set_tracking_uri("https://res17.itu.dk")
 
         SMI_GPU_ID = os.getenv("SMI_GPU_ID")
 

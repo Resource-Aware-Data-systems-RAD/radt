@@ -13,9 +13,6 @@ class MultiLevelDNNGPUBenchmark:
         Context manager for a run.
         Will track ML operations while active.
         """
-
-        mlflow.set_tracking_uri("https://res17.itu.dk")
-
         # Grab run id
         try:
             run = mlflow.start_run(run_id=os.getenv("DNN_RUN_ID"))

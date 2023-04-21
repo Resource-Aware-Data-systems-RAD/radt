@@ -6,12 +6,7 @@ from multiprocessing import Process
 
 class TOPThread(Process):
     def __init__(
-        self,
-        run_id,
-        process_names=[
-            "python",
-        ],
-        experiment_id=88,
+        self, run_id, process_names=["python",], experiment_id=88,
     ):
         super(TOPThread, self).__init__()
         self.run_id = run_id
@@ -20,11 +15,9 @@ class TOPThread(Process):
         self.process_names = process_names
 
     def run(self):
-        mlflow.set_tracking_uri("https://res17.itu.dk")
 
         self.top = subprocess.Popen(
-            "top -i -b -n 999999999 -d 1".split(),
-            stdout=subprocess.PIPE,
+            "top -i -b -n 999999999 -d 1".split(), stdout=subprocess.PIPE,
         )
 
         #  ======= flags and accumulative cpu% and mem% ========

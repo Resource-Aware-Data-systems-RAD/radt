@@ -22,8 +22,6 @@ parser.add_argument(
     help="Rerun failed workloads",
 )
 
-set_tracking_uri("https://res17.itu.dk")
-
 COLOURS = [31, 32, 34, 35, 36, 33]
 
 MIG_OPTIONS = ["1g.5gb", "2g.10gb", "3g.20gb", "4g.20gb", "7g.40gb"]

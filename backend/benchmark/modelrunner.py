@@ -39,8 +39,6 @@ def update_params_listing(params):
     else:
         passthrough = ""
 
-    mlflow.set_tracking_uri("https://res17.itu.dk")
-
     # Grab run id
     try:
         run = mlflow.start_run(RUN_ID)
@@ -105,8 +103,8 @@ def main(framework):
         "True" if ("top" in listeners and not_ncu) else "False"
     )
 
-    max_epoch = str(5) # 5 epochs
-    max_time = str(2 * 24 * 60 * 60) # 2 days
+    max_epoch = str(5)  # 5 epochs
+    max_time = str(2 * 24 * 60 * 60)  # 2 days
 
     os.environ["DNN_MAX_EPOCH"] = max_epoch
     os.environ["DNN_MAX_TIME"] = max_time

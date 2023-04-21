@@ -1,0 +1,25 @@
+name: multi-level-dnn-gpu-benchmark-hface-pytorch
+channels:
+  - pytorch
+  - conda-forge
+  - nvidia
+dependencies:
+  - python=3.9
+  - pip
+  - pytorch
+  - torchvision
+  - torchaudio
+  - pytorch-cuda=11.6
+  - boto3
+  - pip:
+      - mlflow>=1.0
+      - tensorboardX
+      - psutil
+      - sacremoses
+      - datasets
+      - transformers
+      - apache_beam
+      - mwparserfromhell
+      - protobuf  
+      - sentencepiece
+      - sklearn

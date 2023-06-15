@@ -1,6 +1,6 @@
 """Resource-Aware Data systems Tracker (radT) for automatically tracking and training machine learning software"""
 
-__version__ = "0.1.0"
+__version__ = "0.1.3"
 
 import argparse
 import numpy as np

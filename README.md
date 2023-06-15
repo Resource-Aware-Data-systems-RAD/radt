@@ -17,7 +17,7 @@ pip install radt
 ```
 
 <!-- - [Documentation](https://radt.readthedocs.io/) -->
-- [Examples](https://github.com/radt/radt/tree/master/examples/#readme)
+- [Examples](https://github.com/Resource-Aware-Data-systems-RAD/radt/tree/master/examples/#readme)
 - [radT on Github](https://github.com/Resource-Aware-Data-Systems-RAD/radt)
 - [radT on PyPI](https://pypi.org/project/radt/)
 

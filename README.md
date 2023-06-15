@@ -19,6 +19,12 @@ pip install radt
 - [radT on Github](https://github.com/Resource-Aware-Data-Systems-RAD/radt)
 - [radT on PyPI](https://pypi.org/project/radt/)
 
+## Releases
+
+The current release is `0.1.3`. radT has been recently released and is frequently receiving updates.
+
+If you find any issues or bugs, feel free to message `titr (at) itu.dk` or open an issue in this repository.
+
 ## Features
 
 - Wide configuration support including collocation

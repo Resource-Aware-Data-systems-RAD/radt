@@ -1,0 +1,20 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+dependencies = [
+    "mlflow >=2.4.0",
+    "pandas >=2.0.0"
+]
+
+[project]
+name = "radt"
+authors = [{name = "Ties Robroek", email = "titr@itu.dk"}]
+readme = "README.md"
+classifiers = ["License :: OSI Approved :: MIT License"]
+dynamic = ["version", "description"]
+
+[project.urls]
+Home = "https://github.com/Resource-Aware-Data-systems-RAD/radt"
+
+[project.scripts]
+radt = "radt:cli"

@@ -1,0 +1,14 @@
+name: tf
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - pip
+  - cudatoolkit=11.2
+  - cudnn=8.1.0
+  - boto3
+  - pip:
+      - tensorflow
+      - mlflow>=1.0
+      - tensorboardX
+      - psutil

@@ -1,0 +1,3 @@
+Experiment,Workload,Status,Run,Devices,Collocation,File,Listeners,Params
+2,21,,,0,-,cifar10.py,smi+top+dcgmi,batch-size=128
+2,21,,,1,-,cifar10.py,smi+top+dcgmi,batch-size=128

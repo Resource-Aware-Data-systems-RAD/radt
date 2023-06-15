@@ -1,0 +1,16 @@
+name: pt
+channels:
+  - pytorch
+  - nvidia
+dependencies:
+  - python=3.9
+  - pip
+  - pytorch
+  - torchvision
+  - torchaudio
+  - pytorch-cuda=11.7
+  - boto3
+  - pip:
+      - mlflow>=1.0
+      - tensorboardX
+      - psutil

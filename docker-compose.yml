@@ -1,0 +1,84 @@
+# # docker-compose.yml
+
+version: '3'
+services:
+  minio:
+    image: minio/minio
+    container_name: mlflow_s3
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    command: server /data --console-address ':9001' --address ':9000'
+    environment:
+      MINIO_ROOT_USER: minio_user
+      MINIO_ROOT_PASSWORD: minio_password
+    restart: always
+    volumes:
+      - minio_data:/data
+
+  mc:
+    image: minio/mc
+    depends_on:
+      - minio
+    container_name: mc
+    entrypoint: >
+      /bin/sh -c " /usr/bin/mc alias set minio http://minio:9000 minio_user minio_password && /usr/bin/mc mb minio/mlflow-storage; exit 0; "
+
+  postgres:
+    image: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: mlflow_db
+      POSTGRES_USER: mlflow_user
+      POSTGRES_PASSWORD: mlflow_password
+    restart: always
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  postgrest:
+    image: postgrest/postgrest
+    ports:
+      - "3000:3000"
+    environment:
+      PGRST_DB_URI: postgres://mlflow_user:mlflow_password@postgres:5432/mlflow_db
+      PGRST_DB_SCHEMA: public
+      PGRST_DB_ANON_ROLE: mlflow_user
+      PGRST_OPENAPI_SERVER_PROXY_URI: http://127.0.0.1:3000
+    restart: always
+    depends_on:
+      - postgres
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.4.1
+    container_name: mlflow_server
+    ports:
+      - "5000:5000"
+    environment:
+      MLFLOW_S3_ENDPOINT_URL: http://minio:9000
+      AWS_ACCESS_KEY_ID: minio_user
+      AWS_SECRET_ACCESS_KEY: minio_password
+    command:
+      - /bin/bash
+      - -c
+      - |
+        pip install psycopg2-binary boto3
+        mlflow server --backend-store-uri postgresql+psycopg2://mlflow_user:mlflow_password@postgres:5432/mlflow_db --host 0.0.0.0 --default-artifact-root s3://mlflow-storage/
+    restart: always
+    depends_on:
+      - postgres
+
+  visual:
+    image: dockerized-react
+    container_name: visual
+    ports:
+      - "4000:80"
+    environment:
+      POSTGREST_DB_URL: http://127.0.0.1:3000
+    restart: always
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:
+  minio_data:

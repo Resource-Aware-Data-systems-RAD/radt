@@ -1,0 +1,13 @@
+name: mx
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - pip
+  - cudatoolkit=11.2
+  - mxnet-cu112
+  - boto3
+  - pip:
+      - mlflow>=1.0
+      - tensorboardX
+      - psutil

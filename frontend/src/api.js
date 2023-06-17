@@ -1,4 +1,4 @@
-const url = "http://res72.itu.dk:3000/";
+const url = process.env.REACT_APP_API_URL;
 const headers = new Headers();
 headers.append('Content-Type', 'application/json');
 // headers.append('Authorization', 'Bearer ' + process.env.REACT_APP_API_KEY);

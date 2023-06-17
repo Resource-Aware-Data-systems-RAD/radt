@@ -37,7 +37,7 @@ class DataPicker extends React.Component {
 			this.props.pullSelectedRuns(localRunsAndWorkloadData.runData);
 		}
 	}
-	
+
 	componentDidUpdate(prevProps, prevState) {
 		// scroll to bottom of list when adding selections, but not removing
 		if (this.state.selectedWorkloads.length > prevState.selectedWorkloads.length) {
@@ -81,7 +81,7 @@ class DataPicker extends React.Component {
 	setVisibleRuns(workload) {
 		const { runData } = this.state;
 		let filteredRuns = [];
-		for (let i = 0; i < runData.length; i++) {		
+		for (let i = 0; i < runData.length; i++) {
 			const run = runData[i];
 			if (run.workload === workload) {
 				filteredRuns.push(run);
@@ -103,7 +103,7 @@ class DataPicker extends React.Component {
 
 		// five different ways the user can add/remove data to selection
 		if (workload === "null" && run === null) {
-			newSelectedRuns.forEach(run => {	
+			newSelectedRuns.forEach(run => {
 				if (run.workload.substring(run.workload.indexOf("-") + 1) === "null") {
 					const runIndex = newSelectedRuns.findIndex(el => el.name === run.name);
 					newSelectedRuns = newSelectedRuns.slice(0, runIndex).concat(newSelectedRuns.slice(runIndex + 1));
@@ -142,7 +142,7 @@ class DataPicker extends React.Component {
 
 		// update list of selected workloads based on new selected runs, and add experiment name to data 
 		newSelectedWorkloads = [];
-		newSelectedRuns.forEach(run => {	
+		newSelectedRuns.forEach(run => {
 			let workloadIndex = newSelectedWorkloads.indexOf(run.workload);
 			if (workloadIndex === -1) {
 				newSelectedWorkloads.push(run.workload);
@@ -171,7 +171,7 @@ class DataPicker extends React.Component {
 	// clear all selections
 	clearAllSelections() {
 		const confirm = window.confirm("Confirm clear all selections?");
-		if(confirm) {
+		if (confirm) {
 			// update state
 			this.setState({
 				selectedWorkloads: [],
@@ -188,10 +188,10 @@ class DataPicker extends React.Component {
 
 	render() {
 
-		const { 
-			experimentData, 
-			visibleWorkloads, 
-			visibleRuns, 
+		const {
+			experimentData,
+			visibleWorkloads,
+			visibleRuns,
 			activeExperimentId,
 			activeWorkload,
 			selectedWorkloads,
@@ -213,12 +213,12 @@ class DataPicker extends React.Component {
 						onClickSetVisibleRuns={this.setVisibleRuns.bind(this)}
 						onClickToggleWorkloadSelection={this.toggleRunWorkloadSelection.bind(this)}
 					/>
-					<Runs 
+					<Runs
 						data={visibleRuns}
 						selectedRuns={selectedRuns}
-						onClickToggleRunSelection={this.toggleRunWorkloadSelection.bind(this)}	
+						onClickToggleRunSelection={this.toggleRunWorkloadSelection.bind(this)}
 					/>
-					<Selections 
+					<Selections
 						selectedRuns={selectedRuns}
 						onClickToggleWorkloadSelection={this.toggleRunWorkloadSelection.bind(this)}
 						bottomOfScrollRef={this.bottomOfScrollRef}
@@ -231,7 +231,7 @@ class DataPicker extends React.Component {
 					</button>
 				</div>
 			</div>
-			
+
 		);
 
 	}
@@ -239,13 +239,13 @@ class DataPicker extends React.Component {
 
 /* DataPicker functional components */
 function Experiments(props) {
-    return (
+	return (
 		<div id="experimentWrapper">
 			{props.data.sort((a, b) => a.id - b.id).map(experiment => (
 				<button
 					key={experiment.id}
 					className={props.activeExperimentId === experiment.id ? "active" : null}
-					onClick= {() => props.onClickSetVisibleWorkloads(experiment.id)}
+					onClick={() => props.onClickSetVisibleWorkloads(experiment.id)}
 				>
 					<span className="text">
 						<span>{experiment.id}</span>
@@ -259,7 +259,7 @@ function Experiments(props) {
 function Workloads(props) {
 
 	// sort workloads properly
-	function sortWorkloads(a, b) {	
+	function sortWorkloads(a, b) {
 		let x = a.substring(a.indexOf("-") + 1);
 		let y = b.substring(b.indexOf("-") + 1);
 		return x - y;
@@ -272,15 +272,15 @@ function Workloads(props) {
 			workload = "Unsorted Runs";
 		}
 		else {
-			workload = "Workload " + workload; 
+			workload = "Workload " + workload;
 		}
 		return workload;
 	}
 
 	return (
-		<div id="workloadsWrapper"> 
+		<div id="workloadsWrapper">
 			{props.data.slice().sort((a, b) => sortWorkloads(a, b)).map(workload => (
-				<div 
+				<div
 					key={workload}
 					className={`workload ${props.activeWorkload === workload ? "active" : ""} ${props.selectedWorkloads.includes(workload) ? "highlightSelection" : ""}`}
 					onClick={() => props.onClickSetVisibleRuns(workload)}
@@ -288,16 +288,16 @@ function Workloads(props) {
 					<div className="info">
 						{formatWorkloadLabel(workload)}
 					</div>
-					<div 
+					<div
 						className={`checkboxWrapper ${formatWorkloadLabel(workload) === "Unsorted Runs" ? "hide" : null}`}
 					>
-						<div 
+						<div
 							className="checkbox"
 							onClick={() => props.onClickToggleWorkloadSelection(workload)}
 						>
 							{props.selectedWorkloads.includes(workload) ? "✔" : " "}
 						</div>
-					</div>		
+					</div>
 				</div>
 			))}
 		</div>
@@ -320,13 +320,13 @@ function Runs(props) {
 	return (
 		<div id="runsWrapper">
 			{props.data.slice().sort((a, b) => b.startTime - a.startTime).map(run => (
-				<button 
-					key={run.name} 
+				<button
+					key={run.name}
 					onClick={() => props.onClickToggleRunSelection(run.workload, run)}
 					className={props.selectedRuns.findIndex(el => el.name === run.name) > -1 ? "highlightSelection" : null}
 				>
 					<span className={checkRunStatus(run.status)} title={run.status.charAt(0) + run.status.substring(1).toLowerCase()}>•</span>
-					<span className="letter" title="Identifier">{run.letter === null || run.letter === "0" ? run.name.substring(0,6) : run.letter}</span>
+					<span className="letter" title="Identifier">{run.name.substring(0, 6) + " - " + (run.letter === null || run.letter === "0" ? "0" : run.letter)}</span>
 					<span className="startTime" title="Start time">({howLongAgo(run.startTime)})</span>
 					<div className="checkbox">{props.selectedRuns.findIndex(el => el.name === run.name) > -1 ? "✔" : " "}</div>
 					<span className="info" title={"𝗠𝗼𝗱𝗲𝗹: " + run.model + "\n𝗦𝗼𝘂𝗿𝗰𝗲: " + run.source + "\n𝗣𝗮𝗿𝗮𝗺𝘀: " + run.params}>i</span>
@@ -351,7 +351,7 @@ function Selections(props) {
 			let runIndex = visibleSelection[workloadIndex].runs.findIndex(el => el.name === run.name);
 			if (runIndex === -1) {
 				visibleSelection[workloadIndex].runs.push(run);
-			}           
+			}
 		}
 		else {
 			let runs = [];
@@ -368,21 +368,21 @@ function Selections(props) {
 			workload = "Unsorted Runs";
 		}
 		else {
-			workload = "Workload " + workload; 
+			workload = "Workload " + workload;
 		}
 		return workload;
 	}
 
-	return (   
+	return (
 		<div id="selectionsWrapper">
-			{ /* render all workloads */ }
+			{ /* render all workloads */}
 			{visibleSelection.map(visibleWorkload => (
 				<div
 					className='workloadWrapper'
 					key={visibleWorkload.workload}
 				>
 					<div className='workload'>
-						<button 
+						<button
 							className="removeWorkloadBtn"
 							onClick={() => props.onClickToggleWorkloadSelection(visibleWorkload.workload)}
 						>
@@ -391,12 +391,12 @@ function Selections(props) {
 						{formatWorkloadLabel(visibleWorkload.workload)}
 					</div>
 					<ul>
-						{ /* render all runs */ }
+						{ /* render all runs */}
 						{visibleWorkload.runs.sort((a, b) => a.startTime - b.startTime).map(visibleRun => (
 							<li key={visibleRun.name}>
-								{visibleRun.letter === null || visibleRun.letter === "0" ? visibleRun.name.substring(0,6) : visibleRun.letter}
+								{visibleRun.name.substring(0, 6) + " - " + (visibleRun.letter === null || visibleRun.letter === "0" ? "0" : visibleRun.letter)}
 
-								<button 
+								<button
 									className="removeBtn"
 									onClick={() => props.onClickToggleWorkloadSelection(visibleWorkload.workload, visibleRun)}
 								>
@@ -407,7 +407,7 @@ function Selections(props) {
 					</ul>
 				</div>
 			))}
-			{ /* div ref to scroll to bottom of */ }
+			{ /* div ref to scroll to bottom of */}
 			<div ref={props.bottomOfScrollRef} />
 		</div>
 	);
@@ -415,24 +415,24 @@ function Selections(props) {
 
 /* DataPicker helper functions */
 function milliToMinsSecs(ms) {
-    let label;
-    let numOfDays = Math.trunc(ms / 86400000);
-    if (numOfDays > 0) {
-        label = numOfDays + "d " + new Date(ms).toISOString().slice(11, 19);
-    }
-    else {
-        label = new Date(ms).toISOString().slice(11, 19);
-    }
-    return label;
+	let label;
+	let numOfDays = Math.trunc(ms / 86400000);
+	if (numOfDays > 0) {
+		label = numOfDays + "d " + new Date(ms).toISOString().slice(11, 19);
+	}
+	else {
+		label = new Date(ms).toISOString().slice(11, 19);
+	}
+	return label;
 }
 function howLongAgo(startTime) {
 
-	let howLongAgo; 
+	let howLongAgo;
 
 	let diffTime = Date.now() - startTime;
-	let years = diffTime / (365*24*60*60*1000);	
-	let months = diffTime / (30*24*60*60*1000);
-	let days = diffTime / (24*60*60*1000);
+	let years = diffTime / (365 * 24 * 60 * 60 * 1000);
+	let months = diffTime / (30 * 24 * 60 * 60 * 1000);
+	let days = diffTime / (24 * 60 * 60 * 1000);
 	let hours = (days % 1) * 24;
 	let minutes = (hours % 1) * 60;
 	let secs = (minutes % 1) * 60;
@@ -514,7 +514,7 @@ function pullFromLocalStorage() {
 	// pull run data (important stuff)
 	const runDataString = localStorage.getItem("selectedRuns");
 	const runData = JSON.parse(runDataString);
-	
+
 	// combine and return it
 	const runsAndWorkloadData = [];
 	if (runData !== null) {

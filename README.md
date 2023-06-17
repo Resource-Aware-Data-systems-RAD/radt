@@ -24,6 +24,8 @@ pip install radt
 
 The current release is `0.1.3`. radT has been recently released and is frequently receiving updates.
 
+We are currently fixing some issues regarding workload listeners and the imported context, please stay tuned.
+
 If you find any issues or bugs, feel free to message `titr (at) itu.dk` or open an issue in this repository.
 
 ## Features

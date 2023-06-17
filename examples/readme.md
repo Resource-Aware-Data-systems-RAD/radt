@@ -17,7 +17,12 @@ We provide two options for deploying these requirements:
 
 The easiest way of deploying RADT, including the MLFlow instance and data storage, is via [Docker Compose](https://github.com/docker/compose). This deploys all the prerequisites as separate containers.
 
-In order to deploy RADT using docker, clone this repo to your server and run:
+In order to deploy RADT using docker: 
+
+1. Clone this repo to your server
+2. Build the [frontend visualization container](/frontend/)
+3. Run docker compose:
+
 ```bash
 docker compose up
 ```
@@ -30,7 +35,7 @@ The containers can also be deployed manually/individually if desired:
 - [MinIO](https://hub.docker.com/r/minio/minio/)
 - [PostgreSQL](https://hub.docker.com/_/postgres)
 - [PostgREST](https://hub.docker.com/r/postgrest/postgrest/)
-- [RADT Visualisation](https://LINK_MISSING)
+- [RADT Visualisation](/frontend/)
 
 ### **3. From source**
 

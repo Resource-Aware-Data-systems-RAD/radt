@@ -2,6 +2,24 @@
 This is the frontend for the framework. Keep in mind that without the backend this service might not work properly.
 The frontend is a react app that can be hosted on a separate server or on the same server.
 
+## Before building
+
+You should specify the location of the REST api in the `.env` file for the visualization environment to work. This will ordinarily be the `3000` port on the server
+you are running docker compose on. E.g.:
+
+```
+REACT_APP_API_URL=http://res72.itu.dk:3000/
+```
+## Docker
+
+Run the following command in this directory to build the container:
+
+```bash
+docker build . -t radt-frontend
+```
+
+## Manually
+
 In the project directory, you can run:
 
 ### `npm start`

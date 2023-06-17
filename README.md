@@ -75,10 +75,12 @@ with RADT as run:
 RADT can take the hassle of large experiments off you by training multiple models in succession. Models can even be trained at the same time on different gpus or at the same gpu using a range of collocation schemes.
 
 ```csv
-Experiment,Workload,Status,Run,Devices,Collocation,File,Listeners,Params
-2,21,,,0,-,../pytorch/cifar10.py,smi+top+dcgmi,batch-size=128
-2,21,,,1,-,../pytorch/cifar10.py,smi+top+dcgmi,batch-size=128
-
+Experiment,Workload,Status,Run,Devices,Collocation,    File,    Listeners,Params
+         1,       1,      ,   ,      0,          -,train.py,smi+top+dcgmi,batch-size=128
+         1,       1,      ,   ,      1,          -,train.py,smi+top+dcgmi,batch-size=128
+         1,       2,      ,   ,      2,    3g.20gb,train.py,smi+top+dcgmi,batch-size=128
+         1,       2,      ,   ,      2,    3g.20gb,train.py,smi+top+dcgmi,batch-size=128
+         1,       3,      ,   ,      1,          -,train.py,smi+top+dcgmi,batch-size=256
 ```
 
 When interrupted by any means, a csv experiment can be rescheduled to continue from where it left off.

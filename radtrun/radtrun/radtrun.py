@@ -57,7 +57,7 @@ class Parser:
         self.parser.add_argument("-p", "--params", type=str, metavar="PARAMS")
 
 
-def update_params_listing(params):
+def update_params_listing(command, params):
     # Log the parameters individually so they are filterable in MLFlow
     statements = {}
 
@@ -90,6 +90,17 @@ def update_params_listing(params):
             mlflow.log_param(k, v)
         except mlflow.exceptions.MlflowException as e:
             print("Failed to log parameter:", k, v)
+        
+        if "data" in k.lower():
+            try:
+                mlflow.log_param("data", v)
+            except mlflow.exceptions.MlflowException as e:
+                print("Failed to log parameter:", "data", v)
+
+    try:
+        mlflow.log_param("model", command)
+    except mlflow.exceptions.MlflowException as e:
+        print("Failed to log parameter:", "model", command)
 
     # return [argument for pair in statements.items() for argument in pair]
 
@@ -157,7 +168,7 @@ def cli():
 
     print("MAX EPOCH:", max_epoch, "MAX_TIME:", max_time)
 
-    passthrough = update_params_listing(args.params)
+    passthrough = update_params_listing(args.command, args.params)
 
     sys.argv = passthrough
 

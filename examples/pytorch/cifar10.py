@@ -12,8 +12,8 @@ import sys
 print(sys.argv)
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument('-b', '--batch-size', type=int, default=128, metavar='N',
-                   help='Input batch size for training (default: 128)')
+parser.add_argument('-b', '--batch-size', type=int, default=8, metavar='N',
+                   help='Input batch size for training (default: 8)')
 batch_size = parser.parse_args().batch_size
 
 trainset = torchvision.datasets.CIFAR10(root='./data', train=True,

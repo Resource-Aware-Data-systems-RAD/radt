@@ -144,3 +144,4 @@ screenlog*
 _run_temp.csv
 .vscode
 MLproject
+data

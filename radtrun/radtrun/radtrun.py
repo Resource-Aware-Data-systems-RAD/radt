@@ -170,7 +170,9 @@ def cli():
 
     passthrough = update_params_listing(args.command, args.params)
 
-    sys.argv = passthrough
+    print(args.params, "passthrough:", passthrough)
+
+    sys.argv = [sys.argv[0]] + passthrough
 
     with MultiLevelDNNGPUBenchmark() as run:
         code = "run_path(progname, run_name='__main__')"

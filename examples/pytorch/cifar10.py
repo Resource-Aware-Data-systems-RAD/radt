@@ -8,7 +8,13 @@ transform = transforms.Compose(
     [transforms.ToTensor(),
      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
-batch_size = 4
+import sys
+print(sys.argv)
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('-b', '--batch-size', type=int, default=128, metavar='N',
+                   help='Input batch size for training (default: 128)')
+batch_size = parser.parse_args().batch_size
 
 trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
                                         download=True, transform=transform)
@@ -57,6 +63,8 @@ import torch.optim as optim
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+
+print("Training Cifar10 with batch size ", batch_size)
 
 for epoch in range(100):  # loop over the dataset multiple times
 

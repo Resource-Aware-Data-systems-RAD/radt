@@ -61,6 +61,8 @@ conda env config vars set AWS_SECRET_ACCESS_KEY=
 conda env config vars set MLFLOW_TRACKING_URI=
 ```
 
+The `MLFLOW_TRACKING_USERNAME` and `MLFLOW_TRACKING_PASSWORD` fields are only required when authorisation is enabled for MLFlow.
+
 ## Running Examples
 
 All examples should run via `radt <script>.py` unless specified.

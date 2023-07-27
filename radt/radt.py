@@ -10,7 +10,6 @@ import sys
 import time
 
 from contextlib import ExitStack
-from mlflow import set_tracking_uri
 from mlflow.tracking import MlflowClient
 from pathlib import Path
 from queue import Queue, Empty

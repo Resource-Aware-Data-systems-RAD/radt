@@ -50,7 +50,7 @@ services:
       - postgres
 
   mlflow:
-    image: ghcr.io/mlflow/mlflow:v2.4.1
+    image: ghcr.io/mlflow/mlflow:v2.5.0
     container_name: mlflow_server
     ports:
       - "5000:5000"

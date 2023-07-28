@@ -529,6 +529,7 @@ def cli():
     # rerun = args.rerun TODO: add back
 
     if p.suffix == ".py":
+        df_raw = None
         df = pd.DataFrame(np.empty(0, dtype=CSV_FORMAT))
 
         if len(args) < 2:
@@ -655,21 +656,23 @@ def cli():
             )
 
         # Format and run the row
-
         sysprint(f"RUNNING WORKLOAD: {workload}")
         results = execute_workload(commands)
-        for id, letter, returncode, run_id, status in results:
-            df_raw.loc[id, "Run"] = run_id
-            if returncode == 0:
-                df_raw.loc[id, "Status"] = f"{status} ({letter})"
-            else:
-                df_raw.loc[id, "Status"] = f"{status} - Failed ({letter})"
+        
+        # Write if .csv
+        if isinstance(df_raw, pd.DataFrame):
+            for id, letter, returncode, run_id, status in results:
+                df_raw.loc[id, "Run"] = run_id
+                if returncode == 0:
+                    df_raw.loc[id, "Status"] = f"{status} ({letter})"
+                else:
+                    df_raw.loc[id, "Status"] = f"{status} - Failed ({letter})"
 
-        # Write the result of the run to the csv
-        target = Path("result.csv")
-        df_raw.to_csv(target, index=False)
-        p.unlink()
-        target.rename(p)
+            # Write the result of the run to the csv
+            target = Path("result.csv")
+            df_raw.to_csv(target, index=False)
+            p.unlink()
+            target.rename(p)
 
 
 class CollocationManager:

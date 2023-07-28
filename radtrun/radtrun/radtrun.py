@@ -71,8 +71,9 @@ def update_params_listing(command, params):
             passthrough = passthrough[1:-1].strip()
 
         for s in passthrough.split(","):
-            k, v = s.split("=")
-            statements[k] = v
+            if s.strip(): # Omit empty entries
+                k, v = s.split("=")
+                statements[k] = v
 
     else:
         passthrough = ""

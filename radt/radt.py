@@ -2,7 +2,6 @@
 
 __version__ = "0.1.5"
 
-import argparse
 import numpy as np
 import pandas as pd
 import os
@@ -14,7 +13,7 @@ from mlflow.tracking import MlflowClient
 from pathlib import Path
 from queue import Queue, Empty
 from string import ascii_uppercase
-from subprocess import Popen, PIPE, STDOUT, CalledProcessError
+from subprocess import Popen, PIPE, STDOUT
 from threading import Thread
 
 COLOURS = [31, 32, 34, 35, 36, 33]
@@ -54,9 +53,15 @@ COMMAND = (  #'CUDA_VISIBLE_DEVICES={Devices} '
     "-P workload={Workload} "
     "-P listeners={Listeners} "
     "-P command={Command} "
+    "{WorkloadListener}"
     '-P params="{Params}" '
 )
 
+COMMAND_NSYS = (
+    "nsys profile -o nsys_results -f true -w true "  # -t cuda,osrt,nvtx,cudnn,cublas
+)
+COMMAND_NCU = "ncu -o ncu_results "
+COMMAND_NCU_ATTACH = "ncu --mode=launch -o ncu_results "
 
 MLPROJECT_CONTENTS = """name: radt
 
@@ -70,8 +75,9 @@ entry_points:
       listeners: { type: string, default: "smi+dcgmi+top" }
       params: { type: string, default: "-"}
       command: { type: string, default: "cifar10.py"}
+      workload_listener: { type: string, default: ""}
     command: |
-      python -m radtrun -l {listeners} -c {command} -p {params}
+      {workload_listener}python -m radtrun -l {listeners} -c {command} -p {params}
 """
 
 
@@ -639,6 +645,7 @@ def cli():
             row = row.copy()
             row["Filepath"] = str(Path(row["File"]).parent.absolute())
             row["Command"] = str(Path(row["File"]).name)
+            row["WorkloadListener"] = f"'{COMMAND_NSYS}'"
             commands.append(
                 (
                     id,
@@ -658,7 +665,7 @@ def cli():
         # Format and run the row
         sysprint(f"RUNNING WORKLOAD: {workload}")
         results = execute_workload(commands)
-        
+
         # Write if .csv
         if isinstance(df_raw, pd.DataFrame):
             for id, letter, returncode, run_id, status in results:

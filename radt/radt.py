@@ -2,6 +2,7 @@
 
 __version__ = "0.1.5"
 
+import migedit
 import numpy as np
 import pandas as pd
 import os
@@ -18,7 +19,7 @@ from threading import Thread
 
 COLOURS = [31, 32, 34, 35, 36, 33]
 
-MIG_OPTIONS = ["1g.5gb", "2g.10gb", "3g.20gb", "4g.20gb", "7g.40gb"]
+MIG_OPTIONS = ["1g.10gb", "2g.20gb", "3g.40gb", "4g.40gb", "7g.80gb"]
 SMIG_OPTIONS = ["1c.7g.40gb", "2c.7g.40gb", "3c.7g.40gb", "4c.7g.40gb", "7c.7g.40gb"]
 
 HEADER = [
@@ -308,141 +309,6 @@ def get_gpu_ids():
     return gpus
 
 
-def get_mig_ids(device):
-    gpu = None
-    ids = set()
-    for line in execute_command("nvidia-smi -L"):
-        if "UUID: GPU" in line:
-            gpu = int(line.split("GPU")[1].split(":")[0].strip())
-            continue
-        elif "UUID: MIG" in line:
-            if gpu == int(device):
-                ids.add(line.split("UUID:")[1].split(")")[0].strip())
-
-    return ids
-
-
-def get_dcgmi_instance_id(device, gpu_instance):
-    for line in execute_command("dcgmi discovery -c"):
-        if "EntityID" not in line:
-            continue
-
-        if line.count("GPU") != 1:
-            continue
-
-        if f"{device}/{gpu_instance}" in line:
-            entity_id = int(line.split("EntityID:")[1].split(")")[0].strip())
-            return f"i:{entity_id}"
-    return None
-
-
-def make_mig_devices(df_workload, dev_table):
-    # Remove MPS
-    result = "".join(
-        execute_command(["echo quit | nvidia-cuda-mps-control"], shell=True)
-    ).lower()
-
-    # Remove old instances
-    result = "".join(execute_command(f"sudo nvidia-smi mig -dci")).lower()
-    if "failed" in result or "unable" in result:
-        raise ValueError(result)
-
-    result = "".join(execute_command(f"sudo nvidia-smi mig -dgi")).lower()
-    if "failed" in result or "unable" in result:
-        raise ValueError(result)
-
-    time.sleep(1)
-
-    mig_table = dev_table.copy()
-    entity_table = dev_table.copy()
-
-    devicetemp = []
-
-    # TODO: remove this temp code
-    shared_mig_gpui = {}
-
-    # Create new instances
-    for index, (device, profiles) in df_workload[["Devices", "Collocation"]].iterrows():
-        if profiles.lower().strip() == "mps":
-            # TODO: ACTIVATE MPS
-            pass
-
-        # This supports Multi-MIG, which doesn't actually work right now
-        # Tested on PyTorch (and failed), perhaps works for different frameworks
-        for profile in profiles.split("+"):
-            instance = profile.lower().strip()
-
-            # Normal MIG
-            if instance in MIG_OPTIONS:
-                other_mig_ids = get_mig_ids(device)
-
-                result = "".join(
-                    execute_command(
-                        f"sudo nvidia-smi mig -i {int(device)} -cgi {profile} -C"
-                    )
-                ).lower()
-
-                gpu_instance = (
-                    result.split("gpu instance id")[1].split("on gpu")[0].strip()
-                )
-
-                if "failed" in result or "unable" in result:
-                    raise ValueError(result)
-
-                mig_id = get_mig_ids(device) - other_mig_ids
-
-                devicetemp.append((index, mig_id, device, gpu_instance))
-
-            elif instance in SMIG_OPTIONS:
-                # Shared MIG, TODO: make more flexible
-                if device not in shared_mig_gpui:
-                    result = "".join(
-                        execute_command(f"sudo nvidia-smi mig -i {device} -cgi 7g.40gb")
-                    ).lower()
-                    instance_id = (
-                        result.split("gpu instance id")[1].split("on")[0].strip()
-                    )
-                    shared_mig_gpui[device] = instance_id
-
-                other_mig_ids = get_mig_ids(device)
-
-                gpu_instance = shared_mig_gpui[device]
-
-                result = "".join(
-                    execute_command(
-                        f"sudo nvidia-smi mig -gi {gpu_instance} -cci {SMIG_OPTIONS.index(instance)}"
-                    )
-                ).lower()
-
-                if "failed" in result or "unable" in result:
-                    raise ValueError(result)
-
-                mig_id = get_mig_ids(device) - other_mig_ids
-
-                devicetemp.append((index, mig_id, device, gpu_instance))
-
-            time.sleep(
-                2.0
-            )  # Wait for the rather slow DCGMI discovery to yield a GPU entity id
-
-    for index, mig_id, device, gpu_instance in devicetemp:
-        while (entity_id := get_dcgmi_instance_id(device, gpu_instance)) is None:
-            time.sleep(
-                0.5
-            )  # Wait for the rather slow DCGMI discovery to yield a GPU entity id
-
-        if "mig" in str(mig_table[index]).lower():
-            mig_table[index] = frozenset(list(mig_table[index]) + list(mig_id))
-            entity_table[index] = frozenset(
-                tuple(list(entity_table[index]) + [entity_id])
-            )
-        else:
-            mig_table[index] = frozenset(mig_id)
-            entity_table[index] = frozenset((entity_id,))
-
-    return mig_table, entity_table
-
-
 def make_dcgm_groups(dev_table):
     """
     Removes old DCGM groups and make a DCGM group with the required devices.
@@ -615,14 +481,18 @@ def cli():
                 ] = f'{df_workload.loc[i, "Letter"]}.{df_workload.loc[i, "Collocation"]}'
 
         # Set devices string and DCGMI group
-        dev_table = (
-            df[df["Workload_Unique"] == workload]["Devices"]
-            .astype(str)
-            .str.split("+")
-            .apply(frozenset)
-        )
+        migedit.remove_mig_devices()
+        dev_table = df_workload["Devices"].astype(str).str.split("+").apply(frozenset)
+        mig_table, entity_table = dev_table.copy(), dev_table.copy()
 
-        mig_table, entity_table = make_mig_devices(df_workload, dev_table)
+        for i, row in df_workload.iterrows():
+            if "g" in str(row["Collocation"]): # TODO: fix
+                result = migedit.make_mig_devices(row["Devices"], [row["Collocation"]], remove_old=False)
+                mig_table.loc[i] = frozenset([y for x in result for y in x[4]])
+                entity_table.loc[i] = frozenset([x[3] for x in result])
+        
+        print(mig_table)
+        print(entity_table)
 
         gpu_uuids = get_gpu_ids()
         for i, v in mig_table.items():
@@ -639,13 +509,12 @@ def cli():
         make_mps(df_workload, gpu_uuids)
 
         commands = []
-        # exit()
 
         for i, (id, row) in enumerate(df_workload.iterrows()):
             row = row.copy()
             row["Filepath"] = str(Path(row["File"]).parent.absolute())
             row["Command"] = str(Path(row["File"]).name)
-            row["WorkloadListener"] = f"'{COMMAND_NSYS}'"
+            row["WorkloadListener"] = ""#f"'{COMMAND_NSYS}'"
             commands.append(
                 (
                     id,

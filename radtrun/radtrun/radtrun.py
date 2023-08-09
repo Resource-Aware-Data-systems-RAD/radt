@@ -1,9 +1,11 @@
 """Runner for Resource-Aware Data systems Tracker (radT) for automatically tracking and training machine learning software"""
 
+import argparse
 import mlflow
 import os
 import runpy
 import sys
+from pathlib import Path
 
 from .mldgpu import MultiLevelDNNGPUBenchmark
 
@@ -11,20 +13,8 @@ try:
     RUN_ID = mlflow.start_run().info.run_id
 except Exception:
     RUN_ID = mlflow.active_run().info.run_id
-# RUN_ID = mlflow.active_run()
 
-
-# TODO: set nsys gpu device to use env variable  --gpu-metrics-device 1
-COMMAND_NSYS = f"nsys profile -o ../../nsight_results/{RUN_ID} -f true -w true"  # -t cuda,osrt,nvtx,cudnn,cublas
-COMMAND_NCU = f"ncu -o ../../nsight_results/{RUN_ID} "
-COMMAND_NCU_ATTACH = f"ncu --mode=launch ../../nsight_results/{RUN_ID} "
-
-
-import argparse
-import os
-
-
-AVAILABLE_LISTENERS = ["ps", "smi", "dcgmi", "top", "nsys", "ncu", "ncu_attach"]
+AVAILABLE_LISTENERS = ["ps", "smi", "dcgmi", "top"]
 
 
 class Parser:
@@ -66,7 +56,7 @@ def update_params_listing(command, params):
             passthrough = passthrough[1:-1].strip()
 
         for s in passthrough.split(","):
-            if s.strip(): # Omit empty entries
+            if s.strip():  # Omit empty entries
                 k, v = s.split("=")
                 statements[k] = v
 
@@ -86,7 +76,7 @@ def update_params_listing(command, params):
             mlflow.log_param(k, v)
         except mlflow.exceptions.MlflowException as e:
             print("Failed to log parameter:", k, v)
-        
+
         if "data" in k.lower():
             try:
                 mlflow.log_param("data", v)
@@ -130,17 +120,7 @@ def cli():
     # Sanity check listeners
     check_listeners(listeners)
 
-    pass_args = args.params if args.params else ""
-
     os.environ["DNN_RUN_ID"] = RUN_ID
-
-    # TODO: re-enable
-    # if "ncu" in listeners:
-    #     command = f"{COMMAND_NCU}{command}"
-    # elif "ncu_attach" in listeners:
-    #     command = f"{COMMAND_NCU_ATTACH}{command}"
-    # elif "nsys" in listeners:
-    #     command = f"{COMMAND_NSYS}{command}"
 
     not_ncu = not ("ncu" in listeners or "ncu_attach" in listeners)
     os.environ["DNN_LISTENER_PS"] = (
@@ -169,6 +149,9 @@ def cli():
     print(args.params, "passthrough:", passthrough)
 
     sys.argv = [sys.argv[0]] + passthrough
+
+    # Clear MLproject file so next run may start
+    Path("MLproject").unlink()
 
     with MultiLevelDNNGPUBenchmark() as run:
         code = "run_path(progname, run_name='__main__')"

@@ -49,24 +49,27 @@ CSV_FORMAT = np.dtype(
 )
 
 COMMAND = (  #'CUDA_VISIBLE_DEVICES={Devices} '
-    "mlflow run {Filepath} "
+    "mlflow run {Filepath} --env-manager=local "  # TODO: add env management as arg
     "-P letter={Letter} "
     "-P workload={Workload} "
     "-P listeners={Listeners} "
-    "-P command={Command} "
-    "{WorkloadListener}"
+    "-P file={File} "
     '-P params="{Params}" '
 )
 
-COMMAND_NSYS = (
-    "nsys profile -o nsys_results -f true -w true "  # -t cuda,osrt,nvtx,cudnn,cublas
+COMMAND_NSYS = "nsys profile --capture-range nvtx --nvtx-capture profile --cuda-memory-usage=true --capture-range-end repeat -o nsys_{Experiment}_{Workload}_{Letter} -f true -w true -x true -t cuda,nvtx "
+COMMAND_NSYS_RAW = "nsys profile --cuda-memory-usage true -o nsys_{Experiment}_{Workload}_{Letter} -f true -w true -x true -t cuda,nvtx "
+COMMAND_NCU = (
+    "ncu -o ncu_{Experiment}_{Workload}_{Letter} -f --nvtx --nvtx-include profile "
 )
-COMMAND_NCU = "ncu -o ncu_results "
-COMMAND_NCU_ATTACH = "ncu --mode=launch -o ncu_results "
+COMMAND_NCU_RAW = "ncu -o ncu_{Experiment}_{Workload}_{Letter} -f -c 100 "
+COMMAND_NCU_ATTACH = "ncu --mode=launch "
 
+# conda_env: conda.yaml
+# <REPLACE_ENV>
 MLPROJECT_CONTENTS = """name: radt
 
-conda_env: conda.yaml
+
 
 entry_points:
   main:
@@ -75,11 +78,15 @@ entry_points:
       workload: { type: string, default: ""}
       listeners: { type: string, default: "smi+dcgmi+top" }
       params: { type: string, default: "-"}
-      command: { type: string, default: "cifar10.py"}
+      file: { type: string, default: "cifar10.py"}
       workload_listener: { type: string, default: ""}
     command: |
-      {workload_listener}python -m radtrun -l {listeners} -c {command} -p {params}
+      <REPLACE_COMMAND>
 """
+
+MLFLOW_COMMAND = (
+    """{WorkloadListener}python -m radtrun -l {Listeners} -c {File} -p {Params}"""
+)
 
 
 def coloured(colour, string):
@@ -176,8 +183,12 @@ def execute_workload(cmds):
     popens = []
     returncodes = {}
 
+    # # Clear MLproject TODO: set as var
+    # (Path(filepath) / "MLproject").unlink()
+    unlink_first = True
+
     with ExitStack() as stack:
-        for id, colour, letter, vars, cmd, filepath in cmds:
+        for id, colour, letter, vars, cmd, mlproject, filepath, _ in cmds:
             print(
                 sourced(
                     colour,
@@ -203,10 +214,20 @@ def execute_workload(cmds):
 
             # TODO: conda yaml export
 
-            with open(
-                Path(filepath) / "MLproject", "w"
-            ) as project_file:  # TODO: check if file already exists
-                project_file.write(MLPROJECT_CONTENTS)
+            while (Path(filepath) / "MLproject").is_file():
+                # Wait for MLproject to be cleared
+                sysprint("Waiting for MLproject to be cleared")
+                time.sleep(1)
+
+                if unlink_first:
+                    (Path(filepath) / "MLproject").unlink()
+
+                unlink_first = False
+
+            with open(Path(filepath) / "MLproject", "w") as project_file:
+                project_file.write(mlproject)
+
+            time.sleep(1)
 
             q = Queue()
             t = Thread(target=enqueue_output, args=(p.stdout, q))
@@ -284,7 +305,7 @@ def execute_workload(cmds):
     sysprint("Sending logs to server.")
     results = []
 
-    for id, _, letter, _, _, _ in cmds:
+    for id, _, letter, _, _, _, _, row in cmds:
         if run_id := run_ids[letter]:
             client = MlflowClient()
             if run := client.get_run(run_id):
@@ -293,6 +314,16 @@ def execute_workload(cmds):
                 )
                 client.log_text(run_id, "".join(log_runs[letter]), f"log_{run_id}.txt")
                 client.log_text(run_id, "".join(log), f"log_workload.txt")
+
+                if row["WorkloadListener"]:
+                    try:
+                        for file in Path("").glob(
+                            f"{row['WorkloadListener'].split('-o ')[1].split()[0]}*.*-rep"
+                        ):
+                            client.log_artifact(run_id, str(file))
+                            file.unlink()
+                    except IndexError:
+                        pass
 
     if terminate:
         sys.exit()
@@ -422,9 +453,10 @@ def cli():
                 "Params": params,
             }
         )
-        # TODO: finish python file support
+
     elif p.suffix == ".csv":
         df_raw = pd.read_csv(p, delimiter=",", header=0, skipinitialspace=True)
+        df_raw["Collocation"] = df_raw["Collocation"].astype(str)
         df = df_raw.copy()
     else:
         print(f"Suffix [{p.suffix}] not supported. Please supply a python or csv file.")
@@ -465,20 +497,14 @@ def cli():
                 (df_workload["Letter"].value_counts()[letter] - 1)
             ]
 
-            # letter = ascii_uppercase[assigned.index(row["Devices"])]
-            # df_workload.loc[i, "Letter"] = letter
-            # df_workload.loc[i, "Number"] = (
-            #     df_workload["Letter"].value_counts()[letter] - 1
-            # )
-
         letter_quants = df_workload["Letter"].value_counts()
         for i, row in df_workload.iterrows():
             if letter_quants[row["Letter"]] > 1:
-                df_workload.loc[i, "Letter"] = f'{row["Letter"]}.{row["Number"]}'
-            if str(row["Collocation"]).strip() != "-":
+                df_workload.loc[i, "Letter"] = f'{row["Letter"]}_{row["Number"]}'
+            if str(row["Collocation"]).strip() not in ("-", "", "nan"):
                 df_workload.loc[
                     i, "Letter"
-                ] = f'{df_workload.loc[i, "Letter"]}.{df_workload.loc[i, "Collocation"]}'
+                ] = f'{df_workload.loc[i, "Letter"]}_{df_workload.loc[i, "Collocation"]}'
 
         # Set devices string and DCGMI group
         migedit.remove_mig_devices()
@@ -486,13 +512,12 @@ def cli():
         mig_table, entity_table = dev_table.copy(), dev_table.copy()
 
         for i, row in df_workload.iterrows():
-            if "g" in str(row["Collocation"]): # TODO: fix
-                result = migedit.make_mig_devices(row["Devices"], [row["Collocation"]], remove_old=False)
+            if "g" in str(row["Collocation"]):  # TODO: fix
+                result = migedit.make_mig_devices(
+                    row["Devices"], [row["Collocation"]], remove_old=False
+                )
                 mig_table.loc[i] = frozenset([y for x in result for y in x[4]])
                 entity_table.loc[i] = frozenset([x[3] for x in result])
-        
-        print(mig_table)
-        print(entity_table)
 
         gpu_uuids = get_gpu_ids()
         for i, v in mig_table.items():
@@ -513,8 +538,30 @@ def cli():
         for i, (id, row) in enumerate(df_workload.iterrows()):
             row = row.copy()
             row["Filepath"] = str(Path(row["File"]).parent.absolute())
-            row["Command"] = str(Path(row["File"]).name)
-            row["WorkloadListener"] = ""#f"'{COMMAND_NSYS}'"
+            row["File"] = str(Path(row["File"]).name)
+
+            # Workload Listener
+            listeners = row["Listeners"].split("+")
+            for listener in listeners:
+                if listener.strip() == "nsys":
+                    row["WorkloadListener"] = COMMAND_NSYS.format(**row)
+                    listeners.remove(listener)
+                elif listener.strip() == "nsysraw":
+                    row["WorkloadListener"] = COMMAND_NSYS_RAW.format(**row)
+                    listeners.remove(listener)
+                elif listener.strip() == "ncu":
+                    row["WorkloadListener"] = COMMAND_NCU.format(**row)
+                    listeners.remove(listener)
+                elif listener.strip() == "ncuattach":
+                    row["WorkloadListener"] = COMMAND_NCU_ATTACH.format(**row)
+                    listeners.remove(listener)
+                elif listener.strip() == "ncuraw":
+                    row["WorkloadListener"] = COMMAND_NCU_RAW.format(**row)
+                    listeners.remove(listener)
+                else:
+                    row["WorkloadListener"] = ""
+            listeners = "+".join(listeners)
+
             commands.append(
                 (
                     id,
@@ -526,13 +573,25 @@ def cli():
                         "DNN_DCGMI_GROUP": str(dcgmi_table[id]),
                         "SMI_GPU_ID": str(row["Devices"]),
                     },
-                    COMMAND.format(**row).split(),
+                    COMMAND.format(**row).split()
+                    + ["-P", f"workload_listener={row['WorkloadListener']}"],
+                    MLPROJECT_CONTENTS.replace(
+                        "<REPLACE_COMMAND>",
+                        MLFLOW_COMMAND.format(
+                            WorkloadListener=row["WorkloadListener"],
+                            Listeners=listeners,
+                            File=row["File"],
+                            Params=row["Params"] or '""',
+                        ),
+                    ),
                     row["Filepath"],
+                    row,
                 )
             )
 
         # Format and run the row
         sysprint(f"RUNNING WORKLOAD: {workload}")
+        sysprint(commands)
         results = execute_workload(commands)
 
         # Write if .csv
@@ -549,11 +608,6 @@ def cli():
             df_raw.to_csv(target, index=False)
             p.unlink()
             target.rename(p)
-
-
-class CollocationManager:
-    def __init__(self):
-        self.mode = ""
 
 
 if __name__ == "__main__":

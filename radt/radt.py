@@ -2,6 +2,7 @@
 
 __version__ = "0.1.5"
 
+import argparse
 import migedit
 import numpy as np
 import pandas as pd
@@ -379,19 +380,12 @@ def make_dcgm_groups(dev_table):
         if "error" in result:
             raise ValueError("DCGMI group could not be set up with required GPUs.")
 
-        # Set the dcgmi environment variable to communicate the group id to the dcgm listener
-        # os.environ["DNN_DCGMI_GROUP"] = str(group_id)
-
         set_ids[s] = group_id
 
     dcgmi_table = {}
     for i, v in dev_table.items():
         dcgmi_table[i] = set_ids[v]
 
-    # print(dev_table)
-
-    # print(dcgmi_table)
-    # exit(0)
     return dcgmi_table
 
 
@@ -417,50 +411,99 @@ def make_mps(df_workload, gpu_uuids):
             )
 
 
+def remove_mps():
+    # Remove MPS
+    result = "".join(
+        execute_command(["echo quit | nvidia-cuda-mps-control"], shell=True)
+    ).lower()
+
+
+def split_arguments():
+    sysargs = sys.argv[1:]
+
+    for i, arg in enumerate(sysargs):
+        if arg.strip()[-3:] == ".py" or arg.strip()[-4:] == ".csv":
+            return sysargs[:i], Path(arg), sysargs[i + 1 :]
+    else:
+        print("Please supply a python or csv file.")
+        exit()
+
+
+AVAILABLE_LISTENERS = ["ps", "smi", "dcgmi", "top"]
+
+
 def cli():
     # TODO: support specifying workload etc. in quick .py runs
     # make it so that this info is written down before the .py file itself
 
-    args = sys.argv[1:]
-    print(args)
+    args, file, args_passthrough = split_arguments()
 
-    if len(args) < 1:
-        print("Please supply a python or csv file.")
-        exit()
+    parser = argparse.ArgumentParser(description="Multi-Level DNN GPU Benchmark")
 
-    p = Path(args[0])
-    # rerun = args.rerun TODO: add back
+    parser.add_argument("-e", "--experiment", type=int, metavar="EXPERIMENT", default=0)
+    parser.add_argument("-w", "--workload", type=int, metavar="WORKLOAD", default=0)
+    parser.add_argument(
+        "-d",
+        "--devices",
+        type=str,
+        metavar="DEVICES",
+        default="0",
+    )
+    parser.add_argument(
+        "-c",
+        "--collocation",
+        type=str,
+        metavar="COLLOCATION",
+        default="-",
+        help=f"collocation",
+    )
+    parser.add_argument(
+        "-l",
+        "--listeners",
+        type=str,
+        metavar="LISTENERS",
+        default="smi+top+dcgmi",
+        help=f"listeners, available: {' '.join(AVAILABLE_LISTENERS)}",
+    )
+    parser.add_argument(
+        "-r",
+        "--rerun",
+        type=bool,
+        metavar="RERUN",
+        default=False,
+    )
 
-    if p.suffix == ".py":
+    parsed_args = parser.parse_args(args)
+
+    rerun = parsed_args.rerun
+
+    if file.suffix == ".py":
         df_raw = None
         df = pd.DataFrame(np.empty(0, dtype=CSV_FORMAT))
 
-        if len(args) < 2:
-            params = ""
+        if len(args_passthrough):
+            params = " ".join(args_passthrough)
         else:
-            params = " ".join(args[1:])
+            params = ""
 
         df.loc[0] = pd.Series(
             {
-                "Experiment": 0,
-                "Workload": 0,
+                "Experiment": parsed_args.experiment,
+                "Workload": parsed_args.workload,
                 "Status": "",
                 "Run": "",
-                "Devices": "0",
-                "Collocation": "-",
-                "Listeners": "smi+top+dcgmi",
-                "File": str(p),
+                "Devices": parsed_args.devices,
+                "Collocation": parsed_args.collocation,
+                "Listeners": parsed_args.listeners,
+                "File": str(file),
                 "Params": params,
             }
         )
 
-    elif p.suffix == ".csv":
-        df_raw = pd.read_csv(p, delimiter=",", header=0, skipinitialspace=True)
+    elif file.suffix == ".csv":
+        df_raw = pd.read_csv(file, delimiter=",", header=0, skipinitialspace=True)
         df_raw["Collocation"] = df_raw["Collocation"].astype(str)
         df = df_raw.copy()
-    else:
-        print(f"Suffix [{p.suffix}] not supported. Please supply a python or csv file.")
-        exit()
 
     df["Params"] = df["Params"].apply(format_params)
 
@@ -512,6 +555,8 @@ def cli():
         mig_table, entity_table = dev_table.copy(), dev_table.copy()
 
         for i, row in df_workload.iterrows():
+            remove_mps()
+
             if "g" in str(row["Collocation"]):  # TODO: fix
                 result = migedit.make_mig_devices(
                     row["Devices"], [row["Collocation"]], remove_old=False
@@ -593,6 +638,7 @@ def cli():
         sysprint(f"RUNNING WORKLOAD: {workload}")
         sysprint(commands)
         results = execute_workload(commands)
+        remove_mps()
 
         # Write if .csv
         if isinstance(df_raw, pd.DataFrame):

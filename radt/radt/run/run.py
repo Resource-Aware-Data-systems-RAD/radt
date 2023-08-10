@@ -10,11 +10,6 @@ import mlflow
 
 from .benchmark import RADTBenchmark
 
-try:
-    RUN_ID = mlflow.start_run().info.run_id
-except Exception:
-    RUN_ID = mlflow.active_run().info.run_id
-
 
 def update_params_listing(command, params):
     # Log the parameters individually so they are filterable in MLFlow
@@ -72,6 +67,10 @@ def update_params_listing(command, params):
 
 
 def start_run(args, listeners):
+    try:
+        RUN_ID = mlflow.start_run().info.run_id
+    except Exception:
+        RUN_ID = mlflow.active_run().info.run_id
     os.environ["RADT_RUN_ID"] = RUN_ID
 
     print(

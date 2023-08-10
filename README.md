@@ -57,16 +57,19 @@ radT will automatically track hardware metrics for your application. The listene
 
 As radT extends MLFlow, you can either use the advanced tracking or use MLFlow to track software metrics (e.g. loss).
 
-<!-- ## Advanced tracking options via context
+## Advanced tracking options via context
 
-If you want to have more control over what is logged, you can encapsulate your training loop in the RADT context:
+If you want to have more control over what is logged, you can encapsulate your training loop in the RADT context. This allows for logging of ML metrics among other MLFlow functions:
 
 ```py
-from radt import RADT
+import radt
 
-with RADT as run:
+with radt.run.RADTBenchmark() as run:
   # training loop
-``` -->
+  run.log_metric("Metric A", amount)
+  run.log_artifact("Metric A", artifact)
+```
+All methods and functions under `mlflow` are accessible this way. These functions are disabled when running the codebase without `radt`, ensuring code flexibility.
 
 ## CSV syntax for larger experiments
 

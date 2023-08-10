@@ -5,7 +5,7 @@ import subprocess
 
 from multiprocessing import Process
 
-DCGMI_GROUP_ID = os.getenv("DNN_DCGMI_GROUP")
+DCGMI_GROUP_ID = os.getenv("RADT_DCGMI_GROUP")
 
 METRIC_NAMES = [
     "Power Usage",

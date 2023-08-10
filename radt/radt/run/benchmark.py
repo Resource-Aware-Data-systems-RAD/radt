@@ -16,7 +16,7 @@ class RADTBenchmark:
 
         # Grab run id
         try:
-            run = mlflow.start_run(run_id=os.getenv("DNN_RUN_ID"))
+            run = mlflow.start_run(run_id=os.getenv("RADT_RUN_ID"))
         except Exception as e:
             run = mlflow.active_run()
         self.run_id = run.info.run_id
@@ -26,17 +26,17 @@ class RADTBenchmark:
 
     def __enter__(self):
         self.threads = []
-        self.max_epoch = int(os.getenv("DNN_MAX_EPOCH"))
-        self.max_time = time() + int(os.getenv("DNN_MAX_TIME"))
+        self.max_epoch = int(os.getenv("RADT_MAX_EPOCH"))
+        self.max_time = time() + int(os.getenv("RADT_MAX_TIME"))
 
         # Spawn threads for listeners
-        if os.getenv("DNN_LISTENER_PS") == "True":
+        if os.getenv("RADT_LISTENER_PS") == "True":
             self.threads.append(ps_listener.PSThread(self.run_id))
-        if os.getenv("DNN_LISTENER_SMI") == "True":
+        if os.getenv("RADT_LISTENER_SMI") == "True":
             self.threads.append(smi_listener.SMIThread(self.run_id))
-        if os.getenv("DNN_LISTENER_DCGMI") == "True":
+        if os.getenv("RADT_LISTENER_DCGMI") == "True":
             self.threads.append(dcgmi_listener.DCGMIThread(self.run_id))
-        if os.getenv("DNN_LISTENER_TOP") == "True":
+        if os.getenv("RADT_LISTENER_TOP") == "True":
             self.threads.append(top_listener.TOPThread(self.run_id))
 
         for thread in self.threads:

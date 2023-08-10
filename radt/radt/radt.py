@@ -8,6 +8,11 @@ from .schedule import start_schedule
 
 
 def schedule_split_arguments():
+    """Split arguments for `radt` into parsed arguments and passthrough arguments
+
+    Returns:
+        list, Path, list: Split arguments
+    """
     sysargs = sys.argv[1:]
 
     for i, arg in enumerate(sysargs):
@@ -18,7 +23,15 @@ def schedule_split_arguments():
         exit()
 
 
-def schedule_parse_arguments(args):
+def schedule_parse_arguments(args: list):
+    """Argparse for `radt`
+
+    Args:
+        args (list): List of raw arguments
+
+    Returns:
+        argparse.Namespace: Parsed arguments
+    """
     parser = argparse.ArgumentParser(description="Multi-Level DNN GPU Benchmark")
     parser.add_argument(
         "-e",
@@ -77,11 +90,35 @@ def schedule_parse_arguments(args):
         default=True,
         help="Use the current active environment",
     )
+    parser.add_argument(
+        "-i",
+        "--epoch",
+        type=int,
+        dest="max_epoch",
+        default=5,
+        help="Maximum number of epochs to train for",
+    )
+    parser.add_argument(
+        "-t",
+        "--time",
+        type=int,
+        dest="max_time",
+        default=2 * 24 * 60,
+        help="Maximum amount of time to train for (minutes)",
+    )
 
     return parser.parse_args(args)
 
 
-def run_parse_arguments(args):
+def run_parse_arguments(args: list):
+    """Argparse for `radt run`
+
+    Args:
+        args (list): List of raw arguments
+
+    Returns:
+        argparse.Namespace: Parsed arguments
+    """
     parser = argparse.ArgumentParser(description="Multi-Level DNN GPU Benchmark")
 
     parser.add_argument(
@@ -104,6 +141,14 @@ def run_parse_arguments(args):
 
 
 def check_run_listeners(l):
+    """Check whether all run listeners are registered
+
+    Args:
+        l (list): Listeners
+
+    Raises:
+        Exception: Listener unavailable
+    """
     if len(l) == 1 and l[0] == "none":
         return
     for entry in l:
@@ -126,8 +171,7 @@ def cli_run():
 
 
 def cli():
-    print(sys.argv)
-
+    """Entrypoint for `radt` and `radt run`"""
     if sys.argv[1].strip() == "run":
         cli_run()
     else:

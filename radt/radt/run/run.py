@@ -72,29 +72,14 @@ def update_params_listing(command, params):
 
 
 def start_run(args, listeners):
-    os.environ["DNN_RUN_ID"] = RUN_ID
+    os.environ["RADT_RUN_ID"] = RUN_ID
 
-    not_ncu = not ("ncu" in listeners or "ncu_attach" in listeners)
-    os.environ["DNN_LISTENER_PS"] = (
-        "True" if ("ps" in listeners and not_ncu) else "False"
+    print(
+        "MAX EPOCH: ",
+        os.environ["RADT_MAX_EPOCH"],
+        " MAX_TIME: ",
+        os.environ["RADT_MAX_TIME"],
     )
-    os.environ["DNN_LISTENER_SMI"] = (
-        "True" if ("smi" in listeners and not_ncu) else "False"
-    )
-    os.environ["DNN_LISTENER_DCGMI"] = (
-        "True" if ("dcgmi" in listeners and not_ncu) else "False"
-    )
-    os.environ["DNN_LISTENER_TOP"] = (
-        "True" if ("top" in listeners and not_ncu) else "False"
-    )
-
-    max_epoch = str(5)  # 5 epochs TODO: make this a nice parameter
-    max_time = str(2 * 24 * 60 * 60)  # 2 days
-
-    os.environ["DNN_MAX_EPOCH"] = max_epoch
-    os.environ["DNN_MAX_TIME"] = max_time
-
-    print("MAX EPOCH:", max_epoch, "MAX_TIME:", max_time)
 
     passthrough = update_params_listing(args.command, args.params)
 

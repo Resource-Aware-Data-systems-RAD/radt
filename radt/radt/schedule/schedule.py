@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+from argparse import Namespace
 from contextlib import ExitStack
 from pathlib import Path
 from queue import Empty, Queue
@@ -16,22 +17,54 @@ from mlflow.tracking import MlflowClient
 from .. import constants
 
 
-def coloured(colour, string):
+def coloured(colour: int, string: str):
+    """Add colour tags to a string
+
+    Args:
+        colour (int): Colour id
+        string (str): String to colour
+
+    Returns:
+        str: Coloured string
+    """
     return f"\033[{colour}m{string}\033[0m"
 
 
-def sysprint(string):
+def sysprint(string: str):
+    """Print in colour 33
+
+    Args:
+        string (str): String to print
+    """
     print(coloured(33, string))
 
 
-def sourced(colour, letter, string):
+def runformat(colour: int, letter: str, string: str):
+    """Format string styled to a specific run
+
+    Args:
+        colour (int): Colour id
+        letter (str): Run letter
+        string (str): String to format
+
+    Returns:
+        str: Formatted string
+    """
     prefix = f"[RUN {letter}]:".ljust(20)
     if colour is None:
         return f"{prefix} {string}"
     return f"{coloured(colour, prefix)} {string}"
 
 
-def format_params(line):
+def format_params(line: str):
+    """Format parameters for run passthrough
+
+    Args:
+        line (str): Parameters to format
+
+    Returns:
+        str: Formatted parameters
+    """
     if isinstance(line, str):
         line = " ".join(line.split())
         if "--" in line:
@@ -48,13 +81,18 @@ def format_params(line):
     return line
 
 
-def execute_command(cmd, shell=False, vars={}):
-    """
-    Executes a (non-run) command.
-    :param cmd -> Command to run.
+def execute_command(cmd: str, shell: bool = False, vars: dict = {}):
+    """Execute a (non-run) command
 
-    :return result -> Text printed by the command.
+    Args:
+        cmd (str or list): Command to run
+        shell (bool, optional): Whether to enable shell. Defaults to False.
+        vars (dict, optional): Environment vars for the command. Defaults to {}.
+
+    Returns:
+        str: stdout output of the command
     """
+
     if isinstance(cmd, str):
         cmd = cmd.split()
 
@@ -79,7 +117,13 @@ def execute_command(cmd, shell=False, vars={}):
     return result
 
 
-def enqueue_output(out, queue):
+def enqueue_output(out: PIPE, queue: Queue):
+    """Enqueue any output from pipe into queue
+
+    Args:
+        out (PIPE): Pipe to read from
+        queue (Queue): Queue to write to
+    """
     try:
         for line in iter(out.readline, b""):
             queue.put(line)
@@ -88,18 +132,15 @@ def enqueue_output(out, queue):
     out.close()
 
 
-def execute_workload(cmds):
+def execute_workload(cmds: list):
+    """Executes a workload. Handles run halting and collecting of run status.
+
+    Args:
+        cmds (list): Commands to run
+
+    Returns:
+        list: Run results to write back to df
     """
-    Executes a workload. Handles run halting and collecting of run status.
-    :param cmd -> Command to run.
-
-    :return run_id -> ID of run.
-    :return status -> Status code of run.
-    """
-
-    # sysprint(f"Executing workload - {cmds}")
-
-    # exit()
     run_ids = {}
 
     terminate = False
@@ -109,14 +150,12 @@ def execute_workload(cmds):
     popens = []
     returncodes = {}
 
-    # # Clear MLproject TODO: set as var
-    # (Path(filepath) / "MLproject").unlink()
     unlink_first = True
 
     with ExitStack() as stack:
         for id, colour, letter, vars, cmd, mlproject, filepath, _ in cmds:
             print(
-                sourced(
+                runformat(
                     colour,
                     letter,
                     f"context: {id}-{colour}-{letter}-{vars}-{cmd}-{filepath}",
@@ -185,8 +224,8 @@ def execute_workload(cmds):
                             break
                         else:
                             log_runs[letter].append(l)
-                            log.append(sourced(None, letter, l))
-                            print(sourced(colour, letter, l), end="")
+                            log.append(runformat(None, letter, l))
+                            print(runformat(colour, letter, l), end="")
 
                             if run_ids[letter]:
                                 continue
@@ -197,7 +236,7 @@ def execute_workload(cmds):
                                     .strip()
                                 )
                                 print(
-                                    sourced(
+                                    runformat(
                                         colour, letter, f"MAPPED TO {run_ids[letter]}"
                                     )
                                 )
@@ -220,8 +259,8 @@ def execute_workload(cmds):
                         else:
                             last_update = time.time()
                             log_runs[letter].append(l)
-                            log.append(sourced(None, letter, l))
-                            print(sourced(colour, letter, l), end="")
+                            log.append(runformat(None, letter, l))
+                            print(runformat(colour, letter, l), end="")
             except KeyboardInterrupt:
                 pass
 
@@ -258,6 +297,11 @@ def execute_workload(cmds):
 
 
 def get_gpu_ids():
+    """Get UUIDs of all gpus
+
+    Returns:
+        dict: GPU indices and UUIDs
+    """
     gpus = {}
     for line in execute_command("nvidia-smi -L"):
         if "UUID: GPU" in line:
@@ -266,12 +310,17 @@ def get_gpu_ids():
     return gpus
 
 
-def make_dcgm_groups(dev_table):
-    """
-    Removes old DCGM groups and make a DCGM group with the required devices.
-    :param dev_table -> Run to device mapping table.
+def make_dcgm_groups(dev_table: pd.DataFrame):
+    """Removes old DCGM groups and make a DCGM group with the required devices.
 
-    :return dcgmi_table -> Run to id mapping table.
+    Args:
+        dev_table (pd.DataFrame): Run to device mapping table.
+
+    Raises:
+        ValueError: Group could not be created
+
+    Returns:
+        pd.DataFrame: Run to id mapping table.
     """
 
     # Grab existing groups
@@ -314,7 +363,17 @@ def make_dcgm_groups(dev_table):
     return dcgmi_table
 
 
-def make_mps(df_workload, gpu_uuids):
+def make_mps(df_workload: pd.DataFrame, gpu_uuids: dict):
+    """Initialise MPS mode if MPS flag is present
+
+    Args:
+        df_workload (pd.DataFrame): Workload to run
+        gpu_uuids (dict): GPU UUIDs to run MPS on
+
+    Raises:
+        Exception: Attempting to run MPS on multiple devices
+    """
+
     gpu_ids = (
         df_workload[df_workload["Collocation"].str.strip().str.lower() == "mps"][
             "Devices"
@@ -337,13 +396,23 @@ def make_mps(df_workload, gpu_uuids):
 
 
 def remove_mps():
-    # Remove MPS
-    result = "".join(
-        execute_command(["echo quit | nvidia-cuda-mps-control"], shell=True)
-    ).lower()
+    """Remove MPS"""
+    execute_command(["echo quit | nvidia-cuda-mps-control"], shell=True)
 
 
-def determine_operating_mode(parsed_args, file, args_passthrough):
+def determine_operating_mode(
+    parsed_args: Namespace, file: Path, args_passthrough: list
+):
+    """Determine and initialise whether running a .csv or .py file
+
+    Args:
+        parsed_args (Namespace): Schedule arguments
+        file (Path): Path to file
+        args_passthrough (list): Run arguments
+
+    Returns:
+        pd.DataFrame, pd.Dataframe: Dataframe to run, copy
+    """
     if file.suffix == ".py":
         df_raw = None
         df = pd.DataFrame(np.empty(0, dtype=constants.CSV_FORMAT))
@@ -375,7 +444,14 @@ def determine_operating_mode(parsed_args, file, args_passthrough):
     return df, df_raw
 
 
-def start_schedule(parsed_args, file, args_passthrough):
+def start_schedule(parsed_args: Namespace, file: Path, args_passthrough: list):
+    """Schedule (execute) a .py or .csv file via RADT
+
+    Args:
+        parsed_args (Namespace): Schedule arguments
+        file (Path): Path to file
+        args_passthrough (list): Run arguments
+    """
     df, df_raw = determine_operating_mode(parsed_args, file, args_passthrough)
 
     df["Params"] = df["Params"].apply(format_params)
@@ -460,6 +536,9 @@ def start_schedule(parsed_args, file, args_passthrough):
 
             # Workload Listener
             listeners = row["Listeners"].split("+")
+            row["WorkloadListener"] = ""
+            listener_env_vars = {k: "False" for k in constants.RUN_LISTENERS}
+
             for listener in listeners:
                 if (k := listener.strip()) in constants.WORKLOAD_LISTENERS:
                     row["WorkloadListener"] = constants.WORKLOAD_LISTENERS[k].format(
@@ -467,7 +546,8 @@ def start_schedule(parsed_args, file, args_passthrough):
                     )
                     listeners.remove(listener)
                 else:
-                    row["WorkloadListener"] = ""
+                    listener_env_vars[f"RADT_LISTENER_{k.upper()}"] = "True"
+
             listeners = "+".join(listeners)
 
             commands.append(
@@ -478,9 +558,12 @@ def start_schedule(parsed_args, file, args_passthrough):
                     {
                         "MLFLOW_EXPERIMENT_ID": str(row["Experiment"]).strip(),
                         "CUDA_VISIBLE_DEVICES": ",".join(map(str, mig_table[id])),
-                        "DNN_DCGMI_GROUP": str(dcgmi_table[id]),
+                        "RADT_DCGMI_GROUP": str(dcgmi_table[id]),
                         "SMI_GPU_ID": str(row["Devices"]),
-                    },
+                        "RADT_MAX_EPOCH": str(parsed_args.max_epoch),
+                        "RADT_MAX_TIME": str(parsed_args.max_time * 60),
+                    }
+                    | listener_env_vars,
                     constants.COMMAND.format(**row).split()
                     + ["-P", f"workload_listener={row['WorkloadListener']}"],
                     constants.MLPROJECT_CONTENTS.replace(

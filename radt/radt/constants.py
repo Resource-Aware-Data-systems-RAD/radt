@@ -17,7 +17,7 @@ CSV_FORMAT = np.dtype(
 )
 
 COMMAND = (
-    "mlflow run {Filepath} --env-manager={Envmanager} "  # TODO: add env management as arg
+    "mlflow run {Filepath} --env-manager={Envmanager} "
     "-P letter={Letter} "
     "-P workload={Workload} "
     "-P listeners={Listeners} "

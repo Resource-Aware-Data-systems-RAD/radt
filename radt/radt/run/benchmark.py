@@ -1,13 +1,13 @@
-import mlflow
 import os
-import signal
 import sys
-
 from time import time
 
-from .listeners import smi_listener, dcgmi_listener, ps_listener, top_listener
+import mlflow
 
-class MultiLevelDNNGPUBenchmark:
+from .listeners import dcgmi_listener, ps_listener, smi_listener, top_listener
+
+
+class RADTBenchmark:
     def __init__(self):
         """
         Context manager for a run.
@@ -64,8 +64,6 @@ class MultiLevelDNNGPUBenchmark:
         mlflow.log_metric(name, value, step)
         if step >= self.max_epoch or time() > self.max_time:
             print("Maximum epoch reached")
-            # os.kill(os.getppid(), signal.SIGINT)
-            # raise KeyboardInterrupt("Maximum epoch reached!")
             sys.exit()
 
     def log_metrics(self, metrics, step=0):
@@ -79,6 +77,4 @@ class MultiLevelDNNGPUBenchmark:
         mlflow.log_metrics(metrics, step)
         if step >= self.max_epoch or time() > self.max_time:
             print("Maximum epoch reached")
-            # os.kill(os.getppid(), signal.SIGINT)
-            # raise KeyboardInterrupt("Maximum epoch reached!")
             sys.exit()

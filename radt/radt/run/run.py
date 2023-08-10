@@ -1,45 +1,19 @@
 """Runner for Resource-Aware Data systems Tracker (radT) for automatically tracking and training machine learning software"""
 
 import argparse
-import mlflow
 import os
 import runpy
 import sys
 from pathlib import Path
 
-from .mldgpu import MultiLevelDNNGPUBenchmark
+import mlflow
+
+from .benchmark import RADTBenchmark
 
 try:
     RUN_ID = mlflow.start_run().info.run_id
 except Exception:
     RUN_ID = mlflow.active_run().info.run_id
-
-AVAILABLE_LISTENERS = ["ps", "smi", "dcgmi", "top"]
-
-
-class Parser:
-    """
-    Argparser for MLDGPUB
-    """
-
-    parser = argparse.ArgumentParser(description="Multi-Level DNN GPU Benchmark")
-
-    def __init__(self):
-        self.parser.add_argument(
-            "-l",
-            "--listeners",
-            metavar="LISTENERS",
-            required=True,
-            help=f"listeners, available: {' '.join(AVAILABLE_LISTENERS)}",
-        )
-        self.parser.add_argument(
-            "-c",
-            "--command",
-            type=str,
-            metavar="COMMAND",
-            required=True,
-        )
-        self.parser.add_argument("-p", "--params", type=str, metavar="PARAMS")
 
 
 def update_params_listing(command, params):
@@ -97,29 +71,7 @@ def update_params_listing(command, params):
     ]  # TODO: improve this code to allow for more flexible args
 
 
-def check_listeners(l):
-    if len(l) == 1 and l[0] == "none":
-        return
-    for entry in l:
-        if entry not in AVAILABLE_LISTENERS:
-            raise Exception(f"Unavailable listener: {entry}")
-
-    if "ncu" in l or "ncu_attach" in l:
-        if len(l) > 1:
-            raise Exception(
-                "ncu and ncu_attach can't run together with other listeners!"
-            )
-
-
-def cli():
-    parser = Parser().parser
-    args = parser.parse_args()
-
-    listeners = args.listeners.lower().split("+")
-
-    # Sanity check listeners
-    check_listeners(listeners)
-
+def start_run(args, listeners):
     os.environ["DNN_RUN_ID"] = RUN_ID
 
     not_ncu = not ("ncu" in listeners or "ncu_attach" in listeners)
@@ -153,7 +105,7 @@ def cli():
     # Clear MLproject file so next run may start
     Path("MLproject").unlink()
 
-    with MultiLevelDNNGPUBenchmark() as run:
+    with RADTBenchmark() as run:
         code = "run_path(progname, run_name='__main__')"
         globs = {"run_path": runpy.run_path, "progname": args.command}
 
@@ -161,7 +113,3 @@ def cli():
             exec(code, globs, None)
         except (SystemExit, KeyboardInterrupt):
             pass
-
-
-if __name__ == "__main__":
-    cli()

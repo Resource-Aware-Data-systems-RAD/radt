@@ -1,4 +1,4 @@
-from .radtrun import cli
+from .radt import cli
 
 if __name__ == "__main__":
     cli()

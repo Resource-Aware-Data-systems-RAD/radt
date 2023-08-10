@@ -1,93 +1,19 @@
-"""Resource-Aware Data systems Tracker (radT) for automatically tracking and training machine learning software"""
-
-__version__ = "0.1.5"
-
-import argparse
-import migedit
-import numpy as np
-import pandas as pd
 import os
 import sys
 import time
-
 from contextlib import ExitStack
-from mlflow.tracking import MlflowClient
 from pathlib import Path
-from queue import Queue, Empty
+from queue import Empty, Queue
 from string import ascii_uppercase
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import PIPE, STDOUT, Popen
 from threading import Thread
 
-COLOURS = [31, 32, 34, 35, 36, 33]
+import migedit
+import numpy as np
+import pandas as pd
+from mlflow.tracking import MlflowClient
 
-MIG_OPTIONS = ["1g.10gb", "2g.20gb", "3g.40gb", "4g.40gb", "7g.80gb"]
-SMIG_OPTIONS = ["1c.7g.40gb", "2c.7g.40gb", "3c.7g.40gb", "4c.7g.40gb", "7c.7g.40gb"]
-
-HEADER = [
-    "Experiment",
-    "Workload",
-    "Status",
-    "Run",
-    "Devices",
-    "Collocation",
-    "Listeners",
-    "File",
-    "Params",
-]
-
-CSV_FORMAT = np.dtype(
-    [
-        ("Experiment", int),
-        ("Workload", int),
-        ("Status", str),
-        ("Run", str),
-        ("Devices", str),
-        ("Collocation", str),
-        ("Listeners", str),
-        ("File", str),
-        ("Params", str),
-    ]
-)
-
-COMMAND = (  #'CUDA_VISIBLE_DEVICES={Devices} '
-    "mlflow run {Filepath} --env-manager=local "  # TODO: add env management as arg
-    "-P letter={Letter} "
-    "-P workload={Workload} "
-    "-P listeners={Listeners} "
-    "-P file={File} "
-    '-P params="{Params}" '
-)
-
-COMMAND_NSYS = "nsys profile --capture-range nvtx --nvtx-capture profile --cuda-memory-usage=true --capture-range-end repeat -o nsys_{Experiment}_{Workload}_{Letter} -f true -w true -x true -t cuda,nvtx "
-COMMAND_NSYS_RAW = "nsys profile --cuda-memory-usage true -o nsys_{Experiment}_{Workload}_{Letter} -f true -w true -x true -t cuda,nvtx "
-COMMAND_NCU = (
-    "ncu -o ncu_{Experiment}_{Workload}_{Letter} -f --nvtx --nvtx-include profile "
-)
-COMMAND_NCU_RAW = "ncu -o ncu_{Experiment}_{Workload}_{Letter} -f -c 100 "
-COMMAND_NCU_ATTACH = "ncu --mode=launch "
-
-# conda_env: conda.yaml
-# <REPLACE_ENV>
-MLPROJECT_CONTENTS = """name: radt
-
-
-
-entry_points:
-  main:
-    parameters:
-      letter: { type: string, default: ""}
-      workload: { type: string, default: ""}
-      listeners: { type: string, default: "smi+dcgmi+top" }
-      params: { type: string, default: "-"}
-      file: { type: string, default: "cifar10.py"}
-      workload_listener: { type: string, default: ""}
-    command: |
-      <REPLACE_COMMAND>
-"""
-
-MLFLOW_COMMAND = (
-    """{WorkloadListener}python -m radtrun -l {Listeners} -c {File} -p {Params}"""
-)
+from .. import constants
 
 
 def coloured(colour, string):
@@ -175,7 +101,6 @@ def execute_workload(cmds):
 
     # exit()
     run_ids = {}
-    status = -1
 
     terminate = False
 
@@ -418,68 +343,10 @@ def remove_mps():
     ).lower()
 
 
-def split_arguments():
-    sysargs = sys.argv[1:]
-
-    for i, arg in enumerate(sysargs):
-        if arg.strip()[-3:] == ".py" or arg.strip()[-4:] == ".csv":
-            return sysargs[:i], Path(arg), sysargs[i + 1 :]
-    else:
-        print("Please supply a python or csv file.")
-        exit()
-
-
-AVAILABLE_LISTENERS = ["ps", "smi", "dcgmi", "top"]
-
-
-def cli():
-    # TODO: support specifying workload etc. in quick .py runs
-    # make it so that this info is written down before the .py file itself
-
-    args, file, args_passthrough = split_arguments()
-
-    parser = argparse.ArgumentParser(description="Multi-Level DNN GPU Benchmark")
-
-    parser.add_argument("-e", "--experiment", type=int, metavar="EXPERIMENT", default=0)
-    parser.add_argument("-w", "--workload", type=int, metavar="WORKLOAD", default=0)
-    parser.add_argument(
-        "-d",
-        "--devices",
-        type=str,
-        metavar="DEVICES",
-        default="0",
-    )
-    parser.add_argument(
-        "-c",
-        "--collocation",
-        type=str,
-        metavar="COLLOCATION",
-        default="-",
-        help=f"collocation",
-    )
-    parser.add_argument(
-        "-l",
-        "--listeners",
-        type=str,
-        metavar="LISTENERS",
-        default="smi+top+dcgmi",
-        help=f"listeners, available: {' '.join(AVAILABLE_LISTENERS)}",
-    )
-    parser.add_argument(
-        "-r",
-        "--rerun",
-        type=bool,
-        metavar="RERUN",
-        default=False,
-    )
-
-    parsed_args = parser.parse_args(args)
-
-    rerun = parsed_args.rerun
-
+def determine_operating_mode(parsed_args, file, args_passthrough):
     if file.suffix == ".py":
         df_raw = None
-        df = pd.DataFrame(np.empty(0, dtype=CSV_FORMAT))
+        df = pd.DataFrame(np.empty(0, dtype=constants.CSV_FORMAT))
 
         if len(args_passthrough):
             params = " ".join(args_passthrough)
@@ -505,14 +372,19 @@ def cli():
         df_raw["Collocation"] = df_raw["Collocation"].astype(str)
         df = df_raw.copy()
 
+    return df, df_raw
+
+
+def start_schedule(parsed_args, file, args_passthrough):
+    df, df_raw = determine_operating_mode(parsed_args, file, args_passthrough)
+
     df["Params"] = df["Params"].apply(format_params)
 
     df["Workload_Unique"] = (
         df["Experiment"].astype(str) + "+" + df["Workload"].astype(str)
     )
 
-    workloads = df["Workload_Unique"].unique()
-    for workload in workloads:
+    for workload in df["Workload_Unique"].unique():
         df_workload = df[df["Workload_Unique"] == workload].copy()
 
         df_workload["Letter"] = "-"
@@ -584,24 +456,15 @@ def cli():
             row = row.copy()
             row["Filepath"] = str(Path(row["File"]).parent.absolute())
             row["File"] = str(Path(row["File"]).name)
+            row["Envmanager"] = "conda" if parsed_args.useconda else "local"
 
             # Workload Listener
             listeners = row["Listeners"].split("+")
             for listener in listeners:
-                if listener.strip() == "nsys":
-                    row["WorkloadListener"] = COMMAND_NSYS.format(**row)
-                    listeners.remove(listener)
-                elif listener.strip() == "nsysraw":
-                    row["WorkloadListener"] = COMMAND_NSYS_RAW.format(**row)
-                    listeners.remove(listener)
-                elif listener.strip() == "ncu":
-                    row["WorkloadListener"] = COMMAND_NCU.format(**row)
-                    listeners.remove(listener)
-                elif listener.strip() == "ncuattach":
-                    row["WorkloadListener"] = COMMAND_NCU_ATTACH.format(**row)
-                    listeners.remove(listener)
-                elif listener.strip() == "ncuraw":
-                    row["WorkloadListener"] = COMMAND_NCU_RAW.format(**row)
+                if (k := listener.strip()) in constants.WORKLOAD_LISTENERS:
+                    row["WorkloadListener"] = constants.WORKLOAD_LISTENERS[k].format(
+                        **row
+                    )
                     listeners.remove(listener)
                 else:
                     row["WorkloadListener"] = ""
@@ -610,7 +473,7 @@ def cli():
             commands.append(
                 (
                     id,
-                    COLOURS[i % 6],
+                    constants.COLOURS[i % 6],
                     row["Letter"],
                     {
                         "MLFLOW_EXPERIMENT_ID": str(row["Experiment"]).strip(),
@@ -618,16 +481,19 @@ def cli():
                         "DNN_DCGMI_GROUP": str(dcgmi_table[id]),
                         "SMI_GPU_ID": str(row["Devices"]),
                     },
-                    COMMAND.format(**row).split()
+                    constants.COMMAND.format(**row).split()
                     + ["-P", f"workload_listener={row['WorkloadListener']}"],
-                    MLPROJECT_CONTENTS.replace(
+                    constants.MLPROJECT_CONTENTS.replace(
                         "<REPLACE_COMMAND>",
-                        MLFLOW_COMMAND.format(
+                        constants.MLFLOW_COMMAND.format(
                             WorkloadListener=row["WorkloadListener"],
                             Listeners=listeners,
                             File=row["File"],
                             Params=row["Params"] or '""',
                         ),
+                    ).replace(
+                        "<REPLACE_ENV>",
+                        "conda_env: conda.yaml" if parsed_args.useconda else "",
                     ),
                     row["Filepath"],
                     row,
@@ -652,9 +518,5 @@ def cli():
             # Write the result of the run to the csv
             target = Path("result.csv")
             df_raw.to_csv(target, index=False)
-            p.unlink()
-            target.rename(p)
-
-
-if __name__ == "__main__":
-    cli()
+            file.unlink()
+            target.rename(file)

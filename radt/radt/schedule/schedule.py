@@ -585,7 +585,6 @@ def start_schedule(parsed_args: Namespace, file: Path, args_passthrough: list):
 
         # Format and run the row
         sysprint(f"RUNNING WORKLOAD: {workload}")
-        sysprint(commands)
         results = execute_workload(commands)
         remove_mps()
 

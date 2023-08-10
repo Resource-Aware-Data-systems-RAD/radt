@@ -22,7 +22,7 @@ pip install radt
 
 ## Releases
 
-The current release is `0.2.0`. radT has been recently released and is frequently receiving updates.
+The current release is `0.2.1`. radT has been recently released and is frequently receiving updates.
 
 If you find any issues or bugs, feel free to message `titr (at) itu.dk` or open an issue in this repository.
 

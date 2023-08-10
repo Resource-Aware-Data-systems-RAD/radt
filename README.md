@@ -22,16 +22,14 @@ pip install radt
 
 ## Releases
 
-The current release is `0.1.3`. radT has been recently released and is frequently receiving updates.
-
-*We are currently fixing some issues regarding workload listeners and the imported context, please stay tuned. We are hoping to have these resolved in a couple of days.*
+The current release is `0.2.0`. radT has been recently released and is frequently receiving updates.
 
 If you find any issues or bugs, feel free to message `titr (at) itu.dk` or open an issue in this repository.
 
 ## Features
 
 - Wide configuration support including collocation
-- Track hardware and software metrics
+- Track hardware and software metrics, including Nsight
 - Handle continuous streams of data
 - Support multiple visualization use-cases
 - Filter large amounts of inconsequential data
@@ -59,16 +57,16 @@ radT will automatically track hardware metrics for your application. The listene
 
 As radT extends MLFlow, you can either use the advanced tracking or use MLFlow to track software metrics (e.g. loss).
 
-## Advanced tracking options via context
+<!-- ## Advanced tracking options via context
 
 If you want to have more control over what is logged, you can encapsulate your training loop in the RADT context:
 
 ```py
-from radtrun import RADT
+from radt import RADT
 
 with RADT as run:
   # training loop
-```
+``` -->
 
 ## CSV syntax for larger experiments
 
@@ -89,14 +87,19 @@ When interrupted by any means, a csv experiment can be rescheduled to continue f
 
 - [x] Linux
 
-<!-- 
+
 ## Citation
 
 If you need to cite this repository in academic research:
 ```txt
-@Online{
+@inproceedings{robroek2023data,
+  title={Data Management and Visualization for Benchmarking Deep Learning Training Systems},
+  author={Robroek, Ties and Duane, Aaron and Yousefzadeh-Asl-Miandoab, Ehsan and Tozun, Pinar},
+  booktitle={Proceedings of the Seventh Workshop on Data Management for End-to-End Machine Learning},
+  pages={1--5},
+  year={2023}
 }
-``` -->
+```
 
 
 ## Contributors

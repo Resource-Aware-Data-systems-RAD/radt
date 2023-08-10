@@ -63,6 +63,24 @@ conda env config vars set MLFLOW_TRACKING_URI=
 
 The `MLFLOW_TRACKING_USERNAME` and `MLFLOW_TRACKING_PASSWORD` fields are only required when authorisation is enabled for MLFlow.
 
+## Using Nsight
+Nsight tracking can be enabled by using the respective listeners, e.g. `nsys` or `ncu`.
+By default, these trackers will only track things that are within the `profile` NVTX range. This allows for targeted tracking, which is very helpful when using Nsight. 
+It is critical that you use the official `nvtx` python library, as most other libraries (including PyTorch's native NVTX support) do not use `RegistredString` which is required for this kind of filtering.
+
+Example:
+```python
+>>> import nvtx
+>>> range_id = nvtx.start_range("profile")
+>>> (... training loop ...)
+>>> nvtx.end_range(range_id)
+```
+
+Note that for most projects, the amount of data collected will be extremely large. It is recommended to only mark **up to a couple of iterations** for tracing in order to reduce the quantity of data.
+
+When using NCU, you can use the `ncuattach` to run an Nsight Compute live session instead. This is usually more practical than writing to a log file but requires an active connection to your server.
+
+
 ## Running Examples
 
 All examples should run via `radt <script>.py` unless specified.

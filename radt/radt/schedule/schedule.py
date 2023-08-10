@@ -562,6 +562,7 @@ def start_schedule(parsed_args: Namespace, file: Path, args_passthrough: list):
                         "SMI_GPU_ID": str(row["Devices"]),
                         "RADT_MAX_EPOCH": str(parsed_args.max_epoch),
                         "RADT_MAX_TIME": str(parsed_args.max_time * 60),
+                        "RADT_MANUAL_MODE": "True" if parsed_args.manual else "False",
                     }
                     | listener_env_vars,
                     constants.COMMAND.format(**row).split()

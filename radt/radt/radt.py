@@ -32,7 +32,9 @@ def schedule_parse_arguments(args: list):
     Returns:
         argparse.Namespace: Parsed arguments
     """
-    parser = argparse.ArgumentParser(description="Multi-Level DNN GPU Benchmark")
+    parser = argparse.ArgumentParser(
+        description="RADt Automatic Tracking and Benchmarking"
+    )
     parser.add_argument(
         "-e",
         "--experiment",
@@ -77,20 +79,6 @@ def schedule_parse_arguments(args: list):
         help="Whether to force rerun runs that have previously been completed",
     )
     parser.add_argument(
-        "--conda",
-        action="store_true",
-        dest="useconda",
-        default=True,
-        help="Use conda.yaml to create a conda environment",
-    )
-    parser.add_argument(
-        "--local",
-        action="store_false",
-        dest="useconda",
-        default=True,
-        help="Use the current active environment",
-    )
-    parser.add_argument(
         "-i",
         "--epoch",
         type=int,
@@ -106,6 +94,27 @@ def schedule_parse_arguments(args: list):
         default=2 * 24 * 60,
         help="Maximum amount of time to train for (minutes)",
     )
+    parser.add_argument(
+        "--conda",
+        action="store_true",
+        dest="useconda",
+        default=True,
+        help="Use conda.yaml to create a conda environment",
+    )
+    parser.add_argument(
+        "--local",
+        action="store_false",
+        dest="useconda",
+        default=True,
+        help="Use the current active environment",
+    )
+    parser.add_argument(
+        "--manual",
+        action="store_true",
+        dest="manual",
+        default=False,
+        help="Only start tracking run when context is initialised",
+    )
 
     return parser.parse_args(args)
 
@@ -119,7 +128,7 @@ def run_parse_arguments(args: list):
     Returns:
         argparse.Namespace: Parsed arguments
     """
-    parser = argparse.ArgumentParser(description="Multi-Level DNN GPU Benchmark")
+    parser = argparse.ArgumentParser(description="RADt runner")
 
     parser.add_argument(
         "-l",

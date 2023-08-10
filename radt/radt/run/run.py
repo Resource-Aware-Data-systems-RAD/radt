@@ -32,12 +32,7 @@ def update_params_listing(command, params):
     else:
         passthrough = ""
 
-    # Grab run id
-    try:
-        run = mlflow.start_run(RUN_ID)
-    except Exception as e:
-        print(e)
-        run = mlflow.active_run()
+    run = mlflow.active_run()
 
     # Log parameter
     for k, v in statements.items():
@@ -89,11 +84,21 @@ def start_run(args, listeners):
     # Clear MLproject file so next run may start
     Path("MLproject").unlink()
 
-    with RADTBenchmark() as run:
-        code = "run_path(progname, run_name='__main__')"
-        globs = {"run_path": runpy.run_path, "progname": args.command}
+    code = "run_path(progname, run_name='__main__')"
+    globs = {"run_path": runpy.run_path, "progname": args.command}
 
+    mlflow.log_param("manual", os.getenv("RADT_MANUAL_MODE") == "True")
+    mlflow.log_param("max_epoch", int(os.getenv("RADT_MAX_EPOCH")))
+    mlflow.log_param("max_time", int(os.getenv("RADT_MAX_TIME")))
+
+    if os.getenv("RADT_MANUAL_MODE") == "True":
         try:
             exec(code, globs, None)
         except (SystemExit, KeyboardInterrupt):
             pass
+    else:
+        with RADTBenchmark() as run:
+            try:
+                exec(code, globs, None)
+            except (SystemExit, KeyboardInterrupt):
+                pass

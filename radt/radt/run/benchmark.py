@@ -30,6 +30,9 @@ class RADTBenchmark:
         print("Starting benchmark!")
         print(f"CAPTURED RUN ID [{self.run_id}]")
 
+    def __dir__(self):
+        return dir(super()) + dir(mlflow)
+
     def __getattribute__(self, name):
         """Get attribute, overwrites methods and functions
         if RADT has not been loaded"""

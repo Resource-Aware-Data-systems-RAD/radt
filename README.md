@@ -67,7 +67,7 @@ import radt
 with radt.run.RADTBenchmark() as run:
   # training loop
   run.log_metric("Metric A", amount)
-  run.log_artifact("Metric A", artifact)
+  run.log_artifact("artifact.file")
 ```
 All methods and functions under `mlflow` are accessible this way. These functions are disabled when running the codebase without `radt`, ensuring code flexibility.
 

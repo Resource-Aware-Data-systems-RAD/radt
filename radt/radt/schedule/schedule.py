@@ -275,7 +275,14 @@ def execute_workload(cmds: list):
             client = MlflowClient()
             if run := client.get_run(run_id):
                 results.append(
-                    (id, letter, returncodes[letter], run_id, run.info.status)
+                    (
+                        id,
+                        letter,
+                        returncodes[letter],
+                        run_id,
+                        run.info.run_name,
+                        run.info.status,
+                    )
                 )
                 client.log_text(run_id, "".join(log_runs[letter]), f"log_{run_id}.txt")
                 client.log_text(run_id, "".join(log), f"log_workload.txt")
@@ -471,7 +478,7 @@ def start_schedule(parsed_args: Namespace, file: Path, args_passthrough: list):
             # Reruns FAILED workloads when --rerun is specified
             if not (
                 "FINISHED" in str(row["Status"]).strip()
-                or ("FAILED" in str(row["Status"]).strip() and (not rerun))
+                or ("FAILED" in str(row["Status"]).strip() and (not parsed_args.rerun))
             ):
                 break
         else:
@@ -591,12 +598,9 @@ def start_schedule(parsed_args: Namespace, file: Path, args_passthrough: list):
 
         # Write if .csv
         if isinstance(df_raw, pd.DataFrame):
-            for id, letter, returncode, run_id, status in results:
+            for id, letter, returncode, run_id, run_name, status in results:
                 df_raw.loc[id, "Run"] = run_id
-                if returncode == 0:
-                    df_raw.loc[id, "Status"] = f"{status} ({letter})"
-                else:
-                    df_raw.loc[id, "Status"] = f"{status} - Failed ({letter})"
+                df_raw.loc[id, "Status"] = f"{status} {run_name} ({letter})"
 
             # Write the result of the run to the csv
             target = Path("result.csv")

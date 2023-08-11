@@ -22,12 +22,13 @@ pip install radt
 
 ## Releases
 
-The current release is `0.2.3`. radT has been recently released and is frequently receiving updates.
+The current release is `0.2.4`. radT has been recently released and is frequently receiving updates.
 
 If you find any issues or bugs, feel free to message `titr (at) itu.dk` or open an issue in this repository.
 
 ### Changelog
 
+- 0.2.4: Fixed `rerun` flag, added run names to status
 - 0.2.3: Reintroduced manual mode, fixed issue with context attributes, `max_epoch`, `max_time`, and `manual` are now logged as parameters
 - 0.2.2: Reintroduced contexts, fixed issue of not having `migedit` as a formal requirement
 - 0.2.1: Removed legacy print-statements

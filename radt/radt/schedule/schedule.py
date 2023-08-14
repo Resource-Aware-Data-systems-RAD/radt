@@ -150,7 +150,12 @@ def execute_workload(cmds: list):
     popens = []
     returncodes = {}
 
-    unlink_first = True
+    # Remove MLprojects
+    for _, _, _, _, _, _, filepath, _ in cmds:
+        if (Path(filepath) / "MLproject").is_file():
+            (Path(filepath) / "MLproject").unlink()
+
+    time.sleep(1)
 
     with ExitStack() as stack:
         for id, colour, letter, vars, cmd, mlproject, filepath, _ in cmds:
@@ -177,20 +182,18 @@ def execute_workload(cmds: list):
                 )
             )
 
-            # TODO: conda yaml export
-
             while (Path(filepath) / "MLproject").is_file():
                 # Wait for MLproject to be cleared
                 sysprint("Waiting for MLproject to be cleared")
                 time.sleep(1)
 
-                if unlink_first:
-                    (Path(filepath) / "MLproject").unlink()
-
-                unlink_first = False
-
+            # Write mlflow mlproject
             with open(Path(filepath) / "MLproject", "w") as project_file:
                 project_file.write(mlproject)
+
+            # Write run blocker
+            with open(Path(filepath) / "radtlock", "w") as lock:
+                lock.write("")
 
             time.sleep(1)
 
@@ -202,6 +205,12 @@ def execute_workload(cmds: list):
             popens.append((colour, letter, p, q, t))
             log_runs[letter] = []
             run_ids[letter] = False
+            time.sleep(1)
+
+        # Remove run blockers to start synchronised runs
+        for _, _, _, _, _, _, filepath, _ in cmds:
+            if (Path(filepath) / "radtlock").is_file():
+                (Path(filepath) / "radtlock").unlink()
 
         try:
             while True:

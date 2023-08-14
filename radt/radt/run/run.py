@@ -5,6 +5,7 @@ import os
 import runpy
 import sys
 from pathlib import Path
+from time import sleep
 
 import mlflow
 
@@ -82,6 +83,9 @@ def start_run(args, listeners):
     sys.argv = [sys.argv[0]] + passthrough
 
     # Clear MLproject file so next run may start
+    with open(Path("MLproject")) as file:
+        mlflow.log_text(file.read(), "MLproject")
+
     Path("MLproject").unlink()
 
     code = "run_path(progname, run_name='__main__')"
@@ -90,6 +94,10 @@ def start_run(args, listeners):
     mlflow.log_param("manual", os.getenv("RADT_MANUAL_MODE") == "True")
     mlflow.log_param("max_epoch", int(os.getenv("RADT_MAX_EPOCH")))
     mlflow.log_param("max_time", int(os.getenv("RADT_MAX_TIME")))
+
+    # Wait for lock
+    while Path("radtlock").is_file():
+        sleep(0.1)
 
     if os.getenv("RADT_MANUAL_MODE") == "True":
         try:

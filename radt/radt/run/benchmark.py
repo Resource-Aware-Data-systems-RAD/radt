@@ -2,7 +2,7 @@ import os
 import sys
 import types
 from time import time
-
+from subprocess import PIPE, Popen
 import mlflow
 
 from .listeners import dcgmi_listener, ps_listener, smi_listener, top_listener
@@ -10,6 +10,31 @@ from .listeners import dcgmi_listener, ps_listener, smi_listener, top_listener
 
 def dummy(*args, **kwargs):
     return
+
+
+def execute_command(cmd: str):
+    """Execute a command
+
+    Args:
+        cmd (str or list): Command to run
+
+    Returns:
+        str: stdout output of the command
+    """
+
+    if isinstance(cmd, str):
+        cmd = cmd.split()
+
+    env = os.environ.copy()
+
+    result = []
+    with Popen(cmd, stdout=PIPE, bufsize=1, universal_newlines=True, env=env) as p:
+        result.extend(p.stdout)
+
+        if p.returncode != 0:
+            pass
+
+    return result
 
 
 class RADTBenchmark:
@@ -27,8 +52,21 @@ class RADTBenchmark:
             run = mlflow.active_run()
         self.run_id = run.info.run_id
 
-        print("Starting benchmark!")
-        print(f"CAPTURED RUN ID [{self.run_id}]")
+        # Capture (package) versions for pip, conda, smi
+        try:
+            self.log_text("".join(execute_command("pip freeze")), "pip.txt")
+        except FileNotFoundError as e:
+            pass
+
+        try:
+            self.log_text("".join(execute_command("conda list")), "conda.txt")
+        except FileNotFoundError as e:
+            pass
+
+        try:
+            self.log_text("".join(execute_command("nvidia-smi")), "smi.txt")
+        except FileNotFoundError as e:
+            pass
 
     def __dir__(self):
         return dir(super()) + dir(mlflow)
@@ -49,6 +87,7 @@ class RADTBenchmark:
     def __enter__(self):
         if "RADT_MAX_EPOCH" not in os.environ:
             return self
+
         self.threads = []
         self.max_epoch = int(os.getenv("RADT_MAX_EPOCH"))
         self.max_time = time() + int(os.getenv("RADT_MAX_TIME"))
@@ -69,6 +108,7 @@ class RADTBenchmark:
 
         for thread in self.threads:
             thread.start()
+
         return self
 
     def __exit__(self, type, value, traceback):

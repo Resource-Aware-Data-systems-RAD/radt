@@ -152,10 +152,9 @@ def execute_workload(cmds: list):
 
     # Remove MLprojects
     for _, _, _, _, _, _, filepath, _ in cmds:
-        if (Path(filepath) / "MLproject").is_file():
+        while (Path(filepath) / "MLproject").is_file():
             (Path(filepath) / "MLproject").unlink()
-
-    time.sleep(1)
+            time.sleep(2)
 
     with ExitStack() as stack:
         for id, colour, letter, vars, cmd, mlproject, filepath, _ in cmds:
@@ -171,6 +170,14 @@ def execute_workload(cmds: list):
             for k, v in vars.items():
                 env[k] = str(v)
 
+            # Write mlflow mlproject
+            with open(Path(filepath) / "MLproject", "w") as project_file:
+                project_file.write(mlproject)
+
+            # Write run blocker
+            with open(Path(filepath) / "radtlock", "w") as lock:
+                lock.write("")
+
             stack.enter_context(
                 p := Popen(
                     cmd,
@@ -182,21 +189,6 @@ def execute_workload(cmds: list):
                 )
             )
 
-            while (Path(filepath) / "MLproject").is_file():
-                # Wait for MLproject to be cleared
-                sysprint("Waiting for MLproject to be cleared")
-                time.sleep(1)
-
-            # Write mlflow mlproject
-            with open(Path(filepath) / "MLproject", "w") as project_file:
-                project_file.write(mlproject)
-
-            # Write run blocker
-            with open(Path(filepath) / "radtlock", "w") as lock:
-                lock.write("")
-
-            time.sleep(1)
-
             q = Queue()
             t = Thread(target=enqueue_output, args=(p.stdout, q))
             t.daemon = True
@@ -205,7 +197,12 @@ def execute_workload(cmds: list):
             popens.append((colour, letter, p, q, t))
             log_runs[letter] = []
             run_ids[letter] = False
+
             time.sleep(1)
+            while (Path(filepath) / "MLproject").is_file():
+                # Wait for MLproject to be cleared
+                sysprint("Waiting for MLproject to be cleared")
+                time.sleep(1)
 
         # Remove run blockers to start synchronised runs
         for _, _, _, _, _, _, filepath, _ in cmds:

@@ -22,11 +22,12 @@ pip install radt
 
 ## Releases
 
-The current release is `0.2.6`. radT has been recently released and is frequently receiving updates.
+The current release is `0.2.7`. radT has been recently released and is frequently receiving updates.
 
 If you find any issues or bugs, feel free to message `titr (at) itu.dk` or open an issue in this repository.
 
 ### Changelog
+- 0.2.7: Resolved race condition that could sometimes disrupt collocated model execution.
 - 0.2.6: Resolved synchronisation issues with `.csv` runs.
 - 0.2.5: Automatically log `pip`, `conda` package lists and `nvidia-smi` driver info for reproducability.
 - 0.2.4: Fixed `rerun` flag, added run names to status

@@ -69,6 +69,10 @@ def start_run(args, listeners):
         RUN_ID = mlflow.active_run().info.run_id
     os.environ["RADT_RUN_ID"] = RUN_ID
 
+    # Establish communication with scheduler
+    print("Starting benchmark!")
+    print(f"CAPTURED RUN ID [{RUN_ID}]")
+
     print(
         "MAX EPOCH: ",
         os.environ["RADT_MAX_EPOCH"],

@@ -132,6 +132,29 @@ def enqueue_output(out: PIPE, queue: Queue):
     out.close()
 
 
+def process_output(popens, log_runs, log, run_ids):
+    for colour, letter, p, q, _ in popens:
+        while True:  # p.poll() is None:
+            try:
+                l = q.get_nowait()
+                if not l.strip() and not "\n" in l:
+                    continue
+            except Empty:
+                break
+            else:
+                log_runs[letter].append(l)
+                log.append(runformat(None, letter, l))
+                print(runformat(colour, letter, l), end="")
+
+                if run_ids[letter]:
+                    continue
+                if "CAPTURED RUN ID " in l:
+                    run_ids[letter] = (
+                        l.split("CAPTURED RUN ID [")[-1].strip()[:-1].strip()
+                    )
+                    print(runformat(colour, letter, f"MAPPED TO {run_ids[letter]}"))
+
+
 def execute_workload(cmds: list):
     """Executes a workload. Handles run halting and collecting of run status.
 
@@ -157,59 +180,60 @@ def execute_workload(cmds: list):
             time.sleep(2)
 
     with ExitStack() as stack:
-        for id, colour, letter, vars, cmd, mlproject, filepath, _ in cmds:
-            print(
-                runformat(
-                    colour,
-                    letter,
-                    f"context: {id}-{colour}-{letter}-{vars}-{cmd}-{filepath}",
+        try:
+            for id, colour, letter, vars, cmd, mlproject, filepath, _ in cmds:
+                print(
+                    runformat(
+                        colour,
+                        letter,
+                        f"context: {id}-{colour}-{letter}-{vars}-{cmd}-{filepath}",
+                    )
                 )
-            )
 
-            env = os.environ.copy()
-            for k, v in vars.items():
-                env[k] = str(v)
+                env = os.environ.copy()
+                for k, v in vars.items():
+                    env[k] = str(v)
 
-            # Write mlflow mlproject
-            with open(Path(filepath) / "MLproject", "w") as project_file:
-                project_file.write(mlproject)
+                # Write mlflow mlproject
+                with open(Path(filepath) / "MLproject", "w") as project_file:
+                    project_file.write(mlproject)
 
-            # Write run blocker
-            with open(Path(filepath) / "radtlock", "w") as lock:
-                lock.write("")
+                # Write run blocker
+                with open(Path(filepath) / "radtlock", "w") as lock:
+                    lock.write("")
 
-            stack.enter_context(
-                p := Popen(
-                    cmd,
-                    stdout=PIPE,
-                    stderr=STDOUT,
-                    bufsize=1,
-                    env=env,
-                    universal_newlines=True,
+                stack.enter_context(
+                    p := Popen(
+                        cmd,
+                        stdout=PIPE,
+                        stderr=STDOUT,
+                        bufsize=1,
+                        env=env,
+                        universal_newlines=True,
+                    )
                 )
-            )
 
-            q = Queue()
-            t = Thread(target=enqueue_output, args=(p.stdout, q))
-            t.daemon = True
-            t.start()
+                q = Queue()
+                t = Thread(target=enqueue_output, args=(p.stdout, q))
+                t.daemon = True
+                t.start()
 
-            popens.append((colour, letter, p, q, t))
-            log_runs[letter] = []
-            run_ids[letter] = False
+                popens.append((colour, letter, p, q, t))
+                log_runs[letter] = []
+                run_ids[letter] = False
 
-            time.sleep(1)
-            while (Path(filepath) / "MLproject").is_file():
-                # Wait for MLproject to be cleared
-                sysprint("Waiting for MLproject to be cleared")
                 time.sleep(1)
 
-        # Remove run blockers to start synchronised runs
-        for _, _, _, _, _, _, filepath, _ in cmds:
-            if (Path(filepath) / "radtlock").is_file():
-                (Path(filepath) / "radtlock").unlink()
+                # Wait for MLproject to be cleared
+                while (Path(filepath) / "MLproject").is_file():
+                    process_output(popens, log_runs, log, run_ids)
+                    time.sleep(1)
 
-        try:
+            # Remove run blockers to start synchronised runs
+            for _, _, _, _, _, _, filepath, _ in cmds:
+                if (Path(filepath) / "radtlock").is_file():
+                    (Path(filepath) / "radtlock").unlink()
+
             while True:
                 # Stop once all processes have finished
                 for _, _, p, _, _ in popens:
@@ -219,33 +243,7 @@ def execute_workload(cmds: list):
                 else:
                     break
 
-                # Process output text
-                for colour, letter, p, q, _ in popens:
-                    while p.poll() is None:
-                        try:
-                            l = q.get_nowait()
-                            if not l.strip() and not "\n" in l:
-                                continue
-                        except Empty:
-                            break
-                        else:
-                            log_runs[letter].append(l)
-                            log.append(runformat(None, letter, l))
-                            print(runformat(colour, letter, l), end="")
-
-                            if run_ids[letter]:
-                                continue
-                            if "CAPTURED RUN ID " in l:
-                                run_ids[letter] = (
-                                    l.split("CAPTURED RUN ID [")[-1]
-                                    .strip()[:-1]
-                                    .strip()
-                                )
-                                print(
-                                    runformat(
-                                        colour, letter, f"MAPPED TO {run_ids[letter]}"
-                                    )
-                                )
+                process_output(popens, log_runs, log, run_ids)
 
         except KeyboardInterrupt:
             try:

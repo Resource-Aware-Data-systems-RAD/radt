@@ -22,11 +22,12 @@ pip install radt
 
 ## Releases
 
-The current release is `0.2.9`. radT has been recently released and is frequently receiving updates.
+The current release is `0.2.10`. radT has been recently released and is frequently receiving updates.
 
 If you find any issues or bugs, feel free to message `titr (at) itu.dk` or open an issue in this repository.
 
 ### Changelog
+- 0.2.10: Workload listeners now upload logs when `file` points to a different folder. `rerun` argument now works correctly.
 - 0.2.9: Allow text printing while env is setting up.
 - 0.2.8: Resolved issue preventing logs from being collected.
 - 0.2.7: Resolved race condition that could sometimes disrupt collocated model execution.

@@ -73,10 +73,10 @@ def schedule_parse_arguments(args: list):
     parser.add_argument(
         "-r",
         "--rerun",
-        type=bool,
+        action="store_true",
         dest="rerun",
         default=False,
-        help="Whether to force rerun runs that have previously been completed",
+        help="Whether to force rerun runs that have previously failed",
     )
     parser.add_argument(
         "-i",

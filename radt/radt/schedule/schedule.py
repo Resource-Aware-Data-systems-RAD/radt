@@ -274,7 +274,7 @@ def execute_workload(cmds: list):
     sysprint("Sending logs to server.")
     results = []
 
-    for id, _, letter, _, _, _, _, row in cmds:
+    for id, _, letter, _, _, _, filepath, row in cmds:
         if run_id := run_ids[letter]:
             client = MlflowClient()
             if run := client.get_run(run_id):
@@ -293,7 +293,7 @@ def execute_workload(cmds: list):
 
                 if row["WorkloadListener"]:
                     try:
-                        for file in Path("").glob(
+                        for file in Path(filepath).glob(
                             f"{row['WorkloadListener'].split('-o ')[1].split()[0]}*.*-rep"
                         ):
                             client.log_artifact(run_id, str(file))

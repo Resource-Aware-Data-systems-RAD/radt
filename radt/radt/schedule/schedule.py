@@ -56,31 +56,6 @@ def runformat(colour: int, letter: str, string: str):
     return f"{coloured(colour, prefix)} {string}"
 
 
-def format_params(line: str):
-    """Format parameters for run passthrough
-
-    Args:
-        line (str): Parameters to format
-
-    Returns:
-        str: Formatted parameters
-    """
-    if isinstance(line, str):
-        line = " ".join(line.split())
-        if "--" in line:
-            line = line.replace("--", "")
-            parts = line.split()
-            statements = []
-            while parts:
-                statements.append(f"{parts[0]}={parts[1]}")
-                parts = parts[2:]
-
-            line = ",".join(statements)
-
-        return line.replace(";", ",").replace(" ", "")
-    return line
-
-
 def execute_command(cmd: str, shell: bool = False, vars: dict = {}):
     """Execute a (non-run) command
 
@@ -148,9 +123,10 @@ def process_output(popens, log_runs, log, run_ids):
 
                 if run_ids[letter]:
                     continue
-                if "CAPTURED RUN ID " in l:
+
+                if "in run with ID '" in l:
                     run_ids[letter] = (
-                        l.split("CAPTURED RUN ID [")[-1].strip()[:-1].strip()
+                        l.split("in run with ID '")[-1].split("'")[0].strip()
                     )
                     print(runformat(colour, letter, f"MAPPED TO {run_ids[letter]}"))
 
@@ -225,9 +201,29 @@ def execute_workload(cmds: list):
                 time.sleep(1)
 
                 # Wait for MLproject to be cleared
-                while (Path(filepath) / "MLproject").is_file():
+                while (Path(filepath) / "MLproject").is_file() or run_ids[
+                    letter
+                ] == False:
                     process_output(popens, log_runs, log, run_ids)
                     time.sleep(1)
+
+            # Group runs into workload children
+            # And add experiment/workload to name
+            parent_id = ""
+            for _, _, letter, _, _, _, filepath, _ in cmds:
+                if run_id := run_ids[letter]:
+                    client = MlflowClient()
+                    if run := client.get_run(run_id):
+                        client.set_tag(
+                            run_id,
+                            "mlflow.runName",
+                            f"({run.data.params['workload']} {letter}) {run.info.run_name}",
+                        )
+
+                        if not parent_id:
+                            parent_id = run_id
+                        elif parent_id != run_id:
+                            client.set_tag(run_id, "mlflow.parentRunId", parent_id)
 
             # Remove run blockers to start synchronised runs
             for _, _, _, _, _, _, filepath, _ in cmds:
@@ -464,8 +460,6 @@ def start_schedule(parsed_args: Namespace, file: Path, args_passthrough: list):
         args_passthrough (list): Run arguments
     """
     df, df_raw = determine_operating_mode(parsed_args, file, args_passthrough)
-
-    df["Params"] = df["Params"].apply(format_params)
 
     df["Workload_Unique"] = (
         df["Experiment"].astype(str) + "+" + df["Workload"].astype(str)

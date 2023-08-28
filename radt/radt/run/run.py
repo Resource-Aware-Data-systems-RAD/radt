@@ -1,6 +1,5 @@
 """Runner for Resource-Aware Data systems Tracker (radT) for automatically tracking and training machine learning software"""
 
-import argparse
 import os
 import runpy
 import sys
@@ -16,22 +15,23 @@ def update_params_listing(command, params):
     # Log the parameters individually so they are filterable in MLFlow
     statements = {}
 
-    # Clean passthrough arguments as they were concatenated to a single string
-    if len(params) > 1 and params != '"nan"':  # skip if just "-"
-        passthrough = params.strip()
+    statements["model"] = command
+    statements["params"] = params
 
-        if (
-            passthrough[0] == '"' and passthrough[-1] == '"'
-        ):  # Clean if propagated via "
-            passthrough = passthrough[1:-1].strip()
+    # Identify arguments to upload as parameters
+    key = ""
+    value = []
+    for param in params.split():
+        if param.startswith("-"):
+            if key != "":
+                statements[key.lstrip("-")] = " ".join(value)
+            key = param
+            value = []
+        else:
+            value.append(param)
 
-        for s in passthrough.split(","):
-            if s.strip():  # Omit empty entries
-                k, v = s.split("=")
-                statements[k] = v
-
-    else:
-        passthrough = ""
+    if key != "":
+        statements[key.lstrip("-")] = " ".join(value)
 
     run = mlflow.active_run()
 
@@ -48,19 +48,6 @@ def update_params_listing(command, params):
             except mlflow.exceptions.MlflowException as e:
                 print("Failed to log parameter:", "data", v)
 
-    try:
-        mlflow.log_param("model", command)
-    except mlflow.exceptions.MlflowException as e:
-        print("Failed to log parameter:", "model", command)
-
-    # return [argument for pair in statements.items() for argument in pair]
-
-    return [
-        argument
-        for pair in statements.items()
-        for argument in (f"--{pair[0]}", pair[1])
-    ]  # TODO: improve this code to allow for more flexible args
-
 
 def start_run(args, listeners):
     try:
@@ -69,22 +56,10 @@ def start_run(args, listeners):
         RUN_ID = mlflow.active_run().info.run_id
     os.environ["RADT_RUN_ID"] = RUN_ID
 
-    # Establish communication with scheduler
-    print("Starting benchmark!")
-    print(f"CAPTURED RUN ID [{RUN_ID}]")
+    passthrough = args.params
+    update_params_listing(args.command, args.params)
 
-    print(
-        "MAX EPOCH: ",
-        os.environ["RADT_MAX_EPOCH"],
-        " MAX_TIME: ",
-        os.environ["RADT_MAX_TIME"],
-    )
-
-    passthrough = update_params_listing(args.command, args.params)
-
-    print(args.params, "passthrough:", passthrough)
-
-    sys.argv = [sys.argv[0]] + passthrough
+    sys.argv = [sys.argv[0]] + passthrough.split()
 
     # Clear MLproject file so next run may start
     with open(Path("MLproject")) as file:

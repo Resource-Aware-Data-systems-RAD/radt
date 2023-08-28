@@ -22,7 +22,7 @@ COMMAND = (
     "-P workload={Workload} "
     "-P listeners={Listeners} "
     "-P file={File} "
-    '-P params="{Params}" '
+    '-P params="-" '
 )
 
 RUN_LISTENERS = ["ps", "smi", "dcgmi", "top"]
@@ -54,5 +54,5 @@ entry_points:
 """
 
 MLFLOW_COMMAND = (
-    """{WorkloadListener}python -m radt run -l {Listeners} -c {File} -p {Params}"""
+    '''{WorkloadListener}python -m radt run -l {Listeners} -c {File} -p "{Params}"'''
 )

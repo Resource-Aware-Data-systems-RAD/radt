@@ -327,47 +327,56 @@ def make_dcgm_groups(dev_table: pd.DataFrame):
         ValueError: Group could not be created
 
     Returns:
+        bool: Whether DCGMI is available.
         pd.DataFrame: Run to id mapping table.
     """
 
-    # Grab existing groups
-    result = [l for l in execute_command("dcgmi group -l") if "Group ID" in l]
-    group_ids = [int(l.split("|")[-2]) for l in result]
+    try:
+        # Grab existing groups
+        result = [l for l in execute_command("dcgmi group -l") if "Group ID" in l]
+        group_ids = [int(l.split("|")[-2]) for l in result]
 
-    # Delete groups. First two are protected and shouldn't be deleted
-    if len(group_ids) > 1:
-        for i in group_ids:
-            if i in (0, 1):
-                continue
+        # Delete groups. First two are protected and shouldn't be deleted
+        if len(group_ids) > 1:
+            for i in group_ids:
+                if i in (0, 1):
+                    continue
 
-            result = "".join(execute_command(f"dcgmi group -d {i}")).lower()
+                result = "".join(execute_command(f"dcgmi group -d {i}")).lower()
+                if "error" in result:
+                    raise ValueError(
+                        "DCGMI group index not found. Could not be deleted"
+                    )
+
+        set_ids = {}
+        for i, s in enumerate(dev_table.sort_values().unique()):
+            # Create a new group
+            result = "".join(execute_command(f"dcgmi group -c mldnn_{i}")).lower()
             if "error" in result:
-                raise ValueError("DCGMI group index not found. Could not be deleted")
+                raise ValueError("DCGMI group could not be created.")
+            group_id = int(result.split("group id of ")[1].split()[0])
 
-    set_ids = {}
-    for i, s in enumerate(dev_table.sort_values().unique()):
-        # Create a new group
-        result = "".join(execute_command(f"dcgmi group -c mldnn_{i}")).lower()
-        if "error" in result:
-            raise ValueError("DCGMI group could not be created.")
-        group_id = int(result.split("group id of ")[1].split()[0])
+            gpu_ids = ",".join(list(s))
 
-        gpu_ids = ",".join(list(s))
+            # Add the gpu ids to the new group
+            result = "".join(
+                execute_command(f"dcgmi group -g {group_id} -a {gpu_ids}")
+            ).lower()
+            if "error" in result:
+                raise ValueError("DCGMI group could not be set up with required GPUs.")
 
-        # Add the gpu ids to the new group
-        result = "".join(
-            execute_command(f"dcgmi group -g {group_id} -a {gpu_ids}")
-        ).lower()
-        if "error" in result:
-            raise ValueError("DCGMI group could not be set up with required GPUs.")
+            set_ids[s] = group_id
 
-        set_ids[s] = group_id
-
-    dcgmi_table = {}
-    for i, v in dev_table.items():
-        dcgmi_table[i] = set_ids[v]
-
-    return dcgmi_table
+        dcgmi_table = {}
+        for i, v in dev_table.items():
+            dcgmi_table[i] = set_ids[v]
+        return True, dcgmi_table
+    except FileNotFoundError:
+        sysprint("DCGMI not found. Continuing without DCGMI.")
+        dcgmi_table = {}
+        for i, v in dev_table.items():
+            dcgmi_table[i] = ""
+        return False, dcgmi_table
 
 
 def make_mps(df_workload: pd.DataFrame, gpu_uuids: dict):
@@ -527,7 +536,7 @@ def start_schedule(parsed_args: Namespace, file: Path, args_passthrough: list):
                 s.add(device)
             mig_table[i] = frozenset(s)
 
-        dcgmi_table = make_dcgm_groups(entity_table)
+        dcgmi_enabled, dcgmi_table = make_dcgm_groups(entity_table)
 
         make_mps(df_workload, gpu_uuids)
 
@@ -551,6 +560,8 @@ def start_schedule(parsed_args: Namespace, file: Path, args_passthrough: list):
                     )
                     listeners.remove(listener)
                 else:
+                    if k.upper() == "DCGMI" and not dcgmi_enabled:
+                        continue
                     listener_env_vars[f"RADT_LISTENER_{k.upper()}"] = "True"
 
             listeners = "+".join(listeners)

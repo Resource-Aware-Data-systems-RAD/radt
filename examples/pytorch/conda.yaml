@@ -1,32 +1,17 @@
-name: multi-level-dnn-gpu-benchmark-pytorch
+name: pt
 channels:
   - pytorch
   - nvidia
 dependencies:
-  - python=3.9
+  - python=3.10
   - pip
   - pytorch
   - torchvision
   - torchaudio
-  - pytorch-cuda=11.7
+  - pytorch-cuda=11.8
   - boto3
   - pip:
       - mlflow>=1.0
       - tensorflow
-      - tensorboard
       - tensorboardX
       - psutil
-      - batchgenerators
-      - SimpleITK
-      - nibabel
-      - matplotlib
-      - medpy
-      - tqdm
-      - omegaconf
-      - hydra-core
-      - bitarray
-      - sacrebleu
-      - sentencepiece
-      - fairseq==0.12.2
-      - fvcore
-      - pycocotools

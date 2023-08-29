@@ -22,11 +22,14 @@ pip install radt
 
 ## Releases
 
-The current release is `0.2.11`. radT has been recently released and is frequently receiving updates.
+The current release is `0.2.14`. radT has been recently released and is frequently receiving updates.
 
 If you find any issues or bugs, feel free to message `titr (at) itu.dk` or open an issue in this repository.
 
 ### Changelog
+- 0.2.14: Automatically disable the DCGMI listener when DCGMI is not found.
+- 0.2.13: Enable RADT on systems without DCGMI.
+- 0.2.12: Fixed an issue with dependencies.
 - 0.2.11: Workloads are now nested to group them together. Run names include the workload and letter. Improved flexibility of param passthrough.
 - 0.2.10: Workload listeners now upload logs when `file` points to a different folder. `rerun` argument now works correctly.
 - 0.2.9: Allow text printing while env is setting up.

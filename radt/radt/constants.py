@@ -25,7 +25,7 @@ COMMAND = (
     '-P params="-" '
 )
 
-RUN_LISTENERS = ["ps", "smi", "dcgmi", "top"]
+RUN_LISTENERS = ["ps", "smi", "dcgmi", "top", "iostat"]
 
 WORKLOAD_LISTENERS = {
     "nsys": "nsys profile --capture-range nvtx --nvtx-capture profile --cuda-memory-usage=true --capture-range-end repeat -o nsys_{Experiment}_{Workload}_{Letter} -f true -w true -x true -t cuda,nvtx ",

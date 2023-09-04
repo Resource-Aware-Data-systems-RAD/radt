@@ -15,6 +15,9 @@ class IOstatThread(Process):
             "iostat 1 -m".split(),
             stdout=subprocess.PIPE,
         )
+        total_mb_read_s, total_mb_written_s = 0, 0
+        total_mb_read, total_mb_written = 0, 0
+        devices = {}
 
         for line in io.TextIOWrapper(ps.stdout, encoding="utf-8"):
             m = {}
@@ -27,18 +30,32 @@ class IOstatThread(Process):
                 word_vector = line.strip().split()
 
                 device = word_vector[0]         # storage device
+
                 mb_read_s = word_vector[2]      # MB read/s
                 mb_written_s = word_vector[3]   # MB wrtn/s
-                mb_discarded_s = word_vector[4] # MB dscd/s
                 mb_read = word_vector[5]        # MB read since last sample
                 mb_written = word_vector[6]     # MB written since last sample
-                mb_discarded = word_vector[7]   # MB discarded since last sample
 
                 m[f"{device} - MB read/s"] = float(mb_read_s)
                 m[f"{device} - MB written/s"] = float(mb_written_s)
-                # m[f"{device} - MB discarded/s"] = mb_discarded_s
                 m[f"{device} - MB read"] = float(mb_read)
                 m[f"{device} - MB written"] = float(mb_written)
-                # m[f"{device} - MB discarded"] = mb_discarded_s
 
                 mlflow.log_metrics(m)
+
+                if device in devices:
+                    mlflow.log_metrics({
+                        "iostat - Total MB read/s": total_mb_read_s,
+                        "iostat - Total MB written/s": total_mb_written_s,
+                        "iostat - Total MB read": total_mb_read,
+                        "iostat - Total MB written": total_mb_written,
+                    })
+                    devices = {}
+                    total_mb_read_s, total_mb_written_s = 0, 0
+                    total_mb_read, total_mb_written = 0, 0
+                else:
+                    devices.add(device)
+                    total_mb_read_s += float(mb_read_s)
+                    total_mb_written_s += float(mb_written_s)
+                    total_mb_read += float(mb_read)
+                    total_mb_written += float(mb_written)

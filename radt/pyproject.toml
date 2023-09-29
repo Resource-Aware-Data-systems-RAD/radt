@@ -11,7 +11,8 @@ dynamic = ["version", "description"]
 dependencies = [
     "mlflow >=2.4.0",
     "pandas >=2.0.0",
-    "migedit >= 0.2.0"
+    "migedit >= 0.2.0",
+    "boto3 >= 1.25.0"
 ]
 
 [project.urls]

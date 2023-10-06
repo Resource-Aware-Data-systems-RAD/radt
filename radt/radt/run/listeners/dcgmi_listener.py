@@ -35,26 +35,33 @@ class DCGMIThread(Process):
         self.run_id = run_id
         self.experiment_id = experiment_id
 
+        # Hierarchy of metrics to monitor. Fall back in ascending order if certain metrics are not available for collection.
+        self.dcgm_fields = [
+            [155,156,200,201,203,204,1001,1002,1003,1004,1005,1006,1007,1008,1009,1010,1011,1012], # A100, H100
+            [155,156,200,201,203,204,1001,1002,1003,1004,1005,1007,1008,1009,1010,1011,1012], # A10
+            [155,156,200,201,203,204], # Rest
+        ]
+
+    def _start_dcgm(self, idx):
+        fields = ",".join(map(str,self.dcgm_fields[idx]))
+        self.dcgm = subprocess.Popen(
+            f"dcgmi dmon -e {fields} -g {DCGMI_GROUP_ID}".split(),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
     def run(self):
-        self.dcgm = subprocess.Popen(
-            f"dcgmi dmon -e 155,156,200,201,203,204,1001,1002,1003,1004,1005,1006,1007,1008,1009,1010,1011,1012 -g {DCGMI_GROUP_ID}".split(),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
+        idx = 0
+        while idx < len(self.dcgm_fields):
+            self._start_dcgm(idx)
 
-        self.monitor()
+            self.monitor()
 
-        # If advanced metrics are not available, restart the service with limited collection
-        if "Error setting watches" not in str(self.dcgm.stderr.read()):
-            return
+            # If advanced metrics are not available, restart the service with limited collection
+            if "Error setting watches" not in str(self.dcgm.stderr.read()):
+                return
 
-        self.dcgm = subprocess.Popen(
-            f"dcgmi dmon -e 155,156,200,201,203,204 -g {DCGMI_GROUP_ID}".split(),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-
-        self.monitor()
+            idx += 1
 
     def monitor(self):
         for line in io.TextIOWrapper(self.dcgm.stdout, encoding="utf-8"):

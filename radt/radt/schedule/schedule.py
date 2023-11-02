@@ -415,6 +415,9 @@ def remove_mps():
     """Remove MPS"""
     execute_command(["echo quit | nvidia-cuda-mps-control"], shell=True)
 
+def clear_page_cache():
+    """Clears OS page cache"""
+    execute_command(["sudo sh -c \"/bin/echo 3 > /proc/sys/vm/drop_caches\""], shell=True)
 
 def determine_operating_mode(
     parsed_args: Namespace, file: Path, args_passthrough: list
@@ -518,6 +521,7 @@ def start_schedule(parsed_args: Namespace, file: Path, args_passthrough: list):
 
         for i, row in df_workload.iterrows():
             remove_mps()
+            clear_page_cache()
 
             if "g" in str(row["Collocation"]):  # TODO: fix
                 result = migedit.make_mig_devices(

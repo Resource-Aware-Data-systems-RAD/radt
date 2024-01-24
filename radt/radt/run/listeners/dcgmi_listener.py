@@ -51,8 +51,7 @@ class DCGMIThread(Process):
         )
 
     def run(self):
-        idx = 0
-        while idx < len(self.dcgm_fields):
+        for idx, _ in enumerate(self.dcgm_fields):
             self._start_dcgm(idx)
 
             self.monitor()
@@ -60,8 +59,6 @@ class DCGMIThread(Process):
             # If advanced metrics are not available, restart the service with limited collection
             if "Error setting watches" not in str(self.dcgm.stderr.read()):
                 return
-
-            idx += 1
 
     def monitor(self):
         for line in io.TextIOWrapper(self.dcgm.stdout, encoding="utf-8"):

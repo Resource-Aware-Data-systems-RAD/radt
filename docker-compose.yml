@@ -69,7 +69,7 @@ services:
       - postgres
 
   visual:
-    image: dockerized-react
+    image: radt-frontend
     container_name: visual
     ports:
       - "4000:80"

@@ -22,11 +22,12 @@ pip install radt
 
 ## Releases
 
-The current release is `0.2.14`. radT has been recently released and is frequently receiving updates.
+The current release is `0.2.15`. radT has been recently released and is frequently receiving updates.
 
 If you find any issues or bugs, feel free to message `titr (at) itu.dk` or open an issue in this repository.
 
 ### Changelog
+- 0.2.15: RADT now runs correctly on machines that have a corrupt DCGMI installation.
 - 0.2.14: Automatically disable the DCGMI listener when DCGMI is not found.
 - 0.2.13: Enable RADT on systems without DCGMI.
 - 0.2.12: Fixed an issue with dependencies.

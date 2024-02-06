@@ -371,8 +371,8 @@ def make_dcgm_groups(dev_table: pd.DataFrame):
         for i, v in dev_table.items():
             dcgmi_table[i] = set_ids[v]
         return True, dcgmi_table
-    except FileNotFoundError:
-        sysprint("DCGMI not found. Continuing without DCGMI.")
+    except (FileNotFoundError, ValueError) as e:
+        sysprint(f"DCGMI not found or unreachable. Continuing without DCGMI. ({e})")
         dcgmi_table = {}
         for i, v in dev_table.items():
             dcgmi_table[i] = ""

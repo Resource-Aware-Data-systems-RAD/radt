@@ -69,13 +69,13 @@ export const HTTP = {
 
     fetchMetrics: async (runs) => {
         if (runs.length > 0) {
-            let param = "?run_uuid=in.(";
-            runs.forEach(run => {
-                param = param + '"' + run.name + '",';
-            });
-            param = param.substring(0, param.length - 1) + ")";
+            // let param = "?run_uuid=in.(";
+            // runs.forEach(run => {
+            //     param = param + '"' + run.name + '",';
+            // });
+            // param = param.substring(0, param.length - 1) + ")";
             return new Promise((resolve) => {
-                HTTP.fetchData(endpoints.metrics, param).then((json) => {
+                HTTP.fetchData(endpoints.metrics, "").then((json) => {
                     let uniqueMetrics = [];
                     json.forEach(metric => {
                         const metricIndex = uniqueMetrics.indexOf(metric.key);

@@ -1,7 +1,5 @@
 <div align="center">
-
-[![preview](media/logo_rad.png)](#readme)
-
+<img src="media/logo_rad.png" height=125 alt="radT logo"/>
 </div>
 
 # radT

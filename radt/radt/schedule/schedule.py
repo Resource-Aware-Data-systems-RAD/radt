@@ -507,12 +507,17 @@ def start_schedule(parsed_args: Namespace, file: Path, args_passthrough: list):
             if letter_quants[row["Letter"]] > 1:
                 df_workload.loc[i, "Letter"] = f'{row["Letter"]}_{row["Number"]}'
             if str(row["Collocation"]).strip() not in ("-", "", "nan"):
-                df_workload.loc[
-                    i, "Letter"
-                ] = f'{df_workload.loc[i, "Letter"]}_{df_workload.loc[i, "Collocation"]}'
+                df_workload.loc[i, "Letter"] = (
+                    f'{df_workload.loc[i, "Letter"]}_{df_workload.loc[i, "Collocation"]}'
+                )
 
         # Set devices string and DCGMI group
-        migedit.remove_mig_devices()
+        try:
+            migedit.remove_mig_devices()
+        except FileNotFoundError:
+            # SMI not found, continue
+            pass
+
         dev_table = df_workload["Devices"].astype(str).str.split("+").apply(frozenset)
         mig_table, entity_table = dev_table.copy(), dev_table.copy()
 

@@ -5,7 +5,7 @@ The frontend is a react app that can be hosted on a separate server or on the sa
 ## Before building
 
 You should specify the location of the REST api in the `.env` file for the visualization environment to work. This will ordinarily be the `3000` port on the server
-you are running docker compose on and should be the outward facing address. Setting this to localhost will limit functionality to thuat machine. E.g.:
+you are running docker compose on and should be the outward facing address. Setting this to localhost will limit functionality to that machine. E.g.:
 
 ```
 REACT_APP_API_URL=http://localhost:3000/

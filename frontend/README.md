@@ -8,7 +8,7 @@ You should specify the location of the REST api in the `.env` file for the visua
 you are running docker compose on and should be the outward facing address. Setting this to localhost will limit functionality to thuat machine. E.g.:
 
 ```
-REACT_APP_API_URL=[http://res72.itu.dk](http://localhost):3000/
+REACT_APP_API_URL=http://localhost:3000/
 ```
 ## Docker
 

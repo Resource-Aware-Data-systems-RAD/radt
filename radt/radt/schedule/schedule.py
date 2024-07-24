@@ -170,13 +170,13 @@ def execute_workload(cmds: list):
                 for k, v in vars.items():
                     env[k] = str(v)
 
-                # Write mlflow mlproject
-                with open(Path(filepath) / "MLproject", "w") as project_file:
-                    project_file.write(mlproject)
-
                 # Write run blocker
                 with open(Path(filepath) / "radtlock", "w") as lock:
                     lock.write("")
+
+                # Write mlflow mlproject
+                with open(Path(filepath) / "MLproject", "w") as project_file:
+                    project_file.write(mlproject)
 
                 stack.enter_context(
                     p := Popen(
@@ -198,14 +198,14 @@ def execute_workload(cmds: list):
                 log_runs[letter] = []
                 run_ids[letter] = False
 
-                time.sleep(1)
+                time.sleep(3)
 
                 # Wait for MLproject to be cleared
                 while (Path(filepath) / "MLproject").is_file() or run_ids[
                     letter
                 ] == False:
                     process_output(popens, log_runs, log, run_ids)
-                    time.sleep(1)
+                    time.sleep(2)
 
             # Group runs into workload children
             # And add experiment/workload to name
@@ -415,9 +415,11 @@ def remove_mps():
     """Remove MPS"""
     execute_command(["echo quit | nvidia-cuda-mps-control"], shell=True)
 
+
 def clear_page_cache():
     """Clears OS page cache"""
-    execute_command(["sudo sh -c \"/bin/echo 3 > /proc/sys/vm/drop_caches\""], shell=True)
+    execute_command(['sudo sh -c "/bin/echo 3 > /proc/sys/vm/drop_caches"'], shell=True)
+
 
 def determine_operating_mode(
     parsed_args: Namespace, file: Path, args_passthrough: list

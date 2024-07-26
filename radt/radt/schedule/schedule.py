@@ -131,7 +131,7 @@ def process_output(popens, log_runs, log, run_ids):
                     print(runformat(colour, letter, f"MAPPED TO {run_ids[letter]}"))
 
 
-def execute_workload(cmds: list):
+def execute_workload(cmds: list, timeout: float):
     """Executes a workload. Handles run halting and collecting of run status.
 
     Args:
@@ -148,6 +148,8 @@ def execute_workload(cmds: list):
     log_runs = {}
     popens = []
     returncodes = {}
+
+    start_time = time.time()
 
     # Remove MLprojects
     for _, _, _, _, _, _, filepath, _ in cmds:
@@ -231,6 +233,11 @@ def execute_workload(cmds: list):
                     (Path(filepath) / "radtlock").unlink()
 
             while True:
+
+                # Stop on timeout (failsafe)
+                if time.time() - start_time > timeout + 60:
+                    break
+
                 # Stop once all processes have finished
                 for _, _, p, _, _ in popens:
                     # Check if process is alive
@@ -613,7 +620,7 @@ def start_schedule(parsed_args: Namespace, file: Path, args_passthrough: list):
 
         # Format and run the row
         sysprint(f"RUNNING WORKLOAD: {workload}")
-        results = execute_workload(commands)
+        results = execute_workload(commands, parsed_args.max_time * 60)
         remove_mps()
 
         # Write if .csv

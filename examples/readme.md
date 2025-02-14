@@ -27,6 +27,8 @@ In order to deploy RADT using docker:
 docker compose up
 ```
 
+4. Run the SQL commands found in the [queries]{/queries} folder to prepare the database.
+
 ### **2. Docker containers**
 
 The containers can also be deployed manually/individually if desired:
